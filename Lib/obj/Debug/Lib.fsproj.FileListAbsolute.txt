@@ -1,0 +1,10 @@
+C:\src\bb\Fs5150\Lib\bin\Debug\xunit.runner.visualstudio.testadapter.dll
+C:\src\bb\Fs5150\Lib\bin\Debug\xunit.runner.utility.desktop.dll
+C:\src\bb\Fs5150\Lib\bin\Debug\xunit.abstractions.dll
+C:\src\bb\Fs5150\Lib\bin\Debug\Lib.XML
+C:\src\bb\Fs5150\Lib\bin\Debug\Lib.dll
+C:\src\bb\Fs5150\Lib\bin\Debug\Lib.pdb
+C:\src\bb\Fs5150\Lib\bin\Debug\FSharp.Core.dll
+C:\src\bb\Fs5150\Lib\bin\Debug\FSharp.Core.xml
+C:\src\bb\Fs5150\Lib\obj\Debug\Lib.dll
+C:\src\bb\Fs5150\Lib\obj\Debug\Lib.pdb
