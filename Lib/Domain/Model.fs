@@ -1,4 +1,4 @@
-﻿namespace Model
+﻿namespace Lib.Domain
 
 type Address = 
     { Segment : uint16
