@@ -59,9 +59,12 @@
     <Error Condition="!Exists('..\packages\xunit.core.2.1.0\build\portable-net45+win8+wp8+wpa81\xunit.core.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.core.2.1.0\build\portable-net45+win8+wp8+wpa81\xunit.core.props'))" />
   </Target>
   <ItemGroup>
-    <Compile Include="Disassembler.Tests.fs" />
+    <Compile Include="Parser\Input.Tests.fs" />
+    <Compile Include="Parser\Core.Tests.fs" />
+    <Compile Include="Parser\Combinators.Tests.fs" />
     <None Include="packages.config" />
     <Compile Include="InstructionSetLoader.Tests.fs" />
+    <Compile Include="Disassembler.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsCheck">
