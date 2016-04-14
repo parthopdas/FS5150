@@ -62,6 +62,7 @@
     <Compile Include="Parser\Input.Tests.fs" />
     <Compile Include="Parser\Core.Tests.fs" />
     <Compile Include="Parser\Combinators.Tests.fs" />
+    <Compile Include="Parser\Tokens.Tests.fs" />
     <None Include="packages.config" />
     <Compile Include="InstructionSetLoader.Tests.fs" />
     <Compile Include="Disassembler.Tests.fs" />
