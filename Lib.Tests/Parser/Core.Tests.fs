@@ -16,7 +16,7 @@ let ``Parser with good input`` (c, i, r) =
     |> should equal r
 
 [<Theory>]
-[<InlineData('X', "", "(0, 0): end of file: Error parsing X. No more input")>]
+[<InlineData('X', "", "(0, 0): : Error parsing X. No more input")>]
 [<InlineData('A', "ZBC", "(0, 0): ZBC: Error parsing A. Unexpected 'Z'")>]
 let ``Parser with bad input`` (c, i, s) = 
     let parseChar = pchar c

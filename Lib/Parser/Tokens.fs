@@ -5,7 +5,9 @@ module Tokens =
     open Core
     open System
     
-    let pchar c = satisfy (fun c' -> c' = c) (c.ToString())
+    let pbyte c = satisfy (fun c' -> c' = c) (c.ToString())
+
+    let pchar c = satisfy (fun c' -> c' = (c |> byte)) (c.ToString()) |>> char
     
     let pstring str = 
         str
@@ -14,11 +16,11 @@ module Tokens =
         |> sequence
         |>> (fun cs -> new String(cs |> Array.ofList))
     
-    let pwhitespaceChar = satisfy Char.IsWhiteSpace "whitespace"
+    let pwhitespaceChar = satisfy (char >> Char.IsWhiteSpace) "whitespace" |>> char
     let pwhitespace = pwhitespaceChar
                       |> many
                       |>> (fun cs -> new String(cs |> Array.ofList))
-    let pdigit = satisfy Char.IsDigit "digit"
+    let pdigit = satisfy (char >> Char.IsDigit) "digit" |>> char
     let pinteger = pdigit
                    |> many1
                    |>> (fun cs -> new String(cs |> Array.ofList) |> int)

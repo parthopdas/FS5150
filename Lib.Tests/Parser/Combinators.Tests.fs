@@ -1,11 +1,11 @@
 ﻿module Lib.Parser.Combinators.Tests
 
+open Xunit
 open FsCheck
 open FsUnit.Xunit
 open Lib.Parser.Core
 open Lib.Parser.Tokens
 open System
-open Xunit
 
 [<Fact>]
 let ``mapP - from char to int``() = 
@@ -71,7 +71,7 @@ let ``sequence - list of parsers - bad input`` (i, m) =
 [<Theory>]
 [<InlineData("ABC", 0, 0, "")>]
 [<InlineData(" \tABC", 0, 2, " \t")>]
-[<InlineData("\t \n  ABC", 1, 2, "\t \n  ")>]
+[<InlineData("\t \n  ABC", 0, 5, "\t \n  ")>]
 let ``many - extract whitespaces`` (i, r, c, w) = 
     let res = run pwhitespace i
     res
@@ -110,7 +110,7 @@ let ``throwaway left``() =
     let res = run ab_cd "AB \t\nCD..."
     res
     |> printResult
-    |> should equal "(\"AB\", \"CD\") [State: (1, 2) AB \t\nCD...]"
+    |> should equal "(\"AB\", \"CD\") [State: (0, 7) AB \t\nCD...]"
 
 [<Fact>]
 let ``throwaway right``() = 
@@ -118,7 +118,7 @@ let ``throwaway right``() =
     let res = run ab_cd "AB \t\nCD..."
     res
     |> printResult
-    |> should equal "(\"AB\", \"CD\") [State: (1, 2) AB \t\nCD...]"
+    |> should equal "(\"AB\", \"CD\") [State: (0, 7) AB \t\nCD...]"
 
 [<Fact>]
 let ``between tests``() = 

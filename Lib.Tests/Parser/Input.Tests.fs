@@ -14,9 +14,9 @@ let rec readAllChars input =
 let ``nextChar tests data`` : obj array seq = 
     seq { 
         yield ("", [])
-        yield ("a", [ 'a'; '\n' ])
-        yield ("ab", [ 'a'; 'b'; '\n' ])
-        yield ("a\nb", [ 'a'; '\n'; 'b'; '\n' ])
+        yield ("a", [ 'a' ])
+        yield ("ab", [ 'a'; 'b' ])
+        yield ("a\nb", [ 'a'; '\n'; 'b'])
     }
     |> Seq.map (fun (a, b) -> 
            [| box a
@@ -26,4 +26,4 @@ let ``nextChar tests data`` : obj array seq =
 [<MemberData("nextChar tests data")>]
 let ``nextChar tests`` (i : string, o : char list) : unit = 
     let res = fromStr i |> readAllChars
-    res |> should equal o
+    res |> List.map char |> should equal o

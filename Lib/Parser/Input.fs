@@ -4,66 +4,46 @@ module TextInput =
     open System
     
     type Position = 
-        { Line : int
-          Column : int }
-        override x.ToString() = sprintf "(%i, %i)" x.Line x.Column
+        { Line : int }
+        override x.ToString() = sprintf "(0, %i)" x.Line
     
     let initialPos = 
-        { Line = 0
-          Column = 0 }
-    
-    let incrCol pos = { pos with Column = pos.Column + 1 }
+        { Line = 0 }
     
     let incrLine pos = 
-        { Line = pos.Line + 1
-          Column = 0 }
+        { Line = pos.Line + 1 }
     
     type InputState = 
-        { Lines : string []
+        { Lines : byte[]
           Position : Position }
-        override x.ToString() = sprintf "%O %s" x.Position (String.Join("\n", x.Lines))
+        override x.ToString() = sprintf "%O %s" x.Position (new String(x.Lines |> Array.map char))
     
     /// fromStr :: string -> InputState
     let fromStr s = 
         let lines = 
             match s with
             | s when String.IsNullOrEmpty(s) -> [||]
-            | s -> s.Split([| "\r"; "\n"; "\r\n" |], StringSplitOptions.None)
+            | s -> s |> Seq.map byte |> Seq.toArray
         { Lines = lines
           Position = initialPos }
     
-    /// currentLine :: InputState -> string
-    let currentLine inputState = 
-        let linePos = inputState.Position.Line
-        if inputState.Lines.Length > linePos then inputState.Lines.[linePos]
-        else "end of file"
-    
     /// nextChar :: InputState -> InputState * char option
     let nextChar input = 
-        let colPos = input.Position.Column
-        let linePos = input.Position.Line
         // three cases
         // 1) if line >= maxLine -> 
         //       return EOF
-        if linePos >= input.Lines.Length then input, None
+        if input.Position.Line >= input.Lines.Length then input, None
         // 2) if col less than line length -> 
         //       return char at colPos, increment colPos
         else 
-            let currentLine = currentLine input
-            if colPos < currentLine.Length then 
-                let c = currentLine.[colPos]
-                { input with Position = incrCol input.Position }, Some c
-            // 3) if col at line length -> 
-            //       return NewLine, increment linePos
-            else { input with Position = incrLine input.Position }, Some '\n'
+            let c = input.Lines.[input.Position.Line]
+            { input with Position = incrLine input.Position }, Some c
     
     type ParserPosition = 
-        { CurrentLine : string
-          Line : int
-          Column : int }
-        override x.ToString() = sprintf "(%i, %i): %s" x.Line x.Column x.CurrentLine
+        { CurrentLine : byte[]
+          Line : int }
+        override x.ToString() = sprintf "(%i, %i): %s" 0 x.Line (new String(x.CurrentLine |> Array.map char))
     
     let parserPositionFromInputState input = 
-        { CurrentLine = currentLine input
-          Line = input.Position.Line
-          Column = input.Position.Column }
+        { CurrentLine = input.Lines
+          Line = input.Position.Line }

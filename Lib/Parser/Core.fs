@@ -28,7 +28,7 @@ module Core =
             | Some first -> 
                 if predicate first then Success(first, str')
                 else 
-                    let msg = sprintf "Unexpected '%c'" first
+                    let msg = sprintf "Unexpected '%c'" (first |> char)
                     Failure(label, msg, parserPositionFromInputState str)
         { ParserFn = innerFn
           Label = label }
