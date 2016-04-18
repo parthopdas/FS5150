@@ -22,9 +22,9 @@ type Mneumonic =
 //  show (Mneumonic n) = printf "%s" n
 type Constant = Word8
 
-type IntData = 
-    | Int8 of Word8
-    | Int16 of Word16
+type WordData = 
+    | W8 of Word8
+    | W16 of Word16
 
 //instance Show Inttype where
 //  show (Int8 d) = printf "%02X" d
@@ -62,7 +62,7 @@ type ModRmType =
 //  show MrmTBP = "BP"
 type Dereference = 
     { DrefType : ModRmType
-      DrefDisp : IntData option }
+      DrefDisp : WordData option }
 
 //instance Show Dereference where
 //  show (Dereference t d) = case d of
@@ -102,9 +102,9 @@ type Register =
 type Argument = 
     | ArgAddress of Address
     | ArgConstant of Constant
-    | ArgOffset of IntData
+    | ArgOffset of WordData
     | ArgRegister of Register
-    | ArgImmediate of IntData
+    | ArgImmediate of WordData
     | ArgDereference of Dereference
 
 //instance Show Argument where
