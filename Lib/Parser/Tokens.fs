@@ -5,8 +5,6 @@ module Tokens =
     open Core
     open System
     
-    let pbyte c = satisfy (fun c' -> c' = c) (c.ToString())
-
     let pchar c = satisfy (fun c' -> c' = (c |> byte)) (c.ToString()) |>> char
     
     let pstring str = 

@@ -7,8 +7,8 @@ module Combinators =
     let bindP f p = 
         let label = "unknown"
         
-        let innerFn str = 
-            match runOnInput p str with
+        let innerFn is = 
+            match runOnInput p is with
             | Success(c, remaining) -> runOnInput (f c) remaining
             | Failure(l, msg, pos) -> Failure(l, msg, pos)
         { ParserFn = innerFn
@@ -19,7 +19,7 @@ module Combinators =
     
     /// returnP :: 'a -> Parser<'a>
     let returnP a = 
-        let innerFn str = Success(a, str)
+        let innerFn is = Success(a, is)
         { ParserFn = innerFn
           Label = sprintf "%A" a }
     
@@ -60,16 +60,16 @@ module Combinators =
     let sequence (pas : Parser<'a> list) : Parser<'a list> = 
         List.foldBack (fun e acc -> e .>>. acc |>> List.Cons) pas (returnP [])
     
-    let rec private get0OrMore pa str = 
-        match runOnInput pa str with
+    let rec private get0OrMore pa is = 
+        match runOnInput pa is with
         | Success(c, remaining1) -> 
             let (cs, remaining2) = get0OrMore pa remaining1
             (c :: cs, remaining2)
-        | Failure _ -> ([], str)
+        | Failure _ -> ([], is)
     
     /// many :: Parser<'a> -> Parser<'a list>
     let many (pa : Parser<'a>) : Parser<'a list> = 
-        let innerFn str = Success(get0OrMore pa str)
+        let innerFn is = Success(get0OrMore pa is)
         { ParserFn = innerFn
           Label = sprintf "many %s" pa.Label }
     

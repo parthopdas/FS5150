@@ -17,19 +17,19 @@ module Core =
         { ParserFn : Input -> Result<'T * Input>
           Label : ParserLabel }
     
-    /// satisfy :: (char -> bool) -> ParserLabel -> Parser<char>
+    /// satisfy :: (byte -> bool) -> ParserLabel -> Parser<byte>
     let satisfy predicate label = 
-        let innerFn str = 
-            let str', charOpt = nextChar str
-            match charOpt with
+        let innerFn is = 
+            let is', byteOpt = nextByte is
+            match byteOpt with
             | None -> 
                 let msg = "No more input"
-                Failure(label, msg, parserPositionFromInputState str)
+                Failure(label, msg, parserPositionFromInputState is)
             | Some first -> 
-                if predicate first then Success(first, str')
+                if predicate first then Success(first, is')
                 else 
                     let msg = sprintf "Unexpected '%c'" (first |> char)
-                    Failure(label, msg, parserPositionFromInputState str)
+                    Failure(label, msg, parserPositionFromInputState is)
         { ParserFn = innerFn
           Label = label }
     
