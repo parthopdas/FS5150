@@ -27,6 +27,11 @@ module TextInput =
         { Bytes = lines
           Position = initialPos }
     
+    /// fromBytes :: byte[] -> InputState
+    let fromBytes bytes = 
+        { Bytes = bytes
+          Position = initialPos }
+    
     /// nextByte :: InputState -> InputState * byte option
     let nextByte input = 
         if input.Position.Offset >= input.Bytes.Length then input, None

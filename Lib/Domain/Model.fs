@@ -1,24 +1,30 @@
 ﻿namespace Lib.Domain
 
+type Word8 = uint8
+
+type Word16 = uint16
+
+type Word32 = uint32
+
 type Address = 
-    { Segment : uint16
-      Offset : uint16 }
+    { Segment : Word16
+      Offset : Word16 }
 
 //instance Show Address where
 //  show (Address seg off) = printf "%04X:%04X" seg off
 type MachineCode = 
-    { Bytes : uint8 array }
+    { Bytes : Word8 array }
 
 type Mneumonic = 
     { Name : string }
 
 //instance Show Mneumonic where
 //  show (Mneumonic n) = printf "%s" n
-type Constant = uint8
+type Constant = Word8
 
 type IntData = 
-    | Int8 of uint8
-    | Int16 of uint16
+    | Int8 of Word8
+    | Int16 of Word16
 
 //instance Show Inttype where
 //  show (Int8 d) = printf "%02X" d

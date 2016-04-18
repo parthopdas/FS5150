@@ -1,9 +1,10 @@
 ﻿namespace Lib
 
+open Lib.Parser.Combinators
+open Lib.Parser.Core
+
 module Disassembler = 
     open Lib.Domain
-    open System
-    open System.Globalization
     
     let modRegIndexMap = 
         [ (0b000, MregT0)
@@ -53,10 +54,16 @@ module Disassembler =
           (MregT6, 6)
           (MregT7, 7) ]
         |> Map.ofList
+    
+    /// puint8 :: Parser<Word8>
+    let pword8 = satisfy (fun _ -> true) "any byte"
+    
+    /// pword16 :: Parser<Word16>
+    let pword16 = pword8 .>>. pword8 |>> (fun (a, b) -> ((uint64) b <<< 8) + (uint64) a |> uint16)
+    
+    /// pword32 :: Parser<Word32>
+    let pword32 = pword16 .>>. pword16 |>> (fun (a, b) -> ((uint64) b <<< 16) + (uint64) a |> uint32)
 
-/// pword8 :: Parser<Byte>
-/// pword16 :: Parser<UInt16>
-/// pword32 :: Parser<UInt32>
 /// pmodRegRm :: Parser<ModRegRM>
 /// popCode :: InstructionSet -> Parser<string * string[]>
 /// pargument :: Parser<Argument>
