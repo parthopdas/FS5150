@@ -1,19 +1,8 @@
 ﻿module Lib.InstructionSetLoader
 
+open Lib.Domain
 open System
 open System.Globalization
-
-type OpCodeMap = Map<uint8, string list>
-
-type OpCodeGroup = 
-    { OcgName : string
-      OcgIndex : uint8 }
-
-type OpCodeExtensioMap = Map<OpCodeGroup, string list>
-
-type InstructionSet = 
-    { OpCodes : OpCodeMap
-      OpCodeGroups : OpCodeExtensioMap }
 
 let private split ss (l : string) = 
     l.Split(ss)

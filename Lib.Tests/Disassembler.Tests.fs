@@ -173,3 +173,53 @@ let ``pargument tests`` (desc, bs, res) : unit =
         arg |> should equal res
         is.Position.Offset |> should equal bs.Length
     | _ -> failwithf "Test failed: %A %A %A" desc bs res
+
+let instrSet = 
+    { OpCodes = 
+          [ (0x00uy, [ "XX0" ])
+            (0x02uy, [ "XX2"; "arg0"; "arg1" ])
+            (0x03uy, [ "GRP0" ])
+            (0x04uy, [ "GRP1" ])
+            (0x05uy, [ "GRP2"; "arg0o"; "arg0o" ])
+            (0x06uy, [ "GRP3"; "arg0o"; "arg0o" ]) ]
+          |> Map.ofList
+      OpCodeGroups = 
+          [ ({ OcgName = "GRP0"
+               OcgIndex = 5uy }, [ "EXX00" ])
+            ({ OcgName = "GRP0"
+               OcgIndex = 1uy }, [ "EXX01" ])
+            ({ OcgName = "GRP1"
+               OcgIndex = 0uy }, [ "EXX1"; "arg00"; "arg01" ])
+            ({ OcgName = "GRP2"
+               OcgIndex = 3uy }, [ "EXX2" ])
+            ({ OcgName = "GRP2"
+               OcgIndex = 4uy }, [ "EXX2"; "arg0x"; "arg0x" ])
+            ({ OcgName = "GRP3"
+               OcgIndex = 7uy }, [ "--" ]) ]
+          |> Map.ofList }
+
+let ``popCode tests data`` : obj array seq = 
+    seq { 
+        yield ("0 arg", [| 0x00uy |], "XX0", [])
+        yield ("2 arg", [| 0x02uy |], "XX2", [ "arg0"; "arg1" ])
+        yield ("ex 0 arg", [| 0x03uy; 0b00101000uy |], "EXX00", [])
+        yield ("ex 0 arg - different reg", [| 0x03uy; 0b00001000uy |], "EXX01", [])
+        yield ("ex 2 arg", [| 0x04uy; 0b00000000uy |], "EXX1", [ "arg00"; "arg01" ])
+        yield ("ex 0 2 arg from op", [| 0x05uy; 0b00011000uy |], "EXX2", [ "arg0o"; "arg0o" ])
+        yield ("ex 2 overide arg", [| 0x05uy; 0b00100000uy |], "EXX2", [ "arg0x"; "arg0x" ])
+        yield ("ex illegal", [| 0x06uy; 0b00111000uy |], "???", [])
+    }
+    |> Seq.map (fun (a, b, c, d) -> 
+           [| box a
+              box b
+              box c
+              box d |])
+
+[<Theory>]
+[<MemberData("popCode tests data")>]
+let ``popCode tests`` (n, bs, oc, args) : unit = 
+    match runOnInput (popCode instrSet) (bs |> fromBytes) with
+    | Success(oca, is) -> 
+        oca |> should equal (oc, args)
+        is.Position.Offset |> should equal bs.Length
+    | Failure(pl, pe, pp) -> failwithf "Test '%s' failed: %A %A %A: %A %A %A" n bs oc args pl pe pp

@@ -49,14 +49,14 @@ module Disassembler =
     let private getModRmType mo rm = modRmIndexMap.[(rm, mo)]
     
     let private modRegOcgIndex = 
-        [ (MregT0, 0)
-          (MregT1, 1)
-          (MregT2, 2)
-          (MregT3, 3)
-          (MregT4, 4)
-          (MregT5, 5)
-          (MregT6, 6)
-          (MregT7, 7) ]
+        [ (MregT0, 0uy)
+          (MregT1, 1uy)
+          (MregT2, 2uy)
+          (MregT3, 3uy)
+          (MregT4, 4uy)
+          (MregT5, 5uy)
+          (MregT6, 6uy)
+          (MregT7, 7uy) ]
         |> Map.ofList
     
     let descRegMap = 
@@ -244,5 +244,32 @@ module Disassembler =
             desc
             |> Seq.toList
             |> parseNonRegArgs
-/// popCode :: InstructionSet -> Parser<string * string[]>
-/// pinstruction :: Parser<Instruction>
+    
+    /// popCode :: InstructionSet -> Parser<string * string[]>
+    let popCode (is : InstructionSet) : Parser<string * string list> = 
+        let getOc w8 = 
+            let oc = is.OpCodes.[w8]
+            List.head oc, List.tail oc
+        
+        let getOcg o a mrm = 
+            match is.OpCodeGroups.[{ OcgName = o
+                                     OcgIndex = modRegOcgIndex.[mrm.ModReg] }] with
+            | [] -> failwith "OpCodeGroups has invalid entry"
+            | ox :: ax -> 
+                if ox = "--" then ("???", [])
+                else 
+                    (ox, 
+                     if [] = ax then a
+                     else ax)
+        
+        let parseOc = getOc <!> pword8
+        
+        let parseOcg (o : string, a) = 
+            if o.StartsWith("GRP") then (o, a)
+                                        ||> getOcg
+                                        <!> pmodRegRm
+            else (o, a) |> returnP
+        parseOc >>= parseOcg
+    
+    /// pinstruction :: Parser<Instruction>
+    let pinstruction() : Parser<Instruction> = failwith ""

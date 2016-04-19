@@ -1,6 +1,7 @@
 ﻿module Lib.InstructionSetLoader.Tests
 
 open FsUnit.Xunit
+open Lib.Domain
 open Lib.InstructionSetLoader
 open Xunit
 

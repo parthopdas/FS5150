@@ -6,6 +6,18 @@ type Word16 = uint16
 
 type Word32 = uint32
 
+type OpCodeMap = Map<Word8, string list>
+
+type OpCodeGroup = 
+    { OcgName : string
+      OcgIndex : Word8 }
+
+type OpCodeExtensioMap = Map<OpCodeGroup, string list>
+
+type InstructionSet = 
+    { OpCodes : OpCodeMap
+      OpCodeGroups : OpCodeExtensioMap }
+
 type Address = 
     { Segment : Word16
       Offset : Word16 }
