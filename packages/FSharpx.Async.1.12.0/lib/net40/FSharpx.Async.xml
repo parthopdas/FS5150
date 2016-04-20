@@ -1,0 +1,1389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doc>
+<assembly><name>FSharpx.Async</name></assembly>
+<members>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.Agent`1">
+<summary>
+ Type alias for F# mailbox processor type
+</summary>
+</member>
+<member name="P:FSharpx.Control.AsyncResultCell`1.AsyncResult">
+<summary>
+ Wait for the result and commit it
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncResultCell`1.RegisterResult(FSharpx.Control.AsyncResult{`0},Microsoft.FSharp.Core.FSharpOption{System.Boolean})">
+<summary>
+ Record the result in the AsyncResultCell. Subsequent sets of the result are ignored. 
+
+ This may result in the scheduled resumption of a waiting asynchronous operation  
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncResultCell`1.#ctor">
+<summary>
+ Create a new result cell
+</summary>
+</member>
+<member name="T:FSharpx.Control.AsyncResultCell`1">
+<summary>
+ A helper type to store a single result from an asynchronous computation and asynchronously
+ access its result.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.AsyncResult`1.Commit(FSharpx.Control.AsyncResult{`0})">
+<summary>
+ Create an async whose result depends on the value of an AsyncResult.
+</summary>
+</member>
+<member name="T:FSharpx.Control.AsyncResult`1">
+<summary>
+ Represents the reified result of an asynchronous computation
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.AsyncStreamNode`1">
+<summary>
+ A node of an async stream consisting of an element and the rest of the stream.
+</summary>
+</member>
+<member name="P:FSharpx.Control.AsyncStreamReader.EndOfStream">
+<summary>
+ An async that produces true if the reader is at the end of stream and false otherwise
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.AsyncStreamReader.ReadToEnd">
+<summary>
+ Creates an async that read all characters in the stream up to the end.
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStreamReader.ReadLine">
+<summary>
+ Creates an async that reads next line from the stream
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStreamReader.ReadExactly(System.Char[],System.Int32,System.Int32)">
+<summary>
+ Creates an async that reads exactly &lt;c&gt;count&lt;/c&gt; characters from the stream unless end of stream is reached and puts them 
+ into &lt;c&gt;buffer&lt;/c&gt; starting at &lt;c&gt;index&lt;/c&gt;. The async returns the number of characters that are read (if end-of-stream is not reached
+ that will be &lt;c&gt;count&lt;/c&gt;
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStreamReader.Read(System.Char[],System.Int32,System.Int32)">
+<summary>
+ Creates an async that reads all the charactes that are avilable in the stream up to &lt;c&gt;count&lt;/c characters and puts them 
+ into &lt;c&gt;buffer&lt;/c&gt; starting at &lt;c&gt;index&lt;/c&gt;. The async returns the number of characters that are read.
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStreamReader.Read">
+<summary>
+ Creates an async that reads next character from the stream
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStreamReader.Peek">
+<summary>
+ Creates an async that produces next character from the stream without advancing the stream
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStreamReader.DiscardBufferedData">
+<summary>
+. DiscardBufferedData tells StreamReader to throw away its internal 
+. buffer contents.  This is useful if the user needs to seek on the
+ underlying stream to a known location then wants the StreamReader 
+ to start reading from this new point.  This method should be called
+ very sparingly, if ever, since it can lead to very poor performance.
+ However, it may be the only way of handling some scenarios where
+ users need to re-read the contents of a StreamReader a second time. 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.AsyncStreamReader.#ctor(System.IO.Stream,System.Text.Encoding,System.Boolean,System.Int32)">
+<summary>
+ Creates a new AsyncStreamReader for the given stream.  The 
+ character encoding is set by encoding and the buffer size,
+ in number of 16-bit characters, is set by bufferSize. 
+ 
+ Note that detectEncodingFromByteOrderMarks is a very
+ loose attempt at detecting the encoding by looking at the first 
+ 3 bytes of the stream.  It will recognize UTF-8, little endian
+ unicode, and big endian unicode text, but that&apos;s it.  If neither
+ of those three match, it will use the Encoding you provided.
+</summary>
+</member>
+<member name="T:FSharpx.Control.AsyncStreamReader">
+ <summary>
+ Implements a TextReader-like API that asynchronously reads characters from 
+ a byte stream in a particular encoding.
+ </summary>
+</member>
+<member name="T:FSharpx.Control.AsyncStream`1">
+<summary>
+ An infinite async sequence.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.remove_Error(Microsoft.FSharp.Control.FSharpHandler{System.Exception})">
+<summary>
+ Occurs when the execution of the agent results in an exception.
+</summary>
+</member>
+<member name="P:FSharpx.Control.AutoCancelAgent`1.Error">
+<summary>
+ Occurs when the execution of the agent results in an exception.
+</summary>
+</member>
+<member name="P:FSharpx.Control.AutoCancelAgent`1.CurrentQueueLength">
+<summary>
+ Returns the number of unprocessed messages in the message queue of the agent.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.add_Error(Microsoft.FSharp.Control.FSharpHandler{System.Exception})">
+<summary>
+ Occurs when the execution of the agent results in an exception.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.TryScan``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpOption{Microsoft.FSharp.Control.FSharpAsync{``0}}},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Scans for a message by looking through messages in arrival order until &lt;c&gt;scanner&lt;/c&gt; 
+ returns a Some value. Other messages remain in the queue.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.TryReceive(Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Waits for a message. This will consume the first message in arrival order.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.TryPostAndReply``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Control.FSharpAsyncReplyChannel{``0},`0},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Like PostAndReply, but returns None if no reply within the timeout period.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.Start(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Control.FSharpMailboxProcessor{`0},Microsoft.FSharp.Control.FSharpAsync{Microsoft.FSharp.Core.Unit}})">
+<summary>
+ Start a new disposable agent using the specified body function
+ (the method creates a new cancellation token for the agent)
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.Scan``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpOption{Microsoft.FSharp.Control.FSharpAsync{``0}}},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Scans for a message by looking through messages in arrival order until &lt;c&gt;scanner&lt;/c&gt; 
+ returns a Some value. Other messages remain in the queue.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.Receive(Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Waits for a message. This will consume the first message in arrival order.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.PostAndTryAsyncReply``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Control.FSharpAsyncReplyChannel{``0},`0},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Like PostAndAsyncReply, but returns None if no reply within the timeout period.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.PostAndReply``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Control.FSharpAsyncReplyChannel{``0},`0},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Posts a message to an agent and await a reply on the channel, synchronously.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.PostAndAsyncReply``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Control.FSharpAsyncReplyChannel{``0},`0},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Posts a message to an agent and await a reply on the channel, asynchronously.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AutoCancelAgent`1.Post(`0)">
+<summary>
+ Posts a message to the message queue of the MailboxProcessor, asynchronously.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.AutoCancelAgent`1">
+<summary>
+ Wrapper for the standard F# agent (MailboxProcessor) that
+ supports stopping of the agent&apos;s body using the IDisposable 
+ interface (the type automatically creates a cancellation token)
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.BatchProcessingAgent`1.remove_BatchProduced(Microsoft.FSharp.Control.FSharpHandler{`0[]})">
+<summary>
+ The event is triggered when a group of messages is collected. The
+ group is not empty, but may not be of the specified maximal size
+ (when the timeout elapses before enough messages is collected)
+</summary>
+</member>
+<member name="P:FSharpx.Control.BatchProcessingAgent`1.BatchProduced">
+<summary>
+ The event is triggered when a group of messages is collected. The
+ group is not empty, but may not be of the specified maximal size
+ (when the timeout elapses before enough messages is collected)
+</summary>
+</member>
+<member name="M:FSharpx.Control.BatchProcessingAgent`1.add_BatchProduced(Microsoft.FSharp.Control.FSharpHandler{`0[]})">
+<summary>
+ The event is triggered when a group of messages is collected. The
+ group is not empty, but may not be of the specified maximal size
+ (when the timeout elapses before enough messages is collected)
+</summary>
+</member>
+<member name="M:FSharpx.Control.BatchProcessingAgent`1.Enqueue(`0)">
+<summary>
+ Sends new message to the agent
+</summary>
+</member>
+<member name="M:FSharpx.Control.BatchProcessingAgent`1.System-IDisposable-Dispose">
+<summary>
+ Dispose
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.BatchProcessingAgent`1">
+<summary>
+ Agent that can be used to implement batch processing. It creates groups
+ of messages (added using the Enqueue method) and emits them using the 
+ BatchProduced event. A group is produced when it reaches the maximal 
+ size or after the timeout elapses.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="P:FSharpx.Control.BlockingQueueAgent`1.Count">
+<summary>
+ Gets the number of elements currently waiting in the queue.
+</summary>
+</member>
+<member name="M:FSharpx.Control.BlockingQueueAgent`1.Get(Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Synchronously gets item from the queue. If there are no items
+ in the queue, the operation will block until items are added.
+ This method blocks until value is available!
+</summary>
+</member>
+<member name="M:FSharpx.Control.BlockingQueueAgent`1.AsyncGet(Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Asynchronously gets item from the queue. If there are no items
+ in the queue, the operation will block until items are added.
+</summary>
+</member>
+<member name="M:FSharpx.Control.BlockingQueueAgent`1.AsyncAdd(`0,Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Asynchronously adds item to the queue. The operation ends when
+ there is a place for the item. If the queue is full, the operation
+ will block until some items are removed.
+</summary>
+</member>
+<member name="M:FSharpx.Control.BlockingQueueAgent`1.Add(`0)">
+<summary>
+ Asynchronously adds item to the queue. The operation ends when
+ there is a place for the item. If the queue is full, the operation
+ will block until some items are removed. This overload does not
+ signal the caller that the item has been added.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.BlockingQueueAgent`1">
+<summary>
+ Agent that implements an asynchronous queue with blocking put
+ and blocking get operation (this implements the producer-consumer 
+ concurrent programming pattern). The constructor takes the maximal
+ size of the buffer.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="P:FSharpx.Control.CircularQueueAgent`1.Count">
+<summary>
+ Gets the number of elements currently waiting in the queue.
+</summary>
+</member>
+<member name="M:FSharpx.Control.CircularQueueAgent`1.Enqueue(`0[])">
+<summary>
+ Adds item to the queue. The operation ends when
+ there is a place for the item. If the queue is full, the operation
+ will block until some items are removed.
+</summary>
+</member>
+<member name="M:FSharpx.Control.CircularQueueAgent`1.Enqueue(System.ArraySegment{`0})">
+<summary>
+ Adds item to the queue. The operation ends when
+ there is a place for the item. If the queue is full, the operation
+ will block until some items are removed.
+</summary>
+</member>
+<member name="M:FSharpx.Control.CircularQueueAgent`1.Enqueue(`0[],System.Int32,System.Int32)">
+<summary>
+ Adds item to the queue. The operation ends when
+ there is a place for the item. If the queue is full, the operation
+ will block until some items are removed.
+</summary>
+</member>
+<member name="M:FSharpx.Control.CircularQueueAgent`1.Dequeue(System.Int32,Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Synchronously gets item from the queue. If there are no items
+ in the queue, the operation will block until items are added.
+ This method blocks until value is available!
+</summary>
+</member>
+<member name="M:FSharpx.Control.CircularQueueAgent`1.AsyncEnqueue(`0[],Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Adds item to the queue. The operation ends when
+ there is a place for the item. If the queue is full, the operation
+ will block until some items are removed.
+</summary>
+</member>
+<member name="M:FSharpx.Control.CircularQueueAgent`1.AsyncEnqueue(System.ArraySegment{`0},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Adds item to the queue. The operation ends when
+ there is a place for the item. If the queue is full, the operation
+ will block until some items are removed.
+</summary>
+</member>
+<member name="M:FSharpx.Control.CircularQueueAgent`1.AsyncEnqueue(`0[],System.Int32,System.Int32,Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Adds item to the queue. The operation ends when
+ there is a place for the item. If the queue is full, the operation
+ will block until some items are removed.
+</summary>
+</member>
+<member name="M:FSharpx.Control.CircularQueueAgent`1.AsyncDequeue(System.Int32,Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Asynchronously gets item from the queue. If there are no items
+ in the queue, the operation will block until items are added.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.CircularQueueAgent`1">
+<summary>
+ Agent that implements an asynchronous circular buffer with blocking
+ enqueue and blocking dequeue operation (this implements the producer-consumer 
+ concurrent programming pattern). The constructor takes the maximal
+ size of the buffer.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.ConcurrentSetAgent`1.AsyncAdd(System.Object)">
+<summary>
+ Adds the specified element to the set and returns 
+ &apos;false&apos; when it was already present in the set
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.ConcurrentSetAgent`1">
+<summary>
+ Agent that implements a simple concurrent set. The agent exposes a 
+ member that adds value to the set and returns whether the value
+ was already present.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.ObservableUpdate`1">
+<summary>
+ Union type that represents different messages that can be sent to the
+ IObserver interface. The IObserver type is equivalent to a type that has
+ just OnNext method that gets &apos;ObservableUpdate&apos; as an argument.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.SlidingWindowAgent`1.remove_WindowProduced(Microsoft.FSharp.Control.FSharpHandler{`0[]})">
+<summary>
+ The event is triggered when a group of messages is collected. 
+ The size of the group is exactly &apos;count&apos; and the values are
+ returned in a fresh array.
+</summary>
+</member>
+<member name="P:FSharpx.Control.SlidingWindowAgent`1.WindowProduced">
+<summary>
+ The event is triggered when a group of messages is collected. 
+ The size of the group is exactly &apos;count&apos; and the values are
+ returned in a fresh array.
+</summary>
+</member>
+<member name="M:FSharpx.Control.SlidingWindowAgent`1.add_WindowProduced(Microsoft.FSharp.Control.FSharpHandler{`0[]})">
+<summary>
+ The event is triggered when a group of messages is collected. 
+ The size of the group is exactly &apos;count&apos; and the values are
+ returned in a fresh array.
+</summary>
+</member>
+<member name="M:FSharpx.Control.SlidingWindowAgent`1.Enqueue(`0)">
+<summary>
+ Sends new message to the agent
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.SlidingWindowAgent`1">
+<summary>
+ Agent that implements the &quot;sliding window&quot; functionality. It collects
+ messages added using the Enqueue method and emits them in overlapping 
+ groups of the specified size. For example, given [1,2,3,4,5...] and a 
+ size 3, the produced groups will be [1,2,3], [2,3,4], [3,4,5], ...
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.chooseBoth.Static``1(Microsoft.FSharp.Control.FSharpAsync{``0},Microsoft.FSharp.Control.FSharpAsync{``0})">
+<summary>
+ Creates a computation which produces a tuple consiting of the value produces by the first
+ argument computation to complete and a handle to the other computation. The second computation
+ to complete is memoized.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.bindChoices.Static``4(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{Microsoft.FSharp.Core.FSharpChoice{``1,``2}}},Microsoft.FSharp.Control.FSharpAsync{Microsoft.FSharp.Core.FSharpChoice{``0,``3}})">
+<summary>
+ Binds an async computation producing a choice value to another async
+ computation producing a choice such that a Choice2Of2 value is passed through.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.bindChoice.Static``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{Microsoft.FSharp.Core.FSharpChoice{``1,``2}}},Microsoft.FSharp.Control.FSharpAsync{Microsoft.FSharp.Core.FSharpChoice{``0,``2}})">
+<summary>
+ Binds an async computation producing a choice value to another async
+ computation producing a choice such that a Choice2Of2 value is passed through.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.mapChoice.Static``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpChoice{``1,``2}},Microsoft.FSharp.Control.FSharpAsync{Microsoft.FSharp.Core.FSharpChoice{``0,``2}})">
+<summary>
+ Maps over an async computation which produces a choice value
+ using a function which maps over Choice1Of2 and itself returns a choice. 
+ A value of Choice2Of2 is treated like an error and passed through.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.bind.Static``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{``1}},Microsoft.FSharp.Control.FSharpAsync{``0})">
+<summary>
+ Creates an async computation which binds the result of the specified 
+ async computation to the specified function. The computation produced 
+ by the specified function is returned.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.map.Static``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Control.FSharpAsync{``0})">
+<summary>
+ Creates an async computation which maps a function f over the 
+ value produced by the specified asynchronous computation.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.get_never.Static">
+<summary>
+ An async computation which does nothing and never completes.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.get_unit.Static">
+<summary>
+ An async computation which does nothing and completes immediatly.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.ParallelIgnore.Static``1(System.Int32,System.Collections.Generic.IEnumerable{Microsoft.FSharp.Control.FSharpAsync{``0}})">
+<summary>
+ Creates an async computation which runs the provided sequence of computations and completes
+ when all computations in the sequence complete. Up to parallelism computations will
+ be in-flight at any given point in time. Error or cancellation of any computation in
+ the sequence causes the resulting computation to error or cancel, respectively.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.Parallel.Static``3(Microsoft.FSharp.Control.FSharpAsync{``0},Microsoft.FSharp.Control.FSharpAsync{``1},Microsoft.FSharp.Control.FSharpAsync{``2})">
+<summary>
+ Creates an async computations which runs the specified computations
+ in parallel and returns their results.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.Parallel.Static``2(Microsoft.FSharp.Control.FSharpAsync{``0},Microsoft.FSharp.Control.FSharpAsync{``1})">
+<summary>
+ Creates an async computations which runs the specified computations
+ in parallel and returns their results.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.StartDisposable.Static(Microsoft.FSharp.Control.FSharpAsync{Microsoft.FSharp.Core.Unit})">
+<summary>
+ Starts the specified operation using a new CancellationToken and returns
+ IDisposable object that cancels the computation. This method can be used
+ when implementing the Subscribe method of IObservable interface.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncExtensions.Async.Cache.Static``1(Microsoft.FSharp.Control.FSharpAsync{``0})">
+<summary>
+ Creates an asynchronous workflow that runs the asynchronous workflow
+ given as an argument at most once. When the returned workflow is 
+ started for the second time, it reuses the result of the 
+ previous execution.
+</summary>
+</member>
+<member name="T:FSharpx.Control.AsyncExtensions">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.AsyncOps">
+
+</member>
+<member name="M:FSharpx.Control.AsyncStream.distributeList``1(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}}})">
+<summary>
+ Takes a list of streams and produces a stream of lists.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.zip``2(Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``1}})">
+<summary>
+ Zips two streams into a stream of pairs.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.zipWith``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``2}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``1}})">
+<summary>
+ Zips two streams using the specified function.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.iterAsync``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{Microsoft.FSharp.Core.Unit}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Creates a computation which applies the function f to elements of the stream forever.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.scanAsync``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Control.FSharpAsync{``1}}},``1,Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Scans the stream applying the specified function to consecutive elements and
+ returning the stream of results. 
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.chooseAsync``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{Microsoft.FSharp.Core.FSharpOption{``1}}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Filters and maps a stream using the specified choose function.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.filterAsync``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{System.Boolean}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Filters a stream based on the specified predicate.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.splitAtList``1(System.Int32,Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Returns a pair consisting of the prefix of the stream of the specified length
+ and the remaining stream immediately following this prefix.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.drop``1(System.Int32,Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Drops the first n items from the stream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.takeWhileAsync``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{System.Boolean}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Takes elements from the stream until the specified predicate is no longer satisfied.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.take``1(System.Int32,Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Creates an async sequence which iterates through the first n elements from the stream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.toAsyncSeq``1(Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Creates an infinite async sequence from the stream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.mapAsyncSeq``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{FSharp.Control.AsyncSeqInner{``1}}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Maps each element of an async stream onto an async sequences returning a stream
+ containing consecutive elements of the genereated async sequences.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.mapAsync``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{``1}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Maps a function over an async stream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.tails``1(Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Creates a stream of tails of the specified stream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.tail``1(Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Creates a stream which skips the first element of the provided stream.       
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.head``1(Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Returns the first element of the stream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.iterate``1(Microsoft.FSharp.Core.FSharpFunc{``0,``0},``0)">
+<summary>
+ Produces the infinite sequence of repeated applications of f.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.prefixAsyncSeq``1(Microsoft.FSharp.Control.FSharpAsync{FSharp.Control.AsyncSeqInner{``0}},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Prepends an async sequence to a stream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.prefixList``1(Microsoft.FSharp.Collections.FSharpList{``0},Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Prepends a list to a stream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.cycleList``1(Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Returns infinite repetition of the specified list.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.unfoldAsync``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{System.Tuple{``1,``0}}},``0)">
+<summary>
+ Generates an async stream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.repeat``1(``0)">
+<summary>
+ Creates an async stream which repeatedly returns the provided value.
+</summary>
+</member>
+<member name="M:FSharpx.Control.AsyncStream.create``1(``0,Microsoft.FSharp.Control.FSharpAsync{FSharpx.Control.AsyncStreamNode{``0}})">
+<summary>
+ Creates an async stream given a head and tail.
+</summary>
+</member>
+<member name="T:FSharpx.Control.AsyncStream">
+<summary>
+ Operations on async streams.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.AsyncStreamNode">
+<summary>
+ Operations on async stream nodes.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:FSharpx.Control.BufferAgent">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.FileExtensions.File.AsyncOpen.Static(System.String,System.IO.FileMode,Microsoft.FSharp.Core.FSharpOption{System.IO.FileAccess},Microsoft.FSharp.Core.FSharpOption{System.IO.FileShare},Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.IO.FileOptions})">
+<summary>
+ Create an async that opens a &lt;c&gt;System.IO.FileStream&lt;/c&gt; on the specified path, via a fresh I/O thread.
+ Pass &lt;c&gt;options=FileOptions.Asynchronous&lt;/c&gt; to enable further asynchronous read/write operations
+ on the FileStream.
+</summary>
+</member>
+<member name="M:FSharpx.Control.FileExtensions.File.AsyncAppendText.Static(System.String)">
+<summary>
+ Create an async that returns a &lt;c&gt;System.IO.StreamWriter&lt;/c&gt; that appends UTF-8 text to an existing file, via a fresh I/O thread.
+</summary>
+</member>
+<member name="M:FSharpx.Control.FileExtensions.File.AsyncOpenWrite.Static(System.String)">
+<summary>
+ Create an async that opens an existing file writing, via a fresh I/O thread.
+</summary>
+</member>
+<member name="M:FSharpx.Control.FileExtensions.File.AsyncOpenRead.Static(System.String)">
+<summary>
+ Create an async that opens a &lt;c&gt;System.IO.FileStream&lt;/c&gt; on the specified path for read/write access, via a fresh I/O thread.
+</summary>
+</member>
+<member name="M:FSharpx.Control.FileExtensions.File.AsyncOpenText.Static(System.String)">
+<summary>
+ Create an async that opens an existing file for reading, via a fresh I/O thread.
+</summary>
+</member>
+<member name="T:FSharpx.Control.FileExtensions">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.Observable.Async.AwaitObservable.Static``4(System.IObservable{``0},System.IObservable{``1},System.IObservable{``2},System.IObservable{``3})">
+<summary>
+ Creates an asynchronous workflow that will be resumed when the 
+ first of the specified four observables produces a value. The 
+ workflow will return a Choice value that can be used to identify
+ the observable that produced the value.
+</summary>
+</member>
+<member name="M:FSharpx.Control.Observable.Async.AwaitObservable.Static``3(System.IObservable{``0},System.IObservable{``1},System.IObservable{``2})">
+<summary>
+ Creates an asynchronous workflow that will be resumed when the 
+ first of the specified three observables produces a value. The 
+ workflow will return a Choice value that can be used to identify
+ the observable that produced the value.
+</summary>
+</member>
+<member name="M:FSharpx.Control.Observable.Async.AwaitObservable.Static``2(System.IObservable{``0},System.IObservable{``1})">
+<summary>
+ Creates an asynchronous workflow that will be resumed when the 
+ first of the specified two observables produces a value. The 
+ workflow will return a Choice value that can be used to identify
+ the observable that produced the value.
+</summary>
+</member>
+<member name="M:FSharpx.Control.Observable.Async.AwaitObservable.Static``1(System.IObservable{``0})">
+<summary>
+ Creates an asynchronous workflow that will be resumed when the 
+ specified observables produces a value. The workflow will return 
+ the value produced by the observable.
+</summary>
+</member>
+<member name="M:FSharpx.Control.Observable.Async.GuardedAwaitObservable.Static``1(System.IObservable{``0},Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Behaves like AwaitObservable, but calls the specified guarding function
+ after a subscriber is registered with the observable.
+</summary>
+</member>
+<member name="M:FSharpx.Control.Observable.synchronize``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit},Microsoft.FSharp.Core.Unit},``0})">
+<summary>
+ Helper that can be used for writing CPS-style code that resumes
+ on the same thread where the operation was started.
+</summary>
+</member>
+<member name="M:FSharpx.Control.Observable.delay``1(System.Int32,System.IObservable{``0})">
+<summary>
+ Delay execution of Observer function
+</summary>
+</member>
+<member name="M:FSharpx.Control.Observable.invoke``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit},Microsoft.FSharp.Core.Unit},System.IObservable{``0})">
+<summary>
+ Invoke Observer function through specified function
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.Observable.asUpdates``1(System.IObservable{``0})">
+<summary>
+ Turns observable into an observable that only calls OnNext method of the
+ observer, but gives it a discriminated union that represents different
+ kinds of events (error, next, completed)
+</summary>
+</member>
+<member name="M:FSharpx.Control.Observable.guard``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit},System.IObservable{``0})">
+<summary>
+ Creates an observable that calls the specified function (each time)
+ after an observer is attached to the observable. This is useful to 
+ make sure that events triggered by the function are handled. 
+</summary>
+</member>
+<member name="M:FSharpx.Control.Observable.windowed``1(System.Int32,System.IObservable{``0})">
+<summary>
+ Returns an observable that yields sliding windows of 
+ containing elements drawn from the input observable. 
+ Each window is returned as a fresh array.
+</summary>
+</member>
+<member name="T:FSharpx.Control.Observable">
+
+</member>
+<member name="M:FSharpx.Control.StreamReaderExtensions.StreamReader.AsyncReadToEnd(System.IO.StreamReader)">
+<summary>
+ Return an asynchronous computation that will read to the end of a stream via a fresh I/O thread.
+</summary>
+</member>
+<member name="T:FSharpx.Control.StreamReaderExtensions">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.Control.Utils.Choice.mapr``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Core.FSharpChoice{``2,``0})">
+<summary>
+ Maps over the right result type.
+</summary>
+</member>
+<member name="M:FSharpx.Control.Utils.Choice.mapl``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Core.FSharpChoice{``0,``2})">
+<summary>
+ Maps over the left result type.
+</summary>
+</member>
+<member name="T:FSharpx.Control.Utils.Choice">
+
+</member>
+<member name="T:FSharpx.Control.Utils">
+
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncDownloadData(System.Net.WebClient,System.Uri)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the download of the specified resource as a data buffer.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncDownloadFile(System.Net.WebClient,System.Uri,System.String)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the download of a resource with the specified URI to the local file.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncOpenRead(System.Net.WebClient,System.Uri)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the opening of a readable stream containing the specified resource.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncOpenWrite(System.Net.WebClient,System.Uri,System.String)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the opening of a stream for writing data to the specified resource.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncOpenWrite(System.Net.WebClient,System.Uri)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the opening of a stream for writing data to the specified resource.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncUploadData(System.Net.WebClient,System.Uri,System.String,System.Byte[])">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the upload of a data buffer to a resource identified by a URI, using the specified method.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncUploadData(System.Net.WebClient,System.Uri,System.Byte[])">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the upload of a data buffer to a resource identified by a URI, using the POST method.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncUploadFile(System.Net.WebClient,System.Uri,System.String,System.String)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the upload of the specified local file to the specified resource, using the specified method.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncUploadFile(System.Net.WebClient,System.Uri,System.String)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the upload of the specified local file to the specified resource, using the POST method.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncUploadString(System.Net.WebClient,System.Uri,System.String,System.String)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the upload of the specified string to the specified resource, using the specified method.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncUploadString(System.Net.WebClient,System.Uri,System.String)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the upload of the specified string to the specified resource.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncUploadValues(System.Net.WebClient,System.Uri,System.String,System.Collections.Specialized.NameValueCollection)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the upload of the data in the specified name/value collection to the resource identified by the specified URI, using the specified method.
+</summary>
+</member>
+<member name="M:FSharpx.Control.WebClientExtensions.WebClient.AsyncUploadValues(System.Net.WebClient,System.Uri,System.Collections.Specialized.NameValueCollection)">
+<summary>
+ Returns an asynchronous computation that, when run, will wait for the upload of the data in the specified name/value collection to the resource identified by the specified URI.
+</summary>
+</member>
+<member name="T:FSharpx.Control.WebClientExtensions">
+
+</member>
+<member name="M:FSharpx.Control.WebRequestExtensions.WebRequest.AsyncGetResponse(System.Net.WebRequest)">
+<summary>
+ Return an asynchronous computation that, when run, will wait for a response to the given WebRequest.
+</summary>
+</member>
+<member name="T:FSharpx.Control.WebRequestExtensions">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:FSharpx.IO.IOExtensions.Stream.AsyncWriteSeq(System.IO.Stream,Microsoft.FSharp.Control.FSharpAsync{FSharp.Control.AsyncSeqInner{System.Byte[]}})">
+<summary>
+ Asynchronously writes all data specified by the 
+ given asynchronous sequence to the stream.
+</summary>
+</member>
+<member name="M:FSharpx.IO.IOExtensions.Stream.AsyncReadSeq(System.IO.Stream,Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Asynchronously reads the stream in chunks of a specified size
+ and returns the result as an asynchronous sequence.
+</summary>
+</member>
+<member name="T:FSharpx.IO.IOExtensions">
+
+</member>
+</members>
+</doc>
