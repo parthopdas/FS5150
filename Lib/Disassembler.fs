@@ -182,7 +182,7 @@ module Disassembler =
         >>= createpModRegRm
     
     /// pargument :: string -> Parser<Argument>
-    let pargument (desc : string) : Parser<Argument> = 
+    let pargument desc = 
         let getRegister aoc r = aocRegMap.[(aoc, r)] |> ArgRegister
         
         let parseDrefOrReg aoc = 
@@ -246,7 +246,7 @@ module Disassembler =
             |> parseNonRegArgs
     
     /// popCode :: InstructionSet -> Parser<string * string[]>
-    let popCode (is : InstructionSet) : Parser<string * string list> = 
+    let popCode is = 
         let getOc w8 = 
             let oc = is.OpCodes.[w8]
             List.head oc, List.tail oc
