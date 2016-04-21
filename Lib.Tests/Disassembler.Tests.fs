@@ -89,89 +89,92 @@ let ``pmodRegRm tests`` (bs, reg, rm) : unit =
 
 let ``pargument tests data`` : obj array seq = 
     seq { 
-        yield ("eAX", [||], ArgRegister AX)
-        yield ("eCX", [||], ArgRegister CX)
-        yield ("eBX", [||], ArgRegister BX)
-        yield ("eDX", [||], ArgRegister DX)
-        yield ("eSP", [||], ArgRegister SP)
-        yield ("eBP", [||], ArgRegister BP)
-        yield ("eSI", [||], ArgRegister SI)
-        yield ("eDI", [||], ArgRegister DI)
-        yield ("AX", [||], ArgRegister AX)
-        yield ("BX", [||], ArgRegister BX)
-        yield ("CX", [||], ArgRegister CX)
-        yield ("DX", [||], ArgRegister DX)
-        yield ("SP", [||], ArgRegister SP)
-        yield ("BP", [||], ArgRegister BP)
-        yield ("SI", [||], ArgRegister SI)
-        yield ("DI", [||], ArgRegister DI)
-        yield ("CS", [||], ArgRegister CS)
-        yield ("DS", [||], ArgRegister DS)
-        yield ("ES", [||], ArgRegister ES)
-        yield ("SS", [||], ArgRegister SS)
-        yield ("AL", [||], ArgRegister AL)
-        yield ("BL", [||], ArgRegister BL)
-        yield ("CL", [||], ArgRegister CL)
-        yield ("DL", [||], ArgRegister DL)
-        yield ("AH", [||], ArgRegister AH)
-        yield ("BH", [||], ArgRegister BH)
-        yield ("CH", [||], ArgRegister CH)
-        yield ("DH", [||], ArgRegister DH)
+        yield ("eAX", [||], ArgRegister AX, false)
+        yield ("eCX", [||], ArgRegister CX, false)
+        yield ("eBX", [||], ArgRegister BX, false)
+        yield ("eDX", [||], ArgRegister DX, false)
+        yield ("eSP", [||], ArgRegister SP, false)
+        yield ("eBP", [||], ArgRegister BP, false)
+        yield ("eSI", [||], ArgRegister SI, false)
+        yield ("eDI", [||], ArgRegister DI, false)
+        yield ("AX", [||], ArgRegister AX, false)
+        yield ("BX", [||], ArgRegister BX, false)
+        yield ("CX", [||], ArgRegister CX, false)
+        yield ("DX", [||], ArgRegister DX, false)
+        yield ("SP", [||], ArgRegister SP, false)
+        yield ("BP", [||], ArgRegister BP, false)
+        yield ("SI", [||], ArgRegister SI, false)
+        yield ("DI", [||], ArgRegister DI, false)
+        yield ("CS", [||], ArgRegister CS, false)
+        yield ("DS", [||], ArgRegister DS, false)
+        yield ("ES", [||], ArgRegister ES, false)
+        yield ("SS", [||], ArgRegister SS, false)
+        yield ("AL", [||], ArgRegister AL, false)
+        yield ("BL", [||], ArgRegister BL, false)
+        yield ("CL", [||], ArgRegister CL, false)
+        yield ("DL", [||], ArgRegister DL, false)
+        yield ("AH", [||], ArgRegister AH, false)
+        yield ("BH", [||], ArgRegister BH, false)
+        yield ("CH", [||], ArgRegister CH, false)
+        yield ("DH", [||], ArgRegister DH, false)
         yield ("Eb", [| 0x00uy |], 
                ArgDereference { DrefType = MrmTBXSI
-                                DrefDisp = None })
+                                DrefDisp = None }, true)
         yield ("Eb", [| 0x82uy; 0xDDuy; 0x7Euy |], 
                ArgDereference { DrefType = MrmTBPSI
-                                DrefDisp = Some(W16 0x7eddus) })
-        yield ("Eb", [| 0xC6uy |], ArgRegister DH)
+                                DrefDisp = Some(W16 0x7eddus) }, true)
+        yield ("Eb", [| 0xC6uy |], ArgRegister DH, true)
         yield ("Ev", [| 0x42uy; 0xDDuy |], 
                ArgDereference { DrefType = MrmTBPSI
-                                DrefDisp = Some(W8 0xdduy) })
+                                DrefDisp = Some(W8 0xdduy) }, true)
         yield ("Ev", [| 0x06uy; 0xADuy; 0xBAuy |], 
                ArgDereference { DrefType = MrmTDisp
-                                DrefDisp = Some(W16 0xbaadus) })
-        yield ("Ev", [| 0xC4uy |], ArgRegister SP)
-        yield ("Ew", [| 0xC7uy |], ArgRegister DI)
-        yield ("Gb", [| 0x00uy |], ArgRegister AL)
-        yield ("Gv", [| 0xD8uy |], ArgRegister BX)
-        yield ("Jb", [| 0xEEuy |], ArgOffset(W8 0xeeuy))
-        yield ("Jv", [| 0x0Duy; 0xF0uy |], ArgOffset(W16 0xf00dus))
-        yield ("Ib", [| 0xF0uy |], ArgImmediate(W8 0xf0uy))
-        yield ("Iv", [| 0xEFuy; 0xBEuy |], ArgImmediate(W16 0xbeefus))
-        yield ("Iw", [| 0xADuy; 0xDEuy |], ArgImmediate(W16 0xdeadus))
-        yield ("I0", [| 0x42uy |], ArgImmediate(W8 0x42uy))
+                                DrefDisp = Some(W16 0xbaadus) }, true)
+        yield ("Ev", [| 0xC4uy |], ArgRegister SP, true)
+        yield ("Ew", [| 0xC7uy |], ArgRegister DI, true)
+        yield ("Gb", [| 0x00uy |], ArgRegister AL, true)
+        yield ("Gv", [| 0xD8uy |], ArgRegister BX, true)
+        yield ("Jb", [| 0xEEuy |], ArgOffset(W8 0xeeuy), false)
+        yield ("Jv", [| 0x0Duy; 0xF0uy |], ArgOffset(W16 0xf00dus), false)
+        yield ("Ib", [| 0xF0uy |], ArgImmediate(W8 0xf0uy), false)
+        yield ("Iv", [| 0xEFuy; 0xBEuy |], ArgImmediate(W16 0xbeefus), false)
+        yield ("Iw", [| 0xADuy; 0xDEuy |], ArgImmediate(W16 0xdeadus), false)
+        yield ("I0", [| 0x42uy |], ArgImmediate(W8 0x42uy), false)
         yield ("Ob", [| 0x0Duy; 0xF0uy |], 
                ArgDereference { DrefType = MrmTDisp
-                                DrefDisp = Some(W16 0xf00dus) })
+                                DrefDisp = Some(W16 0xf00dus) }, false)
         yield ("Ob", [| 0xADuy; 0xDEuy |], 
                ArgDereference { DrefType = MrmTDisp
-                                DrefDisp = Some(W16 0xdeadus) })
-        yield ("Sw", [| 0x00uy |], ArgRegister ES)
-        yield ("Sw", [| 0x08uy |], ArgRegister CS)
-        yield ("Sw", [| 0x10uy |], ArgRegister SS)
-        yield ("Sw", [| 0x18uy |], ArgRegister DS)
+                                DrefDisp = Some(W16 0xdeadus) }, false)
+        yield ("Sw", [| 0x00uy |], ArgRegister ES, true)
+        yield ("Sw", [| 0x08uy |], ArgRegister CS, true)
+        yield ("Sw", [| 0x10uy |], ArgRegister SS, true)
+        yield ("Sw", [| 0x18uy |], ArgRegister DS, true)
         yield ("Ap", [| 0x0Duy; 0xF0uy; 0xADuy; 0xDEuy |], 
                ArgAddress({ Segment = 0xdeadus
-                            Offset = 0xf00dus }))
+                            Offset = 0xf00dus }), false)
+        yield ("1", [||], ArgConstant 1uy, false)
+        yield ("3", [||], ArgConstant 3uy, false)
         yield ("Mp", [| 0x2Euy; 0xF0uy; 0xDDuy |], 
                ArgDereference { DrefType = MrmTDisp
-                                DrefDisp = Some(W16 0xDDF0us) })
-        yield ("Mp", [| 0xD8uy |], ArgRegister AX)
-        yield ("1", [||], ArgConstant 1uy)
-        yield ("3", [||], ArgConstant 3uy)
+                                DrefDisp = Some(W16 0xDDF0us) }, true)
+        yield ("Mp", [| 0xD8uy |], ArgRegister AX, true)
     }
-    |> Seq.map (fun (a, b, c) -> 
+    |> Seq.map (fun (a, b, c, d) -> 
            [| box a
               box b
-              box c |])
+              box c
+              box d |])
 
 [<Theory>]
 [<MemberData("pargument tests data")>]
-let ``pargument tests`` (desc, bs, res) : unit = 
-    match runOnInput (pargument desc) (bs |> fromBytes) with
-    | Success(arg, is) -> 
-        arg |> should equal res
+let ``pargument tests`` (desc, bs, res, hasMrm) : unit = 
+    match runOnInput (pargument desc ([], None)) (bs |> fromBytes) with
+    | Success((arg, mrm), is) -> 
+        arg = [ res ] |> should equal true
         is.Position.Offset |> should equal bs.Length
+        if hasMrm then mrm |> should not' (equal None)
+        else mrm |> should equal None
     | _ -> failwithf "Test failed: %A %A %A" desc bs res
 
 let instrSet = 
@@ -219,7 +222,32 @@ let ``popCode tests data`` : obj array seq =
 [<MemberData("popCode tests data")>]
 let ``popCode tests`` (n, bs, oc, args) : unit = 
     match runOnInput (popCode instrSet) (bs |> fromBytes) with
-    | Success(oca, is) -> 
-        oca |> should equal (oc, args)
+    | Success((o, a, m), is) -> 
+        (o, a, None) |> should equal (oc, args, None)
         is.Position.Offset |> should equal bs.Length
     | Failure(pl, pe, pp) -> failwithf "Test '%s' failed: %A %A %A: %A %A %A" n bs oc args pl pe pp
+
+let ``pinstruction tests data`` : obj array seq = 
+    seq { 
+        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 ADC\t [+DDF0], BP") 
+//        yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 ADD\t [0134], 0032") 
+    } 
+    |> Seq.map (fun (a, b) -> 
+        [| box a
+           box b |])
+
+[<Theory>]
+[<MemberData("pinstruction tests data")>]
+let ``pinstruction tests`` (bs, instr) : unit = 
+    let is = 
+        Lib.InstructionSetLoader.loadInstructionSet 
+            (System.IO.File.ReadAllText(@"C:\src\bb\5150\pyd4sm\8086_table.txt"))
+    match runOnInput (pinstruction (0us, 0us) is) (bs |> fromBytes) with
+    | Success(i, is) -> 
+        i.ToString() |> should equal instr
+        is.Position.Offset |> should equal bs.Length
+    | Failure(pl, pe, pp) -> failwithf "Test failed: %A %A: %A %A %A" bs instr pl pe pp
+
+// test for address in pinstruction tests
+// move file to project
+// 1 2 3 4 5 6 + GRP tests

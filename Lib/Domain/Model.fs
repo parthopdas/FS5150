@@ -21,26 +21,27 @@ type InstructionSet =
 type Address = 
     { Segment : Word16
       Offset : Word16 }
+    override x.ToString() = sprintf "%04X:%04X" x.Segment x.Offset
 
-//instance Show Address where
-//  show (Address seg off) = printf "%04X:%04X" seg off
 type MachineCode = 
     { Bytes : Word8 array }
 
 type Mneumonic = 
-    { Name : string }
+    | Mneumonic of string
+    override x.ToString() = 
+        match x with
+        | Mneumonic m -> sprintf "%s" m
 
-//instance Show Mneumonic where
-//  show (Mneumonic n) = printf "%s" n
 type Constant = Word8
 
 type WordData = 
     | W8 of Word8
     | W16 of Word16
+    override x.ToString() = 
+        match x with
+        | W8 w8 -> sprintf "%02X" w8
+        | W16 w16 -> sprintf "%04X" w16
 
-//instance Show Inttype where
-//  show (Int8 d) = printf "%02X" d
-//  show (Int16 d) = printf "%04X" d
 type ModRegType = 
     | MregT0
     | MregT1
@@ -61,25 +62,26 @@ type ModRmType =
     | MrmTDisp
     | MrmTBX
     | MrmTBP
+    override x.ToString() = 
+        match x with
+        | MrmTBXSI -> "BX+SI"
+        | MrmTBXDI -> "BX+DI"
+        | MrmTBPSI -> "BP+SI"
+        | MrmTBPDI -> "BP+DI"
+        | MrmTSI -> "SI"
+        | MrmTDI -> "DI"
+        | MrmTDisp -> ""
+        | MrmTBX -> "BX"
+        | MrmTBP -> "BP"
 
-//instance Show ModRmType where
-//  show MrmTBXSI = "BX+SI"
-//  show MrmTBXDI = "BX+DI"
-//  show MrmTBPSI = "BP+SI"
-//  show MrmTBPDI = "BP+DI"
-//  show MrmTSI = "SI"
-//  show MrmTDI = "DI"
-//  show MrmTDisp = ""
-//  show MrmTBX = "BX"
-//  show MrmTBP = "BP"
 type Dereference = 
     { DrefType : ModRmType
       DrefDisp : WordData option }
+    override x.ToString() = 
+        match x.DrefDisp with
+        | Some dval -> sprintf "[%O+%O]" x.DrefType dval
+        | None -> sprintf "[%O]" x.DrefType
 
-//instance Show Dereference where
-//  show (Dereference t d) = case d of
-//    Just dval -> printf "[%s+%s]" (show t) (show dval)
-//    Nothing -> printf "[%s]" (show t)
 type RmArgs = 
     | RmaReg of ModRegType
     | RmaDeref of Dereference
@@ -118,17 +120,18 @@ type Argument =
     | ArgRegister of Register
     | ArgImmediate of WordData
     | ArgDereference of Dereference
+    override x.ToString() = 
+        match x with
+        | ArgAddress a -> sprintf "%O" a
+        | ArgConstant x -> sprintf "%O" x
+        | ArgOffset o -> sprintf "%O" o
+        | ArgRegister r -> sprintf "%A" r
+        | ArgImmediate i -> sprintf "%O" i
+        | ArgDereference d -> sprintf "%O" d
 
-//instance Show Argument where
-//  show (ArgAddress a) = show a
-//  show (ArgConstant c) = show c
-//  show (ArgOffset o) = show o
-//  show (ArgRegister r) = show r
-//  show (ArgImmediate i) = show i
-//  show (ArgDereference d) = show d
 type Instruction = 
     { Address : Address
       Mneumonic : Mneumonic
-      Args : Argument array }
-//instance Show Instruction where
-//  show (Instruction addr mne as) = printf "%s %s\t %s" (show addr) (show mne) (intercalate ", " $ map show as)
+      Args : Argument list }
+    override x.ToString() = 
+        sprintf "%O %O\t %O" x.Address x.Mneumonic ((x.Args |> List.fold (sprintf "%O, %O") "").Substring(2))

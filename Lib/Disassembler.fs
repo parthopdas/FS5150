@@ -1,5 +1,6 @@
 ﻿namespace Lib
 
+open FSharpx.Text
 open Lib.Parser.Combinators
 open Lib.Parser.Core
 
@@ -133,7 +134,7 @@ module Disassembler =
         |> Map.ofList
     
     /// puint8 :: Parser<Word8>
-    let pword8 = satisfy (fun _ -> true) "any byte"
+    let pword8 = satisfy (fun _ -> true) "word8"
     
     /// pword16 :: Parser<Word16>
     let pword16 = pword8 .>>. pword8 |>> (fun (a, b) -> ((uint64) b <<< 8) + (uint64) a |> uint16)
@@ -181,15 +182,18 @@ module Disassembler =
         >>= (fun w8 -> f <!> parseReg w8 <*> parseRmArgs w8)
         >>= createpModRegRm
     
-    /// pargument :: string -> Parser<Argument>
-    let pargument desc = 
+    /// pargument :: string -> Argument list * ModRegRM opt -> Parser<Argument list * ModRegRM opt>
+    let pargument desc (args, mrm) = 
         let getRegister aoc r = aocRegMap.[(aoc, r)] |> ArgRegister
+        let withNone a = a, None
+        let appendArg a = a :: args
+        let cpmodRegRm = mrm |> Option.fold (fun _ e -> returnP e) pmodRegRm
         
         let parseDrefOrReg aoc = 
-            pmodRegRm |>> (fun mrm -> 
+            cpmodRegRm |>> (fun mrm -> 
             match mrm.ModRM with
-            | RmaReg r -> getRegister aoc r
-            | RmaDeref d -> ArgDereference d)
+            | RmaReg r -> getRegister aoc r |> appendArg, Some mrm
+            | RmaDeref d -> ArgDereference d |> appendArg, Some mrm)
         
         let parseImmediate8 = W8
                               >> ArgImmediate
@@ -201,50 +205,68 @@ module Disassembler =
         let parseNonRegArgs = 
             function 
             | [ 'E'; aoc ] -> parseDrefOrReg aoc
-            | [ 'G'; aoc ] -> pmodRegRm |>> (fun mrm -> mrm.ModReg |> getRegister aoc)
+            | [ 'G'; aoc ] -> 
+                cpmodRegRm |>> (fun mrm -> 
+                mrm.ModReg
+                |> getRegister aoc
+                |> appendArg, Some mrm)
             | [ 'J'; 'b' ] -> W8
                               >> ArgOffset
                               <!> pword8
+                              |>> appendArg
+                              |>> withNone
             | [ 'J'; 'v' ] -> W16
                               >> ArgOffset
                               <!> pword16
-            | [ 'I'; 'b' ] -> parseImmediate8
-            | [ 'I'; 'v' ] -> parseImmediate16
-            | [ 'I'; 'w' ] -> parseImmediate16
-            | [ 'I'; '0' ] -> parseImmediate8
+                              |>> appendArg
+                              |>> withNone
+            | [ 'I'; 'b' ] -> parseImmediate8 |>> appendArg |>> withNone
+            | [ 'I'; 'v' ] -> parseImmediate16 |>> appendArg |>> withNone
+            | [ 'I'; 'w' ] -> parseImmediate16 |>> appendArg |>> withNone
+            | [ 'I'; '0' ] -> parseImmediate8 |>> appendArg |>> withNone
             | [ 'O'; _ ] -> 
                 pword16 |>> (fun w16 -> 
                 ArgDereference { DrefType = MrmTDisp
                                  DrefDisp = 
                                      w16
                                      |> W16
-                                     |> Some })
-            | [ 'S'; 'w' ] -> pmodRegRm |>> (fun mrm -> modRegMap.[mrm.ModReg] |> ArgRegister)
+                                     |> Some }) |>> appendArg |>> withNone
+            | [ 'S'; 'w' ] -> 
+                cpmodRegRm |>> (fun mrm -> 
+                modRegMap.[mrm.ModReg]
+                |> ArgRegister
+                |> appendArg, Some mrm)
             | [ 'A'; 'p' ] -> 
                 pword16 .>>. pword16 |>> (fun (o, s) -> 
                 { Offset = o
                   Segment = s }
-                |> ArgAddress)
+                |> ArgAddress) |>> appendArg |>> withNone
             | [ '1' ] -> 
                 1uy
                 |> ArgConstant
                 |> returnP
+                |>> appendArg
+                |>> withNone
             | [ '3' ] -> 
                 3uy
                 |> ArgConstant
                 |> returnP
+                |>> appendArg
+                |>> withNone
             | [ 'M'; 'p' ] -> parseDrefOrReg 'p'
             | _ -> failwithf "DESC value = %A is unexpected." desc
         match descRegMap |> Map.tryFind desc with
         | Some r -> 
             r
             |> ArgRegister
+            |> appendArg
+            |> withNone
             |> returnP
         | None -> 
             desc
             |> Seq.toList
             |> parseNonRegArgs
-    
+
     /// popCode :: InstructionSet -> Parser<string * string[]>
     let popCode is = 
         let getOc w8 = 
@@ -256,20 +278,39 @@ module Disassembler =
                                      OcgIndex = modRegOcgIndex.[mrm.ModReg] }] with
             | [] -> failwith "OpCodeGroups has invalid entry"
             | ox :: ax -> 
-                if ox = "--" then ("???", [])
-                else 
-                    (ox, 
-                     if [] = ax then a
-                     else ax)
+                if ox = "--" then ("???", [], Some mrm)
+                else (ox, (if [] = ax then a else ax), Some mrm)
         
         let parseOc = getOc <!> pword8
         
-        let parseOcg (o : string, a) = 
-            if o.StartsWith("GRP") then (o, a)
-                                        ||> getOcg
-                                        <!> pmodRegRm
-            else (o, a) |> returnP
+        let parseOcg (o, a) = 
+            if (Strings.startsWith "GRP" o) then (o, a)
+                                                 ||> getOcg
+                                                 <!> pmodRegRm
+            else (o, a, None) |> returnP
         parseOc >>= parseOcg
     
-    /// pinstruction :: Parser<Instruction>
-    let pinstruction() : Parser<Instruction> = failwith ""
+    /// pinstruction :: Word16 * Word16 -> InstructionSet -> Parser<Instruction>
+    let pinstruction (a, o) is = 
+        let parseAddress = 
+            { Segment = a
+              Offset = a + o }
+            |> returnP
+        
+        let parseMneumonicAndArgs = 
+            let parseMAndAs (oc, ocas, mrm) = 
+                let parseMneumonic oc = oc |> Mneumonic |> returnP
+                let parseArgs = (ocas, (([], mrm) |> returnP))
+                                ||> List.foldBack (fun e acc -> acc >>= pargument e)
+                                |>> fst
+                (fun a b -> a, b) <!> (parseMneumonic oc) <*> parseArgs
+            is
+            |> popCode
+            >>= parseMAndAs
+        
+        let createInstruction a (m, args) = 
+            { Address = a
+              Mneumonic = m
+              Args = args }
+        
+        createInstruction <!> parseAddress <*> parseMneumonicAndArgs
