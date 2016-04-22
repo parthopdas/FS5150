@@ -137,4 +137,5 @@ type Instruction =
       Mneumonic : Mneumonic
       Args : Argument list }
     override x.ToString() = 
-        sprintf "%O %O\t %O" x.Address x.Mneumonic ((x.Args |> List.fold (sprintf "%O, %O") "").Substring(2))
+        sprintf "%O %O\t %O" 
+            x.Address x.Mneumonic (System.String.Join(", ", x.Args |> List.map (fun e -> e.ToString()) |> Array.ofList))

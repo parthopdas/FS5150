@@ -66,6 +66,9 @@
     <Compile Include="InstructionSetLoader.fs" />
     <Compile Include="Disassembler.fs" />
     <None Include="app.config" />
+    <None Include="8086_table.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Control.AsyncSeq">

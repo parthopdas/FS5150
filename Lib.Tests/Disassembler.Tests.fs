@@ -8,6 +8,8 @@ open Lib.Domain
 open Lib.Parser.Core
 open Lib.Parser.TextInput
 open System
+open System.IO
+open System.Reflection
 
 [<Fact>]
 let ``pword8 can parse word8``() = 
@@ -203,14 +205,14 @@ let instrSet =
 
 let ``popCode tests data`` : obj array seq = 
     seq { 
-        yield ((*0 arg*)[| 0x00uy |], "XX0", [], false)
-        yield ((*2 arg*) [| 0x02uy |], "XX2", [ "arg0"; "arg1" ], false)
-        yield ((*ex 0 arg*) [| 0x03uy; 0b00101000uy |], "EXX00", [], true)
-        yield ((*ex 0 arg - different reg*) [| 0x03uy; 0b00001000uy |], "EXX01", [], true)
-        yield ((*ex 2 arg*) [| 0x04uy; 0b00000000uy |], "EXX1", [ "arg00"; "arg01" ], true)
-        yield ((*ex 0 2 arg from op*) [| 0x05uy; 0b00011000uy |], "EXX2", [ "arg0o"; "arg0o" ], true)
-        yield ((*ex 2 overide arg*) [| 0x05uy; 0b00100000uy |], "EXX2", [ "arg0x"; "arg0x" ], true)
-        yield ((*ex illegal*) [| 0x06uy; 0b00111000uy |], "???", [], true)
+        yield ([| (*0 arg*) 0x00uy |], "XX0", [], false)
+        yield ([| (*2 arg*) 0x02uy |], "XX2", [ "arg0"; "arg1" ], false)
+        yield ([| (*ex 0 arg*) 0x03uy; 0b00101000uy |], "EXX00", [], true)
+        yield ([| (*ex 0 arg - different reg*) 0x03uy; 0b00001000uy |], "EXX01", [], true)
+        yield ([| (*ex 2 arg*) 0x04uy; 0b00000000uy |], "EXX1", [ "arg00"; "arg01" ], true)
+        yield ([| (*ex 0 2 arg from op*) 0x05uy; 0b00011000uy |], "EXX2", [ "arg0o"; "arg0o" ], true)
+        yield ([| (*ex 2 overide arg*) 0x05uy; 0b00100000uy |], "EXX2", [ "arg0x"; "arg0x" ], true)
+        yield ([| (*ex illegal*) 0x06uy; 0b00111000uy |], "???", [], true)
     }
     |> Seq.map (fun (a, b, c, d) -> 
            [| box a
@@ -230,26 +232,40 @@ let ``popCode tests`` (bs, oc, args, hasMrm) : unit =
     | Failure(pl, pe, pp) -> failwithf "Test failed: %A %A %A %A: %A %A %A" bs oc args hasMrm pl pe pp
 
 let ``pinstruction tests data`` : obj array seq = 
-    seq { 
+    seq {    
+        (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 AAA\t ") 
+        (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 ADD\t AL, FF") 
+        (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 CALL\t F00D") 
         (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 ADC\t [DDF0], BP") 
+        (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 JMP\t BAAD:F00D") 
         (* 6 Args + GRP *)  yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 ADD\t [0134], 0032") 
-    } 
+    }
     |> Seq.map (fun (a, b) -> 
-        [| box a
-           box b |])
+           [| box a
+              box b |])
+
+let is = 
+    (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
+    |> Path.GetFullPath
+    |> Path.GetDirectoryName
+    |> fun p -> Path.Combine(p, "8086_table.txt")
+    |> File.ReadAllText
+    |> Lib.InstructionSetLoader.loadInstructionSet
 
 [<Theory>]
 [<MemberData("pinstruction tests data")>]
 let ``pinstruction tests`` (bs, instr) : unit = 
-    let is = 
-        Lib.InstructionSetLoader.loadInstructionSet 
-            (System.IO.File.ReadAllText(@"C:\src\bb\5150\pyd4sm\8086_table.txt"))
     match runOnInput (pinstruction (0us, 0us) is) (bs |> fromBytes) with
     | Success(i, is) -> 
         i.ToString() |> should equal instr
         is.Position.Offset |> should equal bs.Length
     | Failure(pl, pe, pp) -> failwithf "Test failed: %A %A: %A %A %A" bs instr pl pe pp
 
-// test for address in pinstruction tests
-// move file to project
-// 1 2 3 4 5 6 + GRP tests
+[<Fact>]
+let ``pinstruction parse-compile round trip``() = 
+    // TODO: P2D: Implement fully when we are able to compile Instruction back to bytes
+    let law (s : uint16) (o : uint16) = 
+        match runOnInput (pinstruction (s, o) is) ([| 0x37uy |] |> fromBytes) with
+        | Success(i, is) -> i.ToString() = (sprintf "%04X:%04X AAA\t " s o) && is.Position.Offset = 1
+        | Failure _ -> false
+    Check.QuickThrowOnFailure law

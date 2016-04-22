@@ -296,10 +296,10 @@ module Disassembler =
         <@> "OpCode"
     
     /// pinstruction :: Word16 * Word16 -> InstructionSet -> Parser<Instruction>
-    let pinstruction (a, o) is = 
+    let pinstruction (s, o) is = 
         let parseAddress = 
-            { Segment = a
-              Offset = a + o }
+            { Segment = s
+              Offset = o }
             |> returnP
         
         let parseMneumonicAndArgs = 
