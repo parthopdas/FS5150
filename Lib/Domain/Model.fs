@@ -79,7 +79,10 @@ type Dereference =
       DrefDisp : WordData option }
     override x.ToString() = 
         match x.DrefDisp with
-        | Some dval -> sprintf "[%O+%O]" x.DrefType dval
+        | Some dval -> 
+            match x.DrefType with
+            | MrmTDisp -> sprintf "[%O]" dval
+            | _ -> sprintf "[%O+%O]" x.DrefType dval
         | None -> sprintf "[%O]" x.DrefType
 
 type RmArgs = 

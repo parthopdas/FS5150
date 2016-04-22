@@ -203,14 +203,14 @@ let instrSet =
 
 let ``popCode tests data`` : obj array seq = 
     seq { 
-        yield ("0 arg", [| 0x00uy |], "XX0", [])
-        yield ("2 arg", [| 0x02uy |], "XX2", [ "arg0"; "arg1" ])
-        yield ("ex 0 arg", [| 0x03uy; 0b00101000uy |], "EXX00", [])
-        yield ("ex 0 arg - different reg", [| 0x03uy; 0b00001000uy |], "EXX01", [])
-        yield ("ex 2 arg", [| 0x04uy; 0b00000000uy |], "EXX1", [ "arg00"; "arg01" ])
-        yield ("ex 0 2 arg from op", [| 0x05uy; 0b00011000uy |], "EXX2", [ "arg0o"; "arg0o" ])
-        yield ("ex 2 overide arg", [| 0x05uy; 0b00100000uy |], "EXX2", [ "arg0x"; "arg0x" ])
-        yield ("ex illegal", [| 0x06uy; 0b00111000uy |], "???", [])
+        yield ((*0 arg*)[| 0x00uy |], "XX0", [], false)
+        yield ((*2 arg*) [| 0x02uy |], "XX2", [ "arg0"; "arg1" ], false)
+        yield ((*ex 0 arg*) [| 0x03uy; 0b00101000uy |], "EXX00", [], true)
+        yield ((*ex 0 arg - different reg*) [| 0x03uy; 0b00001000uy |], "EXX01", [], true)
+        yield ((*ex 2 arg*) [| 0x04uy; 0b00000000uy |], "EXX1", [ "arg00"; "arg01" ], true)
+        yield ((*ex 0 2 arg from op*) [| 0x05uy; 0b00011000uy |], "EXX2", [ "arg0o"; "arg0o" ], true)
+        yield ((*ex 2 overide arg*) [| 0x05uy; 0b00100000uy |], "EXX2", [ "arg0x"; "arg0x" ], true)
+        yield ((*ex illegal*) [| 0x06uy; 0b00111000uy |], "???", [], true)
     }
     |> Seq.map (fun (a, b, c, d) -> 
            [| box a
@@ -220,17 +220,19 @@ let ``popCode tests data`` : obj array seq =
 
 [<Theory>]
 [<MemberData("popCode tests data")>]
-let ``popCode tests`` (n, bs, oc, args) : unit = 
+let ``popCode tests`` (bs, oc, args, hasMrm) : unit = 
     match runOnInput (popCode instrSet) (bs |> fromBytes) with
     | Success((o, a, m), is) -> 
-        (o, a, None) |> should equal (oc, args, None)
+        (o, a) |> should equal (oc, args)
+        if hasMrm then m |> should not' (equal None)
+        else m |> should equal None
         is.Position.Offset |> should equal bs.Length
-    | Failure(pl, pe, pp) -> failwithf "Test '%s' failed: %A %A %A: %A %A %A" n bs oc args pl pe pp
+    | Failure(pl, pe, pp) -> failwithf "Test failed: %A %A %A %A: %A %A %A" bs oc args hasMrm pl pe pp
 
 let ``pinstruction tests data`` : obj array seq = 
     seq { 
-        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 ADC\t [+DDF0], BP") 
-//        yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 ADD\t [0134], 0032") 
+        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 ADC\t [DDF0], BP") 
+        (* 6 Args + GRP *)  yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 ADD\t [0134], 0032") 
     } 
     |> Seq.map (fun (a, b) -> 
         [| box a

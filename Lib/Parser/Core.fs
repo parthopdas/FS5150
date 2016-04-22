@@ -3,6 +3,8 @@
 module Core = 
     open TextInput
     
+    let inline dprintfn fmt = Printf.ksprintf System.Diagnostics.Debug.WriteLine fmt
+    
     type Input = InputState
     
     type ParserLabel = string
@@ -12,6 +14,10 @@ module Core =
     type Result<'a> = 
         | Success of 'a
         | Failure of ParserLabel * ParserError * ParserPosition
+        override x.ToString() = 
+            match x with
+            | Success _ -> "... OK"
+            | Failure(l, e, p) -> sprintf "... Error: %O %O %A" l e p.CurrentOffset
     
     type Parser<'T> = 
         { ParserFn : Input -> Result<'T * Input>
@@ -38,6 +44,14 @@ module Core =
     
     /// run :: Parser<'a> -> string -> Result<'a * Input>
     let run parser input = parser.ParserFn(fromStr input)
+    
+    let (<@>) (p : Parser<_>) label : Parser<_> = 
+        let innerFn (is : Input) = 
+            dprintfn "%A: Entering %s" is.Position label
+            let ret = runOnInput p is
+            dprintfn "%A: Leaving %s (%O)" is.Position label ret
+            ret
+        { p with ParserFn = innerFn }
     
     /// setLabel :: string -> Parser<'a> -> Parser<'a>
     let setLabel pa label = 
