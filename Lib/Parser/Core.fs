@@ -5,8 +5,6 @@ module Core =
     
     let inline dprintfn fmt = Printf.ksprintf System.Diagnostics.Debug.WriteLine fmt
     
-    type Input = InputState
-    
     type ParserLabel = string
     
     type ParserError = 
@@ -25,8 +23,8 @@ module Core =
             | Success _ -> "... OK"
             | Failure(l, e, p) -> sprintf "... Error: %O %O %A" l e p.CurrentOffset
     
-    type Parser<'T> = 
-        { ParserFn : Input -> Result<'T * Input>
+    type Parser<'T, 'U> = 
+        { ParserFn : InputState<'U> -> Result<'T * InputState<'U>>
           Label : ParserLabel }
     
     /// satisfy :: (byte -> bool) -> ParserLabel -> Parser<byte>
@@ -44,14 +42,14 @@ module Core =
         { ParserFn = innerFn
           Label = label }
     
-    /// runOnInput :: Parser<'a> -> Input -> Result<'a * Input>
+    /// runOnInput :: Parser<'a> -> InputState -> Result<'a * InputState>
     let runOnInput parser input = parser.ParserFn input
     
-    /// run :: Parser<'a> -> string -> Result<'a * Input>
-    let run parser input = parser.ParserFn(fromStr input)
+    /// run :: Parser<'a> -> string -> Result<'a * InputState>
+    let run parser ius input = parser.ParserFn(fromStr ius input)
     
-    let (<@>) (p : Parser<_>) label : Parser<_> = 
-        let innerFn (is : Input) = 
+    let (<@>) (p : Parser<_, _>) label : Parser<_, _> = 
+        let innerFn (is : InputState<_>) = 
             dprintfn "%A: Entering %s" is.Position label
             let ret = runOnInput p is
             dprintfn "%A: Leaving %s (%O)" is.Position label ret
@@ -69,6 +67,28 @@ module Core =
     
     /// <?> :: Parser<'a> -> string -> Parser<'a>
     let (<?>) = setLabel
+
+    /// getPosition :: Parser<Position, 'a>
+    let getPosition = 
+        let innerFn is =
+            Success(is.Position, is)
+        { ParserFn = innerFn
+          Label = "getPosition" }
+
+    /// setUserState :: ('a -> 'a) -> Parser<'a, 'a>
+    let setUserState f = 
+        let innerFn is =
+            let is' = { is with UserState = f is.UserState }
+            Success(is'.UserState, is')
+        { ParserFn = innerFn
+          Label = "updateUserState" }
+
+    /// getUserState :: Parser<'a, 'a>
+    let getUserState = 
+        let innerFn is =
+            Success(is.UserState, is)
+        { ParserFn = innerFn
+          Label = "getUserState" }
     
     /// printResult :: Result<'a> -> string
     let printResult = 

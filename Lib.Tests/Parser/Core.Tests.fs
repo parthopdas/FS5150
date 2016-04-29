@@ -10,7 +10,7 @@ open Xunit
 [<InlineData('Z', "ZBC", "'Z' [State: (0, 1) ZBC]")>]
 let ``Parser with good input`` (c, i, r) = 
     let parseChar = pchar c
-    let res = i |> run parseChar
+    let res = i |> run parseChar ()
     res
     |> printResult
     |> should equal r
@@ -20,7 +20,7 @@ let ``Parser with good input`` (c, i, r) =
 [<InlineData('A', "ZBC", "(0, 0): ZBC: Error parsing A. Unexpected 'Z'")>]
 let ``Parser with bad input`` (c, i, s) = 
     let parseChar = pchar c
-    let res = i |> run parseChar
+    let res = i |> run parseChar ()
     res
     |> printResult
     |> should equal s
@@ -32,7 +32,7 @@ let parseB = pchar 'B'
 [<InlineData("ABC", "('A', 'B') [State: (0, 2) ABC]")>]
 let ``andThen with good input`` (i, r) = 
     let parseAandThenB = parseA .>>. parseB
-    let res = i |> run parseAandThenB
+    let res = i |> run parseAandThenB ()
     res
     |> printResult
     |> should equal r
@@ -42,7 +42,7 @@ let ``andThen with good input`` (i, r) =
 [<InlineData("AZC", "(0, 1): AZC: Error parsing B. Unexpected 'Z'")>]
 let ``andThen with bad input`` (i, m) = 
     let parseAandThenB = parseA .>>. parseB
-    let res = i |> run parseAandThenB
+    let res = i |> run parseAandThenB ()
     res
     |> printResult
     |> should equal m
@@ -52,7 +52,7 @@ let ``andThen with bad input`` (i, m) =
 [<InlineData("BZZ", "'B' [State: (0, 1) BZZ]")>]
 let ``orElse with good input`` (i, r) = 
     let parseAorElseB = parseA <|> parseB
-    let res = i |> run parseAorElseB
+    let res = i |> run parseAorElseB ()
     res
     |> printResult
     |> should equal r
@@ -61,7 +61,7 @@ let ``orElse with good input`` (i, r) =
 [<InlineData("CZZ", "(0, 0): CZZ: Error parsing B. Unexpected 'C'")>]
 let ``orElse with bad input`` (i, m) = 
     let parseAorElseB = parseA <|> parseB
-    let res = i |> run parseAorElseB
+    let res = i |> run parseAorElseB ()
     res
     |> printResult
     |> should equal m
@@ -73,7 +73,7 @@ let parseAandThenBOrC = parseA .>>. (parseB <|> parseC)
 [<InlineData("ABZ", "('A', 'B') [State: (0, 2) ABZ]")>]
 [<InlineData("ACZ", "('A', 'C') [State: (0, 2) ACZ]")>]
 let ``andThenOrElse with good input`` (i, r) = 
-    let res = i |> run parseAandThenBOrC
+    let res = i |> run parseAandThenBOrC ()
     res
     |> printResult
     |> should equal r
@@ -82,7 +82,31 @@ let ``andThenOrElse with good input`` (i, r) =
 [<InlineData("QBZ", "(0, 0): QBZ: Error parsing A. Unexpected 'Q'")>]
 [<InlineData("AQZ", "(0, 1): AQZ: Error parsing C. Unexpected 'Q'")>]
 let ``andThenOrElse with bad input`` (i, m) = 
-    let res = i |> run parseAandThenBOrC
+    let res = i |> run parseAandThenBOrC ()
     res
     |> printResult
     |> should equal m
+
+[<Fact>]
+let ``getPosition test`` () = 
+    let parseAWithPos = getPosition .>>. parseA .>>. getPosition
+    let res = "ABC" |> run parseAWithPos ()
+    res
+    |> printResult
+    |> should equal "(({Offset = 0;}, 'A'), {Offset = 1;}) [State: (0, 1) ABC]"
+
+[<Fact>]
+let ``reset and set UserState test`` () = 
+    let parser = setUserState (fun _ -> []) .>>. pchar 'a' >>= (fun (_, c) -> setUserState (fun us -> c::us)) 
+    let res = "aa" |> run parser ['o']
+    res
+    |> printResult
+    |> should equal "['a'] [State: (0, 1) aa]"
+
+[<Fact>]
+let ``get UserState test`` () = 
+    let parser = pchar 'a' .>>. getUserState 
+    let res = "aa" |> run parser 'o'
+    res
+    |> printResult
+    |> should equal "('a', 'o') [State: (0, 1) aa]"

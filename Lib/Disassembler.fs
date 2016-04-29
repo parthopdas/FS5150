@@ -134,16 +134,16 @@ module Disassembler =
         |> Map.ofList
     
     /// puint8 :: Parser<Word8>
-    let pword8 = satisfy (fun _ -> true) "word8" <@> "word8"
+    let pword8<'a> : Parser<Word8, 'a> = satisfy (fun _ -> true) "word8" <@> "word8"
     
     /// pword16 :: Parser<Word16>
-    let pword16 = pword8 .>>. pword8 |>> (fun (a, b) -> ((uint64) b <<< 8) + (uint64) a |> uint16) <@> "word16"
+    let pword16<'a> : Parser<Word16, 'a> = pword8 .>>. pword8 |>> (fun (a, b) -> ((uint64) b <<< 8) + (uint64) a |> uint16) <@> "word16"
     
     /// pword32 :: Parser<Word32>
-    let pword32 = pword16 .>>. pword16 |>> (fun (a, b) -> ((uint64) b <<< 16) + (uint64) a |> uint32) <@> "word32"
+    let pword32<'a> : Parser<Word32, 'a> = pword16 .>>. pword16 |>> (fun (a, b) -> ((uint64) b <<< 16) + (uint64) a |> uint32) <@> "word32"
     
     /// pmodRegRm :: Parser<ModRegRM>
-    let pmodRegRm = 
+    let pmodRegRm<'a> : Parser<ModRegRM, 'a> = 
         let parseReg w8 = 
             ((w8 >>> 0b11) &&& 0b111uy)
             |> getModRegType
@@ -256,7 +256,7 @@ module Disassembler =
                 |>> withMrm
             | [ 'M'; 'p' ] -> parseDrefOrReg 'p'
             | _ -> failwithf "DESC value = %A is unexpected." desc
-        match descRegMap |> Map.tryFind desc with
+        (match descRegMap |> Map.tryFind desc with
         | Some r -> 
             r
             |> ArgRegister
@@ -266,8 +266,7 @@ module Disassembler =
         | None -> 
             desc
             |> Seq.toList
-            |> parseNonRegArgs
-            <@> "Argument"
+            |> parseNonRegArgs) <@> "Argument"
     
     /// popCode :: InstructionSet -> Parser<string * string[]>
     let popCode is = 

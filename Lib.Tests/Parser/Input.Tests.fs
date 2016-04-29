@@ -25,7 +25,7 @@ let ``nextByte tests data`` : obj array seq =
 [<Theory>]
 [<MemberData("nextByte tests data")>]
 let ``nextByte tests`` (i : string, o : char list) : unit = 
-    let res = fromStr i |> readAllChars
+    let res = fromStr () i |> readAllChars
     res
     |> List.map char
     |> should equal o

@@ -10,7 +10,7 @@ open System
 [<Theory>]
 [<InlineData("aBC", "'a' [State: (0, 1) aBC]")>]
 let ``parseLowerCase with good input`` (i, r) = 
-    let res = i |> run plowerCase
+    let res = i |> run plowerCase ()
     res
     |> printResult
     |> should equal r
@@ -18,7 +18,7 @@ let ``parseLowerCase with good input`` (i, r) =
 [<Theory>]
 [<InlineData("ABC", "(0, 0): ABC: Error parsing lowercase. Unexpected 'A'")>]
 let ``parseLowerCase with bad input`` (i, m) = 
-    let res = i |> run plowerCase
+    let res = i |> run plowerCase ()
     res
     |> printResult
     |> should equal m
@@ -27,7 +27,7 @@ let ``parseLowerCase with bad input`` (i, m) =
 [<InlineData("1ABC", "'1' [State: (0, 1) 1ABC]")>]
 [<InlineData("9ABC", "'9' [State: (0, 1) 9ABC]")>]
 let ``parseDigit with good input`` (i, r) = 
-    let res = i |> run pdigit
+    let res = i |> run pdigit ()
     res
     |> printResult
     |> should equal r
@@ -35,7 +35,7 @@ let ``parseDigit with good input`` (i, r) =
 [<Theory>]
 [<InlineData("|ABC", "(0, 0): |ABC: Error parsing digit. Unexpected '|'")>]
 let ``parseDigit with bad input`` (i, m) = 
-    let res = i |> run pdigit
+    let res = i |> run pdigit ()
     res
     |> printResult
     |> should equal m

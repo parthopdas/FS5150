@@ -57,7 +57,7 @@ module Combinators =
     let (<*>) = applyP
     
     /// sequence :: Parser<'a> list -> Parser<'a list>
-    let sequence (pas : Parser<'a> list) : Parser<'a list> = 
+    let sequence (pas : Parser<'a, _> list) : Parser<'a list, _> = 
         List.foldBack (fun e acc -> e .>>. acc |>> List.Cons) pas (returnP [])
     
     let rec private get0OrMore pa is = 
@@ -68,13 +68,13 @@ module Combinators =
         | Failure _ -> ([], is)
     
     /// many :: Parser<'a> -> Parser<'a list>
-    let many (pa : Parser<'a>) : Parser<'a list> = 
+    let many (pa : Parser<'a, _>) : Parser<'a list, _> = 
         let innerFn is = Success(get0OrMore pa is)
         { ParserFn = innerFn
           Label = sprintf "many %s" pa.Label }
     
     /// many1 :: Parser<'a> -> Parser<'a list>
-    let many1 (pa : Parser<'a>) : Parser<'a list> = 
+    let many1 (pa : Parser<'a, _>) : Parser<'a list, _> = 
         pa >>= (fun h -> many pa >>= (fun t -> { returnP (h :: t) with Label = sprintf "many1 %s" pa.Label }))
     
     /// opt :: Parser<'a> -> Parser<'a option>

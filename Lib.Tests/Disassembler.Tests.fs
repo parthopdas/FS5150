@@ -14,10 +14,11 @@ open System.Reflection
 [<Fact>]
 let ``pword8 can parse word8``() = 
     let law b = 
-        let x = runOnInput pword8 (fromBytes [| b |])
+        let x = runOnInput pword8 (fromBytes () [| b |])
         x = Success(b, 
                     { Bytes = [| b |]
-                      Position = { Offset = 1 } })
+                      Position = { Offset = 1 }
+                      UserState = () })
     Check.QuickThrowOnFailure law
 
 [<Fact>]
@@ -25,10 +26,11 @@ let ``pword16 can parse word16``() =
     let law n = 
         let num = (n + 1) * 9876 |> uint16
         let bytes = num |> BitConverter.GetBytes
-        let res = runOnInput pword16 (bytes |> fromBytes)
+        let res = runOnInput pword16 (bytes |> fromBytes ())
         res = Success(num, 
                       { Bytes = bytes
-                        Position = { Offset = 2 } })
+                        Position = { Offset = 2 }
+                        UserState = () })
     Check.QuickThrowOnFailure law
 
 [<Fact>]
@@ -36,10 +38,11 @@ let ``pword32 can parse word32``() =
     let law n = 
         let num = (n + 1) * 987654 |> uint32
         let bytes = num |> BitConverter.GetBytes
-        let res = runOnInput pword32 (bytes |> fromBytes)
+        let res = runOnInput pword32 (bytes |> fromBytes ())
         res = Success(num, 
                       { Bytes = bytes
-                        Position = { Offset = 4 } })
+                        Position = { Offset = 4 } 
+                        UserState = () })
     Check.QuickThrowOnFailure law
 
 let ``pmodRegRm tests data`` : obj array seq = 
@@ -82,7 +85,7 @@ let ``pmodRegRm tests data`` : obj array seq =
 [<Theory>]
 [<MemberData("pmodRegRm tests data")>]
 let ``pmodRegRm tests`` (bs, reg, rm) : unit = 
-    match runOnInput pmodRegRm (bs |> fromBytes) with
+    match runOnInput pmodRegRm (bs |> fromBytes ()) with
     | Success(mrm, is) -> 
         mrm |> should equal { ModReg = reg
                               ModRM = rm }
@@ -171,7 +174,7 @@ let ``pargument tests data`` : obj array seq =
 [<Theory>]
 [<MemberData("pargument tests data")>]
 let ``pargument tests`` (desc, bs, res, hasMrm) : unit = 
-    match runOnInput (pargument desc ([], None)) (bs |> fromBytes) with
+    match runOnInput (pargument desc ([], None)) (bs |> fromBytes ()) with
     | Success((arg, mrm), is) -> 
         arg = [ res ] |> should equal true
         is.Position.Offset |> should equal bs.Length
@@ -223,7 +226,7 @@ let ``popCode tests data`` : obj array seq =
 [<Theory>]
 [<MemberData("popCode tests data")>]
 let ``popCode tests`` (bs, oc, args, hasMrm) : unit = 
-    match runOnInput (popCode instrSet) (bs |> fromBytes) with
+    match runOnInput (popCode instrSet) (bs |> fromBytes ()) with
     | Success((o, a, m), is) -> 
         (o, a) |> should equal (oc, args)
         if hasMrm then m |> should not' (equal None)
@@ -255,7 +258,7 @@ let is =
 [<Theory>]
 [<MemberData("pinstruction tests data")>]
 let ``pinstruction tests`` (bs, instr) : unit = 
-    match runOnInput (pinstruction (0us, 0us) is) (bs |> fromBytes) with
+    match runOnInput (pinstruction (0us, 0us) is) (bs |> fromBytes ()) with
     | Success(i, is) -> 
         i.ToString() |> should equal instr
         is.Position.Offset |> should equal bs.Length
@@ -265,7 +268,7 @@ let ``pinstruction tests`` (bs, instr) : unit =
 let ``pinstruction parse-compile round trip``() = 
     // TODO: P2D: Implement fully when we are able to compile Instruction back to bytes
     let law (s : uint16) (o : uint16) = 
-        match runOnInput (pinstruction (s, o) is) ([| 0x37uy |] |> fromBytes) with
+        match runOnInput (pinstruction (s, o) is) ([| 0x37uy |] |> fromBytes ()) with
         | Success(i, is) -> i.ToString() = (sprintf "%04X:%04X AAA\t " s o) && is.Position.Offset = 1
         | Failure _ -> false
     Check.QuickThrowOnFailure law

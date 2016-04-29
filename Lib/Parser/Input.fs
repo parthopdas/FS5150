@@ -10,13 +10,14 @@ module TextInput =
     let initialPos = { Offset = 0 }
     let incrLine pos = { Offset = pos.Offset + 1 }
     
-    type InputState = 
+    type InputState<'a> = 
         { Bytes : byte []
-          Position : Position }
+          Position : Position
+          UserState : 'a }
         override x.ToString() = sprintf "%O %s" x.Position (new String(x.Bytes |> Array.map char))
     
     /// fromStr :: string -> InputState
-    let fromStr s = 
+    let fromStr us s = 
         let lines = 
             match s with
             | s when String.IsNullOrEmpty(s) -> [||]
@@ -25,12 +26,14 @@ module TextInput =
                 |> Seq.map byte
                 |> Seq.toArray
         { Bytes = lines
-          Position = initialPos }
+          Position = initialPos
+          UserState = us }
     
     /// fromBytes :: byte[] -> InputState
-    let fromBytes bytes = 
+    let fromBytes us bytes = 
         { Bytes = bytes
-          Position = initialPos }
+          Position = initialPos
+          UserState = us }
     
     /// nextByte :: InputState -> InputState * byte option
     let nextByte input = 
