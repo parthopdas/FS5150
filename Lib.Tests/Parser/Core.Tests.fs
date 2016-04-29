@@ -110,3 +110,11 @@ let ``get UserState test`` () =
     res
     |> printResult
     |> should equal "('a', 'o') [State: (0, 1) aa]"
+
+[<Fact>]
+let ``get input stream chunk test`` () = 
+    let parser = pchar 'a' >>. getInputStreamChunk (1, 3) |>> (Array.map char >> (fun cs -> new string(cs)))
+    let res = "a1bc" |> run parser ()
+    res
+    |> printResult
+    |> should equal "\"1bc\" [State: (0, 1) a1bc]"
