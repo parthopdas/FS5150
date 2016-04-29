@@ -1,5 +1,7 @@
 ﻿namespace Lib.Domain
 
+open System
+
 type Word8 = uint8
 
 type Word16 = uint16
@@ -135,7 +137,10 @@ type Argument =
 type Instruction = 
     { Address : Address
       Mneumonic : Mneumonic
-      Args : Argument list }
+      Args : Argument list
+      Bytes : Word8[] }
     override x.ToString() = 
-        sprintf "%O %O\t %O" 
-            x.Address x.Mneumonic (System.String.Join(", ", x.Args |> List.map (fun e -> e.ToString()) |> Array.ofList))
+        let fmtBytes = sprintf "%s%s" (String.Join("", x.Bytes |> Array.map (sprintf "%02X"))) (new String(' ', 2 * (6 - x.Bytes.Length)))
+        let fmtArgs = (String.Join(", ", x.Args |> List.map (fun e -> e.ToString()) |> Array.ofList))
+        sprintf "%O %s  %O\t %O" 
+            x.Address fmtBytes x.Mneumonic fmtArgs

@@ -15,6 +15,9 @@ module TextInput =
           Position : Position
           UserState : 'a }
         override x.ToString() = sprintf "%O %s" x.Position (new String(x.Bytes |> Array.map char))
+
+    let getInputChunk is s e =
+        Array.sub is.Bytes s.Offset (e.Offset - s.Offset)
     
     /// fromStr :: string -> InputState
     let fromStr us s = 

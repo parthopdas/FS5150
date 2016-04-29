@@ -75,10 +75,10 @@ module Core =
         { ParserFn = innerFn
           Label = "getPosition" }
 
-    /// getInputStreamChunk :: Parser<byte[], 'a>
-    let getInputStreamChunk (s, c) = 
+    /// getInputChunk :: Parser<byte[], 'a>
+    let getInputChunk s c = 
         let innerFn is =
-            Success(Array.sub is.Bytes s c, is)
+            Success(getInputChunk is s c, is)
         { ParserFn = innerFn
           Label = "getPosition" }
 

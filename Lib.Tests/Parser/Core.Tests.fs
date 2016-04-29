@@ -88,7 +88,7 @@ let ``andThenOrElse with bad input`` (i, m) =
     |> should equal m
 
 [<Fact>]
-let ``getPosition test`` () = 
+let ``getPosition test``() = 
     let parseAWithPos = getPosition .>>. parseA .>>. getPosition
     let res = "ABC" |> run parseAWithPos ()
     res
@@ -96,24 +96,26 @@ let ``getPosition test`` () =
     |> should equal "(({Offset = 0;}, 'A'), {Offset = 1;}) [State: (0, 1) ABC]"
 
 [<Fact>]
-let ``reset and set UserState test`` () = 
-    let parser = setUserState (fun _ -> []) .>>. pchar 'a' >>= (fun (_, c) -> setUserState (fun us -> c::us)) 
-    let res = "aa" |> run parser ['o']
+let ``reset and set UserState test``() = 
+    let parser = setUserState (fun _ -> []) .>>. pchar 'a' >>= (fun (_, c) -> setUserState (fun us -> c :: us))
+    let res = "aa" |> run parser [ 'o' ]
     res
     |> printResult
     |> should equal "['a'] [State: (0, 1) aa]"
 
 [<Fact>]
-let ``get UserState test`` () = 
-    let parser = pchar 'a' .>>. getUserState 
+let ``get UserState test``() = 
+    let parser = pchar 'a' .>>. getUserState
     let res = "aa" |> run parser 'o'
     res
     |> printResult
     |> should equal "('a', 'o') [State: (0, 1) aa]"
 
 [<Fact>]
-let ``get input stream chunk test`` () = 
-    let parser = pchar 'a' >>. getInputStreamChunk (1, 3) |>> (Array.map char >> (fun cs -> new string(cs)))
+let ``get input stream chunk test``() = 
+    let parser = 
+        pchar 'a' >>. getInputChunk { Offset = 1 } { Offset = 4 } 
+        |>> (Array.map char >> (fun cs -> new string(cs)))
     let res = "a1bc" |> run parser ()
     res
     |> printResult

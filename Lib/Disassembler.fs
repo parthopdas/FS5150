@@ -137,10 +137,12 @@ module Disassembler =
     let pword8<'a> : Parser<Word8, 'a> = satisfy (fun _ -> true) "word8" <@> "word8"
     
     /// pword16 :: Parser<Word16>
-    let pword16<'a> : Parser<Word16, 'a> = pword8 .>>. pword8 |>> (fun (a, b) -> ((uint64) b <<< 8) + (uint64) a |> uint16) <@> "word16"
+    let pword16<'a> : Parser<Word16, 'a> = 
+        pword8 .>>. pword8 |>> (fun (a, b) -> ((uint64) b <<< 8) + (uint64) a |> uint16) <@> "word16"
     
     /// pword32 :: Parser<Word32>
-    let pword32<'a> : Parser<Word32, 'a> = pword16 .>>. pword16 |>> (fun (a, b) -> ((uint64) b <<< 16) + (uint64) a |> uint32) <@> "word32"
+    let pword32<'a> : Parser<Word32, 'a> = 
+        pword16 .>>. pword16 |>> (fun (a, b) -> ((uint64) b <<< 16) + (uint64) a |> uint32) <@> "word32"
     
     /// pmodRegRm :: Parser<ModRegRM>
     let pmodRegRm<'a> : Parser<ModRegRM, 'a> = 
@@ -257,16 +259,17 @@ module Disassembler =
             | [ 'M'; 'p' ] -> parseDrefOrReg 'p'
             | _ -> failwithf "DESC value = %A is unexpected." desc
         (match descRegMap |> Map.tryFind desc with
-        | Some r -> 
-            r
-            |> ArgRegister
-            |> appendArg
-            |> withMrm
-            |> returnP
-        | None -> 
-            desc
-            |> Seq.toList
-            |> parseNonRegArgs) <@> "Argument"
+         | Some r -> 
+             r
+             |> ArgRegister
+             |> appendArg
+             |> withMrm
+             |> returnP
+         | None -> 
+             desc
+             |> Seq.toList
+             |> parseNonRegArgs)
+        <@> "Argument"
     
     /// popCode :: InstructionSet -> Parser<string * string[]>
     let popCode is = 
@@ -316,9 +319,16 @@ module Disassembler =
             |> popCode
             >>= parseMAndAs
         
-        let createInstruction a (m, args) = 
+        let createInstruction a (m, args) bs = 
             { Address = a
               Mneumonic = m
-              Args = args }
+              Args = args
+              Bytes = bs }
         
-        createInstruction <!> parseAddress <*> parseMneumonicAndArgs <@> "Instruction"
+        (getPosition >>= (fun p -> setUserState (fun _ -> p))) 
+        >>. (createInstruction 
+            <!> parseAddress 
+            <*> parseMneumonicAndArgs 
+            <*> (getUserState 
+                .>>. getPosition >>= (fun (s, e) -> getInputChunk s e))) 
+        <@> "Instruction"

@@ -236,12 +236,12 @@ let ``popCode tests`` (bs, oc, args, hasMrm) : unit =
 
 let ``pinstruction tests data`` : obj array seq = 
     seq {    
-        (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 AAA\t ") 
-        (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 ADD\t AL, FF") 
-        (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 CALL\t F00D") 
-        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 ADC\t [DDF0], BP") 
-        (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 JMP\t BAAD:F00D") 
-        (* 6 Args + GRP *)  yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 ADD\t [0134], 0032") 
+        (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 37            AAA\t ") 
+        (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 04FF          ADD\t AL, FF") 
+        (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 E80DF0        CALL\t F00D") 
+        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD      ADC\t [DDF0], BP") 
+        (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 EA0DF0ADBA    JMP\t BAAD:F00D") 
+        (* 6 Args + GRP *)  yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 810634013200  ADD\t [0134], 0032") 
     }
     |> Seq.map (fun (a, b) -> 
            [| box a
@@ -258,7 +258,7 @@ let is =
 [<Theory>]
 [<MemberData("pinstruction tests data")>]
 let ``pinstruction tests`` (bs, instr) : unit = 
-    match runOnInput (pinstruction (0us, 0us) is) (bs |> fromBytes ()) with
+    match runOnInput (pinstruction (0us, 0us) is) (bs |> fromBytes { Offset = 0 }) with
     | Success(i, is) -> 
         i.ToString() |> should equal instr
         is.Position.Offset |> should equal bs.Length
@@ -267,8 +267,10 @@ let ``pinstruction tests`` (bs, instr) : unit =
 [<Fact>]
 let ``pinstruction parse-compile round trip``() = 
     // TODO: P2D: Implement fully when we are able to compile Instruction back to bytes
+    // It can be done now that we are tracking the bytes as well.
+    // As soon as we have figured out how to get a generator for multiple args, implement it.
     let law (s : uint16) (o : uint16) = 
-        match runOnInput (pinstruction (s, o) is) ([| 0x37uy |] |> fromBytes ()) with
-        | Success(i, is) -> i.ToString() = (sprintf "%04X:%04X AAA\t " s o) && is.Position.Offset = 1
+        match runOnInput (pinstruction (s, o) is) ([| 0x37uy |] |> fromBytes { Offset = 0 }) with
+        | Success(i, is) -> i.ToString() = (sprintf "%04X:%04X 37            AAA\t " s o) && is.Position.Offset = 1
         | Failure _ -> false
     Check.QuickThrowOnFailure law

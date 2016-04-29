@@ -29,16 +29,15 @@ let main argv =
         0xC4uy; 0b01000000uy; 0xF0uy;
         0xC5uy; 0b01000000uy; 0xF0uy;
         0xDDuy;
-        0x22uy; 0xDEuy; 0xefuy; 0xdduy; 0x01uy; 0xC4uy; 0xDDuy; 0x71uy; 0x80uy; 0xaduy; 0xbauy; 0x0duy; 0xf0uy; 0xDDuy |] |> fromBytes
+        0x22uy; 0xDEuy; 0xefuy; 0xdduy; 0x01uy; 0xC4uy; 0xDDuy; 0x71uy; 0x80uy; 0xaduy; 0xbauy; 0x0duy; 0xf0uy; 0xDDuy |] |> fromBytes { Offset = 0 }
 
-//    let rec loop (s, o) input =
-//        match runOnInput (pinstruction (s, o) instrs) input with
-//        | Success(i, input) -> 
-//            printfn "%O" i
-//            loop input
-//        | Failure(pl, pe, pp) -> 
-//            printf "Parse failed: %A %A %A" pl pe pp
-//    loop (0us, 0us)
-//    input
+    let rec loop (s, o) input =
+        match runOnInput (pinstruction (s, o) instrs) input with
+        | Success(i, input) -> 
+            printfn "%O" i
+            loop (s, o) input
+        | Failure(pl, pe, pp) -> 
+            printf "Parse failed: %A %A %A" pl pe pp
+    loop (0us, 0us) input
 
     0 // return an integer exit code
