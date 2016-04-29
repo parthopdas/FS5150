@@ -9,7 +9,13 @@ module Core =
     
     type ParserLabel = string
     
-    type ParserError = string
+    type ParserError = 
+        | MoreInputNeeded
+        | ParserError of string
+        override x.ToString() =
+            match x with
+            | MoreInputNeeded -> "No more input"
+            | ParserError msg -> msg
     
     type Result<'a> = 
         | Success of 'a
@@ -29,12 +35,11 @@ module Core =
             let is', byteOpt = nextByte is
             match byteOpt with
             | None -> 
-                let msg = "No more input"
-                Failure(label, msg, parserPositionFromInputState is)
+                Failure(label, MoreInputNeeded, parserPositionFromInputState is)
             | Some first -> 
                 if predicate first then Success(first, is')
                 else 
-                    let msg = sprintf "Unexpected '%c'" (first |> char)
+                    let msg = sprintf "Unexpected '%c'" (first |> char) |> ParserError
                     Failure(label, msg, parserPositionFromInputState is)
         { ParserFn = innerFn
           Label = label }
@@ -69,4 +74,4 @@ module Core =
     let printResult = 
         function 
         | Success(a, is) -> sprintf "%A [State: %O]" a is
-        | Failure(l, m, p) -> sprintf "%O: Error parsing %s. %s" p l m
+        | Failure(l, m, p) -> sprintf "%O: Error parsing %s. %O" p l m

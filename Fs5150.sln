@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fs5150", "Fs5150\Fs5150.fsproj", "{8EFA0A7F-31BD-4FAC-A59F-5C21D5E6B71F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{7EBC142A-9932-4B1E-A1F0-FA393DE2C508}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7EBC142A-9932-4B1E-A1F0-FA393DE2C508}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7EBC142A-9932-4B1E-A1F0-FA393DE2C508}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EFA0A7F-31BD-4FAC-A59F-5C21D5E6B71F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EFA0A7F-31BD-4FAC-A59F-5C21D5E6B71F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EFA0A7F-31BD-4FAC-A59F-5C21D5E6B71F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EFA0A7F-31BD-4FAC-A59F-5C21D5E6B71F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
