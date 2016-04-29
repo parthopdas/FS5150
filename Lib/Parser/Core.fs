@@ -101,4 +101,4 @@ module Core =
     let printResult = 
         function 
         | Success(a, is) -> sprintf "%A [State: %O]" a is
-        | Failure(l, m, p) -> sprintf "%O: Error parsing %s. %O" p l m
+        | Failure(l, m, p) -> sprintf "%s: Error parsing %s. %O" (p.ToString()) l m

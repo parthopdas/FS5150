@@ -142,5 +142,5 @@ type Instruction =
     override x.ToString() = 
         let fmtBytes = sprintf "%s%s" (String.Join("", x.Bytes |> Array.map (sprintf "%02X"))) (new String(' ', 2 * (6 - x.Bytes.Length)))
         let fmtArgs = (String.Join(", ", x.Args |> List.map (fun e -> e.ToString()) |> Array.ofList))
-        sprintf "%O %s  %O\t %O" 
+        sprintf "%O %s %O\t%O" 
             x.Address fmtBytes x.Mneumonic fmtArgs

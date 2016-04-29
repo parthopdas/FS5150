@@ -5,7 +5,7 @@ module TextInput =
     
     type Position = 
         { Offset : int }
-        override x.ToString() = sprintf "(0, %i)" x.Offset
+        override x.ToString() = sprintf "%i" x.Offset
     
     let initialPos = { Offset = 0 }
     let incrLine pos = { Offset = pos.Offset + 1 }
@@ -48,7 +48,7 @@ module TextInput =
     type ParserPosition = 
         { CurrentBytes : byte []
           CurrentOffset : int }
-        override x.ToString() = sprintf "(%i, %i): %s" 0 x.CurrentOffset (new String(x.CurrentBytes |> Array.map char))
+        override x.ToString() = sprintf "%i: %s" x.CurrentOffset (new String(x.CurrentBytes |> Array.map char))
     
     let parserPositionFromInputState input = 
         { CurrentBytes = input.Bytes

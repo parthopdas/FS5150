@@ -236,12 +236,12 @@ let ``popCode tests`` (bs, oc, args, hasMrm) : unit =
 
 let ``pinstruction tests data`` : obj array seq = 
     seq {    
-        (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 37            AAA\t ") 
-        (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 04FF          ADD\t AL, FF") 
-        (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 E80DF0        CALL\t F00D") 
-        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD      ADC\t [DDF0], BP") 
-        (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 EA0DF0ADBA    JMP\t BAAD:F00D") 
-        (* 6 Args + GRP *)  yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 810634013200  ADD\t [0134], 0032") 
+        (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 37           AAA\t") 
+        (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 04FF         ADD\tAL, FF") 
+        (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 E80DF0       CALL\tF00D") 
+        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD     ADC\t[DDF0], BP") 
+        (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 EA0DF0ADBA   JMP\tBAAD:F00D") 
+        (* 6 Args + GRP *)  yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 810634013200 ADD\t[0134], 0032") 
     }
     |> Seq.map (fun (a, b) -> 
            [| box a
@@ -271,6 +271,6 @@ let ``pinstruction parse-compile round trip``() =
     // As soon as we have figured out how to get a generator for multiple args, implement it.
     let law (s : uint16) (o : uint16) = 
         match runOnInput (pinstruction (s, o) is) ([| 0x37uy |] |> fromBytes { Offset = 0 }) with
-        | Success(i, is) -> i.ToString() = (sprintf "%04X:%04X 37            AAA\t " s o) && is.Position.Offset = 1
+        | Success(i, is) -> i.ToString() = (sprintf "%04X:%04X 37           AAA\t" s o) && is.Position.Offset = 1
         | Failure _ -> false
     Check.QuickThrowOnFailure law

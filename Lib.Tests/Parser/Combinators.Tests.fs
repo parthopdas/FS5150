@@ -14,7 +14,7 @@ let ``mapP - from char to int``() =
              |>> (Char.GetNumericValue >> int)
     run p1 () "1BC"
     |> printResult
-    |> should equal "1 [State: (0, 1) 1BC]"
+    |> should equal "1 [State: 1 1BC]"
 
 [<Fact>]
 let ``Functor Law - identity``() = 
@@ -56,12 +56,12 @@ let ``sequence - list of parsers - good input``() =
     let res = run parseABC () "ABCDE"
     res
     |> printResult
-    |> should equal "\"ABC\" [State: (0, 3) ABCDE]"
+    |> should equal "\"ABC\" [State: 3 ABCDE]"
 
 [<Theory>]
-[<InlineData("A|CDE", "(0, 1): A|CDE: Error parsing ABC. Unexpected '|'")>]
-[<InlineData("AB|DE", "(0, 2): AB|DE: Error parsing ABC. Unexpected '|'")>]
-[<InlineData("ACBDE", "(0, 1): ACBDE: Error parsing ABC. Unexpected 'C'")>]
+[<InlineData("A|CDE", "1: A|CDE: Error parsing ABC. Unexpected '|'")>]
+[<InlineData("AB|DE", "2: AB|DE: Error parsing ABC. Unexpected '|'")>]
+[<InlineData("ACBDE", "1: ACBDE: Error parsing ABC. Unexpected 'C'")>]
 let ``sequence - list of parsers - bad input`` (i, m) = 
     let res = run parseABC () i
     res
@@ -69,18 +69,18 @@ let ``sequence - list of parsers - bad input`` (i, m) =
     |> should equal m
 
 [<Theory>]
-[<InlineData("ABC", 0, 0, "")>]
-[<InlineData(" \tABC", 0, 2, " \t")>]
-[<InlineData("\t \n  ABC", 0, 5, "\t \n  ")>]
-let ``many - extract whitespaces`` (i, r, c, w) = 
+[<InlineData("ABC", 0, "")>]
+[<InlineData(" \tABC", 2, " \t")>]
+[<InlineData("\t \n  ABC", 5, "\t \n  ")>]
+let ``many - extract whitespaces`` (i, c, w) = 
     let res = run pwhitespace () i
     res
     |> printResult
-    |> should equal (sprintf "\"%s\" [State: (%d, %d) %s]" w r c i)
+    |> should equal (sprintf "\"%s\" [State: %d %s]" w c i)
 
 [<Theory>]
-[<InlineData("100ABC", "100 [State: (0, 3) 100ABC]")>]
-[<InlineData("991", "991 [State: (0, 3) 991]")>]
+[<InlineData("100ABC", "100 [State: 3 100ABC]")>]
+[<InlineData("991", "991 [State: 3 991]")>]
 let ``many1 - extract integer successfully`` (i, r) = 
     let res = run pinteger () i
     res
@@ -88,7 +88,7 @@ let ``many1 - extract integer successfully`` (i, r) =
     |> should equal r
 
 [<Theory>]
-[<InlineData("ABC", "(0, 0): ABC: Error parsing integer. Unexpected 'A'")>]
+[<InlineData("ABC", "0: ABC: Error parsing integer. Unexpected 'A'")>]
 let ``many1 - unable to extract integer`` (i, m) = 
     let res = run pinteger () i
     res
@@ -96,8 +96,8 @@ let ``many1 - unable to extract integer`` (i, m) =
     |> should equal m
 
 [<Theory>]
-[<InlineData("100ABC", "100 [State: (0, 3) 100ABC]")>]
-[<InlineData("-991", "-991 [State: (0, 4) -991]")>]
+[<InlineData("100ABC", "100 [State: 3 100ABC]")>]
+[<InlineData("-991", "-991 [State: 4 -991]")>]
 let ``opt - extract signed integer successfully`` (i, r) = 
     let res = run psinteger () i
     res
@@ -110,7 +110,7 @@ let ``throwaway left``() =
     let res = run ab_cd () "AB \t\nCD..."
     res
     |> printResult
-    |> should equal "(\"AB\", \"CD\") [State: (0, 7) AB \t\nCD...]"
+    |> should equal "(\"AB\", \"CD\") [State: 7 AB \t\nCD...]"
 
 [<Fact>]
 let ``throwaway right``() = 
@@ -118,7 +118,7 @@ let ``throwaway right``() =
     let res = run ab_cd () "AB \t\nCD..."
     res
     |> printResult
-    |> should equal "(\"AB\", \"CD\") [State: (0, 7) AB \t\nCD...]"
+    |> should equal "(\"AB\", \"CD\") [State: 7 AB \t\nCD...]"
 
 [<Fact>]
 let ``between tests``() = 
@@ -127,29 +127,28 @@ let ``between tests``() =
     let res = run ab_cd () "\"-114\"---"
     res
     |> printResult
-    |> should equal "-114 [State: (0, 6) \"-114\"---]"
+    |> should equal "-114 [State: 6 \"-114\"---]"
 
 let comma = pchar ','
 
 let ``sepBy1 successful tests data`` : obj array seq = 
     seq { 
-        yield ("1;", 0, 1, [ '1' ])
-        yield ("1,2,3+-", 0, 5, [ '1'; '2'; '3' ])
+        yield ("1;", 1, [ '1' ])
+        yield ("1,2,3+-", 5, [ '1'; '2'; '3' ])
     }
-    |> Seq.map (fun (a, b, c, d) -> 
+    |> Seq.map (fun (a, b, c) -> 
            [| box a
               box b
-              box c
-              box d |])
+              box c |])
 
 [<Theory>]
 [<MemberData("sepBy1 successful tests data")>]
-let ``sepBy1 successful tests`` (i, l, c, r) : unit = 
+let ``sepBy1 successful tests`` (i, c, r) : unit = 
     let oneOrMoreDigitList = sepBy1 pdigit comma
     let res = run oneOrMoreDigitList () i
     res
     |> printResult
-    |> should equal (sprintf "%A [State: (%d, %d) %s]" r l c i)
+    |> should equal (sprintf "%A [State: %d %s]" r c i)
 
 [<Fact>]
 let ``sepBy1 failure tests``() = 
@@ -157,28 +156,27 @@ let ``sepBy1 failure tests``() =
     let res = run oneOrMoreDigitList () "Z;"
     res
     |> printResult
-    |> should equal "(0, 0): Z;: Error parsing digit. Unexpected 'Z'"
+    |> should equal "0: Z;: Error parsing digit. Unexpected 'Z'"
 
 let ``sepBy test data`` : obj array seq = 
     seq { 
-        yield ("1;", 0, 1, [ '1' ])
-        yield ("1,2,3+-", 0, 5, [ '1'; '2'; '3' ])
-        yield ("+-", 0, 0, [])
+        yield ("1;", 1, [ '1' ])
+        yield ("1,2,3+-", 5, [ '1'; '2'; '3' ])
+        yield ("+-", 0, [])
     }
-    |> Seq.map (fun (a, b, c, d) -> 
+    |> Seq.map (fun (a, b, c) -> 
            [| box a
               box b
-              box c
-              box d |])
+              box c |])
 
 [<Theory>]
 [<MemberData("sepBy test data")>]
-let ``sepBy tests`` (i, l, c, r) : unit = 
+let ``sepBy tests`` (i, c, r) : unit = 
     let zeroOrMoreDigitList = sepBy pdigit comma
     let res = run zeroOrMoreDigitList () i
     res
     |> printResult
-    |> should equal (sprintf "%A [State: (%d, %d) %s]" r l c i)
+    |> should equal (sprintf "%A [State: %d %s]" r c i)
 
 [<Fact>]
 let ``Monad Law - Left identity - Wrap and unwrap round trip``() = 
