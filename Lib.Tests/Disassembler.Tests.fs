@@ -4,7 +4,7 @@ open Xunit
 open FsCheck
 open FsUnit.Xunit
 open Lib.Disassembler
-open Lib.Domain
+open Lib.Domain.InstructionSet
 open Lib.Parser.Core
 open Lib.Parser.TextInput
 open System
@@ -258,7 +258,8 @@ let is =
 [<Theory>]
 [<MemberData("pinstruction tests data")>]
 let ``pinstruction tests`` (bs, instr) : unit = 
-    match runOnInput (pinstruction (0us, 0us) is) (bs |> fromBytes { Offset = 0 }) with
+    let csip = { Segment = 0us; Offset = 0us }
+    match runOnInput (pinstruction csip is) (bs |> fromBytes { Offset = 0 }) with
     | Success(i, is) -> 
         i.ToString() |> should equal instr
         is.Position.Offset |> should equal bs.Length
@@ -269,8 +270,8 @@ let ``pinstruction parse-compile round trip``() =
     // TODO: P2D: Implement fully when we are able to compile Instruction back to bytes
     // It can be done now that we are tracking the bytes as well.
     // As soon as we have figured out how to get a generator for multiple args, implement it.
-    let law (s : uint16) (o : uint16) = 
-        match runOnInput (pinstruction (s, o) is) ([| 0x37uy |] |> fromBytes { Offset = 0 }) with
-        | Success(i, is) -> i.ToString() = (sprintf "%04X:%04X 37           AAA\t" s o) && is.Position.Offset = 1
+    let law csip = 
+        match runOnInput (pinstruction csip is) ([| 0x37uy |] |> fromBytes { Offset = 0 }) with
+        | Success(i, is) -> i.ToString() = (sprintf "%O 37           AAA\t" csip) && is.Position.Offset = 1
         | Failure _ -> false
     Check.QuickThrowOnFailure law

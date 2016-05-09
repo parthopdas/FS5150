@@ -1,6 +1,6 @@
 ﻿module Lib.InstructionSetLoader
 
-open Lib.Domain
+open Lib.Domain.InstructionSet
 open System
 open System.Globalization
 

@@ -102,3 +102,31 @@ module Core =
         function 
         | Success(a, is) -> sprintf "%A [State: %O]" a is
         | Failure(l, m, p) -> sprintf "%s: Error parsing %s. %O" (p.ToString()) l m
+
+    module Result = 
+
+        /// returnR: 'a -> Result<'a>
+        let returnR x = 
+            Success x
+
+        /// bindR: ('a -> Result<'b>) -> Result<'a> -> Result<'b>
+        let bindR f xResult = 
+            match xResult with
+            | Success x ->
+                f x
+            | Failure(l, e, p) -> Failure(l, e, p)
+
+        let (>>=) x f = bindR f x
+
+        /// mapR: ('a -> 'b) -> Result<'a> -> Result<'b>
+        let mapR f xResult = 
+            xResult >>= (f >> returnR) 
+
+        let (<!>) = mapR
+        let (|>>) x f = mapR f x
+
+        /// applyR: Result<('a -> 'b)> -> Result<'a> -> Result<'b>
+        let applyR fResult xResult = 
+            fResult >>= (fun f -> xResult >>= (f >> returnR)) 
+
+        let (<*>) = applyR

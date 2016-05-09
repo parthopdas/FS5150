@@ -1,11 +1,10 @@
 ﻿namespace Lib
 
-open FSharpx.Text
-open Lib.Parser.Combinators
-open Lib.Parser.Core
-
 module Disassembler = 
-    open Lib.Domain
+    open FSharpx.Text
+    open Lib.Domain.InstructionSet
+    open Lib.Parser.Combinators
+    open Lib.Parser.Core
     
     let private modRegIndexMap = 
         [ (0b000uy, MregT0)
@@ -297,12 +296,9 @@ module Disassembler =
         >>= parseOcg
         <@> "OpCode"
     
-    /// pinstruction :: Word16 * Word16 -> InstructionSet -> Parser<Instruction>
-    let pinstruction (s, o) is = 
-        let parseAddress = 
-            { Segment = s
-              Offset = o }
-            |> returnP
+    /// pinstruction :: Address -> InstructionSet -> Parser<Instruction>
+    let pinstruction csip is = 
+        let parseAddress = returnP csip
         
         let parseMneumonicAndArgs = 
             let parseMAndAs (oc, ocas, mrm) = 
@@ -326,9 +322,5 @@ module Disassembler =
               Bytes = bs }
         
         (getPosition >>= (fun p -> setUserState (fun _ -> p))) 
-        >>. (createInstruction 
-            <!> parseAddress 
-            <*> parseMneumonicAndArgs 
-            <*> (getUserState 
-                .>>. getPosition >>= (fun (s, e) -> getInputChunk s e))) 
-        <@> "Instruction"
+        >>. (createInstruction <!> parseAddress <*> parseMneumonicAndArgs 
+             <*> (getUserState .>>. getPosition >>= (fun (s, e) -> getInputChunk s e))) <@> "Instruction"

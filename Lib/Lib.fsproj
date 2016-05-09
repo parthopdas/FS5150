@@ -62,7 +62,8 @@
     <Compile Include="Parser\Core.fs" />
     <Compile Include="Parser\Combinators.fs" />
     <Compile Include="Parser\Tokens.fs" />
-    <Compile Include="Domain\Model.fs" />
+    <Compile Include="Domain\InstructionSet.fs" />
+    <Compile Include="Domain\Motherboard.fs" />
     <Compile Include="InstructionSetLoader.fs" />
     <Compile Include="Disassembler.fs" />
     <None Include="app.config" />
