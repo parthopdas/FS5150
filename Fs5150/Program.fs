@@ -19,21 +19,21 @@ type DbgAgent() =
                 let newState = 
                     match command with
                     | Step(rc) -> 
-                        let mb' = mb |> Result.bindR CPU.stepCPU
+                        let mb' = mb |> Result.bind CPU.stepCPU
                         mb'
-                        |> Result.bindR CPU.dumpMotherboard
+                        |> Result.bind CPU.dumpMotherboard
                         |> rc.Reply
                         mb'
                     | Dump(rc) -> 
                         mb
-                        |> Result.bindR CPU.dumpMotherboard
+                        |> Result.bind CPU.dumpMotherboard
                         |> rc.Reply
                         mb
                 return! loop newState
             }
         ()
         |> initMotherBoard
-        |> Result.returnR
+        |> Result.``return``
         |> loop
     
     let mailboxProc = MailboxProcessor.Start processor

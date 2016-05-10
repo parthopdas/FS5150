@@ -36,6 +36,7 @@ module CPU =
             | _ -> failwithf "Memory area '%s' not accessible" (addr.ToString())
         innerFn : State<Word8,Motherboard> 
 
+    /// readCSIP : State<Address,Motherboard>
     let readCSIP =
         let innerFn mb =
             { Segment = mb.CPU.CS
@@ -74,22 +75,22 @@ module CPU =
             mb
             |> State.eval fetchInstr 
             ||> decodeInstr
-            |> Result.mapR fst
-            |> Result.mapR toStr
+            |> Result.map fst
+            |> Result.map toStr
         
         let rmbstr = 
             mb
             |> toStr
-            |> Result.returnR
+            |> Result.``return``
         
-        Result.liftR2 (sprintf "%s\n%s") rmbstr rinstr
+        Result.lift2 (sprintf "%s\n%s") rmbstr rinstr
     
     /// stepCPU :: Motherboard -> Result<Motherboard> 
     let stepCPU mb = 
         mb
         |> State.eval fetchInstr 
         ||> decodeInstr
-        |> Result.mapR fst
-        |> Result.bindR (executeInstr >> Result.returnR)
+        |> Result.map fst
+        |> Result.bind (executeInstr >> Result.``return``)
         // TODO: P2D: Is short circuting this early OK?
-        |> Result.bindR (fun s -> State.exec s mb |> Result.returnR)
+        |> Result.bind (fun s -> State.exec s mb |> Result.``return``)

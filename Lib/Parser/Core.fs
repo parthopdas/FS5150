@@ -105,30 +105,30 @@ module Core =
 
     module Result = 
 
-        /// returnR: 'a -> Result<'a>
-        let returnR x = 
+        /// ``return`` :: 'a -> Result<'a>
+        let ``return`` x = 
             Success x
 
-        /// bindR: ('a -> Result<'b>) -> Result<'a> -> Result<'b>
-        let bindR f xResult = 
+        /// bind :: ('a -> Result<'b>) -> Result<'a> -> Result<'b>
+        let bind f xResult = 
             match xResult with
             | Success x ->
                 f x
             | Failure(l, e, p) -> Failure(l, e, p)
 
-        let (>>=) x f = bindR f x
+        let (>>=) x f = bind f x
 
-        /// mapR: ('a -> 'b) -> Result<'a> -> Result<'b>
-        let mapR f xResult = 
-            xResult >>= (f >> returnR) 
+        /// map :: ('a -> 'b) -> Result<'a> -> Result<'b>
+        let map f xResult = 
+            xResult >>= (f >> ``return``) 
 
-        let (<!>) = mapR
-        let (|>>) x f = mapR f x
+        let (<!>) = map
+        let (|>>) x f = map f x
 
-        /// applyR: Result<('a -> 'b)> -> Result<'a> -> Result<'b>
-        let applyR fResult xResult = 
-            fResult >>= (fun f -> xResult >>= (f >> returnR)) 
+        /// apply :: Result<('a -> 'b)> -> Result<'a> -> Result<'b>
+        let apply fResult xResult = 
+            fResult >>= (fun f -> xResult >>= (f >> ``return``)) 
 
-        let (<*>) = applyR
+        let (<*>) = apply
 
-        let liftR2 f x1 x2 = returnR f <*> x1 <*> x2
+        let lift2 f x1 x2 = ``return`` f <*> x1 <*> x2
