@@ -59,7 +59,7 @@ module Disassembler =
           (MregT7, 7uy) ]
         |> Map.ofList
     
-    let descRegMap = 
+    let private descRegMap = 
         [ ("eAX", AX)
           ("eCX", CX)
           ("eBX", BX)
@@ -90,7 +90,7 @@ module Disassembler =
           ("DH", DH) ]
         |> Map.ofList
     
-    let aocRegMap = 
+    let private aocRegMap = 
         [ (('b', MregT0), AL)
           (('b', MregT1), CL)
           (('b', MregT2), DL)
@@ -125,7 +125,7 @@ module Disassembler =
           (('p', MregT7), DI) ]
         |> Map.ofList
     
-    let modRegMap = 
+    let private modRegMap = 
         [ (MregT0, ES)
           (MregT1, CS)
           (MregT2, SS)

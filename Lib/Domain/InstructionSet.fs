@@ -145,3 +145,4 @@ module InstructionSet =
             let fmtArgs = (String.Join(", ", x.Args |> List.map (fun e -> e.ToString()) |> Array.ofList))
             sprintf "%O %s %O\t%O" 
                 x.Address fmtBytes x.Mneumonic fmtArgs
+        member x.Length : Word16 = uint16 x.Bytes.Length

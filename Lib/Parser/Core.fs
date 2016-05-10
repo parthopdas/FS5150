@@ -130,3 +130,5 @@ module Core =
             fResult >>= (fun f -> xResult >>= (f >> returnR)) 
 
         let (<*>) = applyR
+
+        let liftR2 f x1 x2 = returnR f <*> x1 <*> x2

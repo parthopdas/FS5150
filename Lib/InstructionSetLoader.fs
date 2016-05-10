@@ -44,3 +44,6 @@ let loadInstructionSet (text : string) =
     
     { OpCodes = opc
       OpCodeGroups = opcx }
+
+let instrLen instr : Word16 =
+    uint16 instr.Bytes.Length
