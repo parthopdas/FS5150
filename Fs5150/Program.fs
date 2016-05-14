@@ -33,7 +33,7 @@ type DbgAgent() =
             }
         ()
         |> initMotherBoard
-        |> Result.``return``
+        |> Result.unit
         |> loop
     
     let mailboxProc = MailboxProcessor.Start processor
@@ -44,12 +44,12 @@ type DbgAgent() =
 let main _ = 
     printfn "IBM 5150 Emulator. (c) 2016, Partho P. Das"
     let dbg = DbgAgent()
-    printf "\n%A" (dbg.Dump())
+    printf "\n%s" (dbg.Dump().ToString())
     let rec loop() = 
         printf "\n[s, d] - "
         match Console.ReadKey().Key with
-        | ConsoleKey.S -> printf "\n%A" (dbg.Step())
-        | ConsoleKey.D -> printf "\n%A" (dbg.Dump())
+        | ConsoleKey.S -> printf "\n%s" (dbg.Step().ToString())
+        | ConsoleKey.D -> printf "\n%s" (dbg.Dump().ToString())
         | _ -> ()
         loop()
     loop()

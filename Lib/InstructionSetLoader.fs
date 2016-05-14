@@ -29,10 +29,12 @@ let loadInstructionSet (text : string) =
         | x :: xs -> (newOce x, xs)
     
     let (opcxLines, opcLines) = 
-        text.Split([| '\r'; '\n' |], StringSplitOptions.RemoveEmptyEntries)
-        |> Array.filter (Strings.startsWith "*" >> not)
-        |> Array.toList
-        |> List.partition (fun s -> s.StartsWith("GRP"))
+        text
+        |> Strings.toLines
+        |> Seq.filter (Strings.isNullOrEmpty >> not)
+        |> Seq.filter (Strings.startsWith "*" >> not)
+        |> Seq.toList
+        |> List.partition (Strings.startsWith "GRP")
     
     let opc = 
         opcLines

@@ -5,6 +5,12 @@ module Disassembler =
     open Lib.Domain.InstructionSet
     open Lib.Parser.Combinators
     open Lib.Parser.Core
+    open Microsoft.FSharp.Reflection
+    
+    let private fromString<'a> (s : string) = 
+        match FSharpType.GetUnionCases typeof<'a> |> Array.filter (fun case -> case.Name = s) with
+        | [| case |] -> Some(FSharpValue.MakeUnion(case, [||]) :?> 'a)
+        | _ -> None
     
     let private modRegIndexMap = 
         [ (0b000uy, MregT0)
@@ -303,9 +309,9 @@ module Disassembler =
         let parseMneumonicAndArgs = 
             let parseMAndAs (oc, ocas, mrm) = 
                 let parseMneumonic oc = 
-                    oc
-                    |> Mneumonic
-                    |> returnP
+                    match oc |> fromString<Mneumonic> with
+                    | Some m -> m |> returnP
+                    | None -> failwithf "Invalid instruction: %s" oc
                 
                 let parseArgs = (ocas, (([], mrm) |> returnP))
                                 ||> List.foldBack (fun e acc -> acc >>= pargument e)

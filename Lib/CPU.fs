@@ -63,8 +63,15 @@ module CPU =
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr instr = 
         let innerFn mb = 
-            mb.CPU.IP <- mb.CPU.IP + (instr |> InstructionSetLoader.instrLen)
-            (), mb
+            match instr.Mneumonic with 
+            | JMP -> 
+                match instr.Args with
+                | [ArgAddress a] ->
+                    mb.CPU.CS <- a.Segment
+                    mb.CPU.IP <- a.Offset
+                    (), mb
+                | _ -> failwithf "%O - Not implemented" (instr.ToString())
+            | _ -> failwithf "%O - Not implemented" (instr.ToString())
         innerFn
     
     /// dumpMotherboard :: Motherboard -> Result<string>
@@ -81,7 +88,7 @@ module CPU =
         let rmbstr = 
             mb
             |> toStr
-            |> Result.``return``
+            |> Result.unit
         
         Result.lift2 (sprintf "%s\n%s") rmbstr rinstr
     
@@ -91,6 +98,6 @@ module CPU =
         |> State.eval fetchInstr 
         ||> decodeInstr
         |> Result.map fst
-        |> Result.bind (executeInstr >> Result.``return``)
+        |> Result.bind (executeInstr >> Result.unit)
         // TODO: P2D: Is short circuting this early OK?
-        |> Result.bind (fun s -> State.exec s mb |> Result.``return``)
+        |> Result.bind (fun s -> State.exec s mb |> Result.unit)

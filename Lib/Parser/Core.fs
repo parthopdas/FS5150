@@ -20,7 +20,7 @@ module Core =
         | Failure of ParserLabel * ParserError * ParserPosition
         override x.ToString() = 
             match x with
-            | Success _ -> "... OK"
+            | Success a -> sprintf "%O" a
             | Failure(l, e, p) -> sprintf "... Error: %O %O %A" l e p.CurrentOffset
     
     type Parser<'T, 'U> = 
@@ -105,8 +105,8 @@ module Core =
 
     module Result = 
 
-        /// ``return`` :: 'a -> Result<'a>
-        let ``return`` x = 
+        /// unit :: 'a -> Result<'a>
+        let unit x = 
             Success x
 
         /// bind :: ('a -> Result<'b>) -> Result<'a> -> Result<'b>
@@ -120,15 +120,15 @@ module Core =
 
         /// map :: ('a -> 'b) -> Result<'a> -> Result<'b>
         let map f xResult = 
-            xResult >>= (f >> ``return``) 
+            xResult >>= (f >> unit) 
 
         let (<!>) = map
         let (|>>) x f = map f x
 
         /// apply :: Result<('a -> 'b)> -> Result<'a> -> Result<'b>
         let apply fResult xResult = 
-            fResult >>= (fun f -> xResult >>= (f >> ``return``)) 
+            fResult >>= (fun f -> xResult >>= (f >> unit)) 
 
         let (<*>) = apply
 
-        let lift2 f x1 x2 = ``return`` f <*> x1 <*> x2
+        let lift2 f x1 x2 = unit f <*> x1 <*> x2

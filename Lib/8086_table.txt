@@ -3,6 +3,9 @@
 * Opcode 0F - "POP CS" on the 8086, and the first byte in multi-byte opcodes on later processors - is also treated as an undefined opcode. I wouldn't expect to see this in 8086 code (as the "POP CS" instruction is particularly useless) and wanted to treat its appearance as an error condition.
 * Opcodes C6, C7, and 8F require that the reg bits of the ModR/M byte which follows them be equal to zero. Other values are illegal. This restriction is not shared with other opcodes with "E"-addressed arguments, and not reflected in the map.
 * Arguments are not given for a large number of opcodes (e.g. A4 through A7, 9C, 9D) which correspond to instructions which take no arguments when written as assembly code (e.g. MOVSB, MOVSW, CMPSB, CMPSW, PUSHF, POPF). I want to use this map to build a disassembler, not a simulated processor, and the extra arguments would only be burdensome.
+*
+* gc .\8086_table.txt | ? { -not $_.StartsWith("*") } | % { $_.Split(@(' ', [char]"`t"))[1]} | group | Sort-Object -Property Name
+*
 
 00	ADD		Eb	Gb
 01	ADD		Ev	Gv

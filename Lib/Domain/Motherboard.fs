@@ -17,7 +17,7 @@ module PC =
           DI : Word16
           mutable IP : Word16
           Flags : Word16
-          CS : Word16
+          mutable CS : Word16
           DS : Word16
           SS : Word16
           ES : Word16 }
@@ -27,6 +27,10 @@ module PC =
     type Motherboard = 
         { CPU : CPU
           BIOS : MemoryBlock }
+        override x.ToString() = 
+            let l1 = sprintf "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X" x.CPU.AX x.CPU.BX x.CPU.CX x.CPU.DX x.CPU.SP x.CPU.BP x.CPU.SI x.CPU.DI
+            let l2 = sprintf "DS=%04X  ES=%04X  SS=%04X  CS=%04X  IP=%04X   NV UP EI PL NZ NA PO NC" x.CPU.DS x.CPU.ES x.CPU.SS x.CPU.CS x.CPU.IP
+            sprintf "%s\n%s" l1 l2
 
     let initMotherBoard() : Motherboard = 
         { CPU = 
