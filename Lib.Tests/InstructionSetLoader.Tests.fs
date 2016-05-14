@@ -5,6 +5,13 @@ open Lib.Domain.InstructionSet
 open Lib.InstructionSetLoader
 open Xunit
 
+
+[<Fact>]
+let ``Ignore comments and empty lines`` () = 
+    let lines = "\r\n*  asda\n"
+    let is = loadInstructionSet lines
+    { OpCodes = Map.empty; OpCodeGroups = Map.empty }  |> should equal is
+
 let opCodetestData : seq<obj []> = 
     [ "DB\t--", 0xDBuy, [ "--" ], (1, 0)
       "20\tAND \t\tEb  Gb", 0x20uy, [ "AND"; "Eb"; "Gb" ], (1, 0) ]

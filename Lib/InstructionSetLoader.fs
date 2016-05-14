@@ -3,6 +3,7 @@
 open Lib.Domain.InstructionSet
 open System
 open System.Globalization
+open FSharpx.Text
 
 let private split ss (l : string) = 
     l.Split(ss)
@@ -29,6 +30,7 @@ let loadInstructionSet (text : string) =
     
     let (opcxLines, opcLines) = 
         text.Split([| '\r'; '\n' |], StringSplitOptions.RemoveEmptyEntries)
+        |> Array.filter (Strings.startsWith "*" >> not)
         |> Array.toList
         |> List.partition (fun s -> s.StartsWith("GRP"))
     
