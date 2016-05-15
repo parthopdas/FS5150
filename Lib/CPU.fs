@@ -64,7 +64,7 @@ module CPU =
     let executeInstr instr = 
         let innerFn mb = 
             match instr.Mneumonic with 
-            | JMP -> 
+            | Mneumonic "JMP" -> 
                 match instr.Args with
                 | [ArgAddress a] ->
                     mb.CPU.CS <- a.Segment
