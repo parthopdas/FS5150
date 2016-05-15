@@ -7,20 +7,20 @@ module PC =
     open System
     
     type CPU = 
-        { AX : Word16
-          BX : Word16
-          CX : Word16
-          DX : Word16
-          SP : Word16
-          BP : Word16
-          SI : Word16
-          DI : Word16
+        { mutable AX : Word16
+          mutable BX : Word16
+          mutable CX : Word16
+          mutable DX : Word16
+          mutable SP : Word16
+          mutable BP : Word16
+          mutable SI : Word16
+          mutable DI : Word16
           mutable IP : Word16
-          Flags : Word16
+          mutable Flags : Word16
           mutable CS : Word16
-          DS : Word16
-          SS : Word16
-          ES : Word16 }
+          mutable DS : Word16
+          mutable SS : Word16
+          mutable ES : Word16 }
     
     type MemoryBlock = Word8 array
     

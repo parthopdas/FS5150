@@ -5,7 +5,6 @@ module Disassembler =
     open Lib.Domain.InstructionSet
     open Lib.Parser.Combinators
     open Lib.Parser.Core
-    open Microsoft.FSharp.Reflection
     
     let private modRegIndexMap = 
         [ (0b000uy, MregT0)
@@ -304,7 +303,9 @@ module Disassembler =
         let parseMneumonicAndArgs = 
             let parseMAndAs (oc, ocas, mrm) = 
                 let parseMneumonic oc = 
-                    oc |> Mneumonic |> returnP
+                    oc
+                    |> Mneumonic
+                    |> returnP
                 
                 let parseArgs = (ocas, (([], mrm) |> returnP))
                                 ||> List.foldBack (fun e acc -> acc >>= pargument e)
