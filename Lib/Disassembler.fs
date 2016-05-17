@@ -60,69 +60,69 @@ module Disassembler =
         |> Map.ofList
     
     let private descRegMap = 
-        [ ("eAX", AX)
-          ("eCX", CX)
-          ("eBX", BX)
-          ("eDX", DX)
-          ("eSP", SP)
-          ("eBP", BP)
-          ("eSI", SI)
-          ("eDI", DI)
-          ("AX", AX)
-          ("BX", BX)
-          ("CX", CX)
-          ("DX", DX)
-          ("SP", SP)
-          ("BP", BP)
-          ("SI", SI)
-          ("DI", DI)
-          ("CS", CS)
-          ("DS", DS)
-          ("ES", ES)
-          ("SS", SS)
-          ("AL", AL)
-          ("BL", BL)
-          ("CL", CL)
-          ("DL", DL)
-          ("AH", AH)
-          ("BH", BH)
-          ("CH", CH)
-          ("DH", DH) ]
+        [ ("eAX", ArgRegister16 AX)
+          ("eCX", ArgRegister16 CX)
+          ("eBX", ArgRegister16 BX)
+          ("eDX", ArgRegister16 DX)
+          ("eSP", ArgRegister16 SP)
+          ("eBP", ArgRegister16 BP)
+          ("eSI", ArgRegister16 SI)
+          ("eDI", ArgRegister16 DI)
+          ("AX", ArgRegister16 AX)
+          ("BX", ArgRegister16 BX)
+          ("CX", ArgRegister16 CX)
+          ("DX", ArgRegister16 DX)
+          ("SP", ArgRegister16 SP)
+          ("BP", ArgRegister16 BP)
+          ("SI", ArgRegister16 SI)
+          ("DI", ArgRegister16 DI)
+          ("CS", ArgRegisterSeg CS)
+          ("DS", ArgRegisterSeg DS)
+          ("ES", ArgRegisterSeg ES)
+          ("SS", ArgRegisterSeg SS)
+          ("AL", ArgRegister8 AL)
+          ("BL", ArgRegister8 BL)
+          ("CL", ArgRegister8 CL)
+          ("DL", ArgRegister8 DL)
+          ("AH", ArgRegister8 AH)
+          ("BH", ArgRegister8 BH)
+          ("CH", ArgRegister8 CH)
+          ("DH", ArgRegister8 DH) ]
         |> Map.ofList
     
     let private aocRegMap = 
-        [ (('b', MregT0), AL)
-          (('b', MregT1), CL)
-          (('b', MregT2), DL)
-          (('b', MregT3), BL)
-          (('b', MregT4), AH)
-          (('b', MregT5), CH)
-          (('b', MregT6), DH)
-          (('b', MregT7), BH)
-          (('v', MregT0), AX)
-          (('v', MregT1), CX)
-          (('v', MregT2), DX)
-          (('v', MregT3), BX)
-          (('v', MregT4), SP)
-          (('v', MregT5), BP)
-          (('v', MregT6), SI)
-          (('v', MregT7), DI)
-          (('w', MregT0), AX)
-          (('w', MregT1), CX)
-          (('w', MregT2), DX)
-          (('w', MregT3), BX)
-          (('w', MregT4), SP)
-          (('w', MregT5), BP)
-          (('w', MregT6), SI)
-          (('w', MregT7), DI)
-          (('p', MregT0), AX)
-          (('p', MregT1), CX)
-          (('p', MregT2), DX)
-          (('p', MregT3), BX)
-          (('p', MregT4), SP)
-          (('p', MregT5), BP)
-          (('p', MregT6), SI)
-          (('p', MregT7), DI) ]
+        [ (('b', MregT0), ArgRegister8 AL)
+          (('b', MregT1), ArgRegister8 CL)
+          (('b', MregT2), ArgRegister8 DL)
+          (('b', MregT3), ArgRegister8 BL)
+          (('b', MregT4), ArgRegister8 AH)
+          (('b', MregT5), ArgRegister8 CH)
+          (('b', MregT6), ArgRegister8 DH)
+          (('b', MregT7), ArgRegister8 BH)
+          (('v', MregT0), ArgRegister16 AX)
+          (('v', MregT1), ArgRegister16 CX)
+          (('v', MregT2), ArgRegister16 DX)
+          (('v', MregT3), ArgRegister16 BX)
+          (('v', MregT4), ArgRegister16 SP)
+          (('v', MregT5), ArgRegister16 BP)
+          (('v', MregT6), ArgRegister16 SI)
+          (('v', MregT7), ArgRegister16 DI)
+          (('w', MregT0), ArgRegister16 AX)
+          (('w', MregT1), ArgRegister16 CX)
+          (('w', MregT2), ArgRegister16 DX)
+          (('w', MregT3), ArgRegister16 BX)
+          (('w', MregT4), ArgRegister16 SP)
+          (('w', MregT5), ArgRegister16 BP)
+          (('w', MregT6), ArgRegister16 SI)
+          (('w', MregT7), ArgRegister16 DI)
+          (('p', MregT0), ArgRegister16 AX)
+          (('p', MregT1), ArgRegister16 CX)
+          (('p', MregT2), ArgRegister16 DX)
+          (('p', MregT3), ArgRegister16 BX)
+          (('p', MregT4), ArgRegister16 SP)
+          (('p', MregT5), ArgRegister16 BP)
+          (('p', MregT6), ArgRegister16 SI)
+          (('p', MregT7), ArgRegister16 DI) ]
         |> Map.ofList
     
     let private modRegMap = 
@@ -195,7 +195,7 @@ module Disassembler =
     
     /// pargument :: string -> Argument list * ModRegRM opt -> Parser<Argument list * ModRegRM opt>
     let pargument desc (args, mrm) = 
-        let getRegister aoc r = aocRegMap.[(aoc, r)] |> ArgRegister
+        let getRegister aoc r = aocRegMap.[(aoc, r)]
         let withMrm a = a, mrm
         let appendArg a = a :: args
         let cpmodRegRm = mrm |> Option.fold (fun _ e -> (returnP e) <@> "cached MRM") (pmodRegRm <@> "raw MRM")
@@ -245,7 +245,7 @@ module Disassembler =
             | [ 'S'; 'w' ] -> 
                 cpmodRegRm |>> (fun mrm -> 
                 modRegMap.[mrm.ModReg]
-                |> ArgRegister
+                |> ArgRegisterSeg
                 |> appendArg, Some mrm)
             | [ 'A'; 'p' ] -> 
                 pword16 .>>. pword16 |>> (fun (o, s) -> 
@@ -269,7 +269,6 @@ module Disassembler =
         (match descRegMap |> Map.tryFind desc with
          | Some r -> 
              r
-             |> ArgRegister
              |> appendArg
              |> withMrm
              |> returnP

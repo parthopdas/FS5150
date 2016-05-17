@@ -2,41 +2,41 @@
 
 module InstructionSet = 
     open System
-
+    
     type Word8 = uint8
-
+    
     type Word16 = uint16
-
+    
     type Word32 = uint32
-
+    
     type OpCodeMap = Map<Word8, string list>
-
+    
     type OpCodeGroup = 
         { OcgName : string
           OcgIndex : Word8 }
-
+    
     type OpCodeExtensioMap = Map<OpCodeGroup, string list>
-
+    
     type InstructionSet = 
         { OpCodes : OpCodeMap
           OpCodeGroups : OpCodeExtensioMap }
-
+    
     type Address = 
         { Segment : Word16
           Offset : Word16 }
         override x.ToString() = sprintf "%04X:%04X" x.Segment x.Offset
-
+    
     type MachineCode = 
         { Bytes : Word8 array }
-
+    
     type Mneumonic = 
         | Mneumonic of string
         override x.ToString() = 
             match x with
             | Mneumonic m -> m
-
+    
     type Constant = Word8
-
+    
     type WordData = 
         | W8 of Word8
         | W16 of Word16
@@ -44,7 +44,7 @@ module InstructionSet =
             match x with
             | W8 w8 -> sprintf "%02X" w8
             | W16 w16 -> sprintf "%04X" w16
-
+    
     type ModRegType = 
         | MregT0
         | MregT1
@@ -54,7 +54,7 @@ module InstructionSet =
         | MregT5
         | MregT6
         | MregT7
-
+    
     type ModRmType = 
         | MrmTBXSI
         | MrmTBXDI
@@ -76,7 +76,7 @@ module InstructionSet =
             | MrmTDisp -> ""
             | MrmTBX -> "BX"
             | MrmTBP -> "BP"
-
+    
     type Dereference = 
         { DrefType : ModRmType
           DrefDisp : WordData option }
@@ -87,23 +87,23 @@ module InstructionSet =
                 | MrmTDisp -> sprintf "[%O]" dval
                 | _ -> sprintf "[%O+%O]" x.DrefType dval
             | None -> sprintf "[%O]" x.DrefType
-
+    
     type RmArgs = 
         | RmaReg of ModRegType
         | RmaDeref of Dereference
-
+    
     type ModRegRM = 
         { ModReg : ModRegType
           ModRM : RmArgs
           MRUseSS : bool }
-
-    type SegRegister = 
+    
+    type RegisterSeg = 
         | CS
         | DS
         | ES
         | SS
-
-    type Register = 
+    
+    type Register8 = 
         | AL
         | BL
         | CL
@@ -112,6 +112,8 @@ module InstructionSet =
         | BH
         | CH
         | DH
+    
+    type Register16 = 
         | AX
         | BX
         | CX
@@ -120,17 +122,14 @@ module InstructionSet =
         | BP
         | SI
         | DI
-        | CS
-        | DS
-        | ES
-        | SS
-        | IP
-
+    
     type Argument = 
         | ArgAddress of Address
         | ArgConstant of Constant
         | ArgOffset of WordData
-        | ArgRegister of Register
+        | ArgRegister8 of Register8
+        | ArgRegister16 of Register16
+        | ArgRegisterSeg of RegisterSeg
         | ArgImmediate of WordData
         | ArgDereference of Dereference
         override x.ToString() = 
@@ -138,19 +137,29 @@ module InstructionSet =
             | ArgAddress a -> sprintf "%O" a
             | ArgConstant x -> sprintf "%O" x
             | ArgOffset o -> sprintf "%O" o
-            | ArgRegister r -> sprintf "%A" r
+            | ArgRegister8 r -> sprintf "%A" r
+            | ArgRegister16 r -> sprintf "%A" r
+            | ArgRegisterSeg r -> sprintf "%A" r
             | ArgImmediate i -> sprintf "%O" i
             | ArgDereference d -> sprintf "%O" d
-
+    
     type Instruction = 
         { Address : Address
           Mneumonic : Mneumonic
           UseSS : bool
           Args : Argument list
-          Bytes : Word8[] }
+          Bytes : Word8 [] }
+        
         override x.ToString() = 
-            let fmtBytes = sprintf "%s%s" (String.Join("", x.Bytes |> Array.map (sprintf "%02X"))) (new String(' ', 2 * (6 - x.Bytes.Length)))
-            let fmtArgs = (String.Join(", ", x.Args |> List.map (fun e -> e.ToString()) |> Array.ofList))
-            sprintf "%O %s %O\t%O" 
-                x.Address fmtBytes x.Mneumonic fmtArgs
+            let fmtBytes = 
+                sprintf "%s%s" (String.Join("", x.Bytes |> Array.map (sprintf "%02X"))) 
+                    (new String(' ', 2 * (6 - x.Bytes.Length)))
+            
+            let fmtArgs = 
+                (String.Join(", ", 
+                             x.Args
+                             |> List.map (fun e -> e.ToString())
+                             |> Array.ofList))
+            sprintf "%O %s %O\t%O" x.Address fmtBytes x.Mneumonic fmtArgs
+        
         member x.Length : Word16 = uint16 x.Bytes.Length

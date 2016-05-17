@@ -96,51 +96,51 @@ let ``pmodRegRm tests`` (bs, reg, rm, usess) : unit =
 
 let ``pargument tests data`` : obj array seq = 
     seq { 
-        yield ("eAX", [||], ArgRegister AX, false)
-        yield ("eCX", [||], ArgRegister CX, false)
-        yield ("eBX", [||], ArgRegister BX, false)
-        yield ("eDX", [||], ArgRegister DX, false)
-        yield ("eSP", [||], ArgRegister SP, false)
-        yield ("eBP", [||], ArgRegister BP, false)
-        yield ("eSI", [||], ArgRegister SI, false)
-        yield ("eDI", [||], ArgRegister DI, false)
-        yield ("AX", [||], ArgRegister AX, false)
-        yield ("BX", [||], ArgRegister BX, false)
-        yield ("CX", [||], ArgRegister CX, false)
-        yield ("DX", [||], ArgRegister DX, false)
-        yield ("SP", [||], ArgRegister SP, false)
-        yield ("BP", [||], ArgRegister BP, false)
-        yield ("SI", [||], ArgRegister SI, false)
-        yield ("DI", [||], ArgRegister DI, false)
-        yield ("CS", [||], ArgRegister CS, false)
-        yield ("DS", [||], ArgRegister DS, false)
-        yield ("ES", [||], ArgRegister ES, false)
-        yield ("SS", [||], ArgRegister SS, false)
-        yield ("AL", [||], ArgRegister AL, false)
-        yield ("BL", [||], ArgRegister BL, false)
-        yield ("CL", [||], ArgRegister CL, false)
-        yield ("DL", [||], ArgRegister DL, false)
-        yield ("AH", [||], ArgRegister AH, false)
-        yield ("BH", [||], ArgRegister BH, false)
-        yield ("CH", [||], ArgRegister CH, false)
-        yield ("DH", [||], ArgRegister DH, false)
+        yield ("eAX", [||], ArgRegister16 AX, false)
+        yield ("eCX", [||], ArgRegister16 CX, false)
+        yield ("eBX", [||], ArgRegister16 BX, false)
+        yield ("eDX", [||], ArgRegister16 DX, false)
+        yield ("eSP", [||], ArgRegister16 SP, false)
+        yield ("eBP", [||], ArgRegister16 BP, false)
+        yield ("eSI", [||], ArgRegister16 SI, false)
+        yield ("eDI", [||], ArgRegister16 DI, false)
+        yield ("AX", [||], ArgRegister16 AX, false)
+        yield ("BX", [||], ArgRegister16 BX, false)
+        yield ("CX", [||], ArgRegister16 CX, false)
+        yield ("DX", [||], ArgRegister16 DX, false)
+        yield ("SP", [||], ArgRegister16 SP, false)
+        yield ("BP", [||], ArgRegister16 BP, false)
+        yield ("SI", [||], ArgRegister16 SI, false)
+        yield ("DI", [||], ArgRegister16 DI, false)
+        yield ("CS", [||], ArgRegisterSeg CS, false)
+        yield ("DS", [||], ArgRegisterSeg DS, false)
+        yield ("ES", [||], ArgRegisterSeg ES, false)
+        yield ("SS", [||], ArgRegisterSeg SS, false)
+        yield ("AL", [||], ArgRegister8 AL, false)
+        yield ("BL", [||], ArgRegister8 BL, false)
+        yield ("CL", [||], ArgRegister8 CL, false)
+        yield ("DL", [||], ArgRegister8 DL, false)
+        yield ("AH", [||], ArgRegister8 AH, false)
+        yield ("BH", [||], ArgRegister8 BH, false)
+        yield ("CH", [||], ArgRegister8 CH, false)
+        yield ("DH", [||], ArgRegister8 DH, false)
         yield ("Eb", [| 0x00uy |], 
                ArgDereference { DrefType = MrmTBXSI
                                 DrefDisp = None }, true)
         yield ("Eb", [| 0x82uy; 0xDDuy; 0x7Euy |], 
                ArgDereference { DrefType = MrmTBPSI
                                 DrefDisp = Some(W16 0x7eddus) }, true)
-        yield ("Eb", [| 0xC6uy |], ArgRegister DH, true)
+        yield ("Eb", [| 0xC6uy |], ArgRegister8 DH, true)
         yield ("Ev", [| 0x42uy; 0xDDuy |], 
                ArgDereference { DrefType = MrmTBPSI
                                 DrefDisp = Some(W8 0xdduy) }, true)
         yield ("Ev", [| 0x06uy; 0xADuy; 0xBAuy |], 
                ArgDereference { DrefType = MrmTDisp
                                 DrefDisp = Some(W16 0xbaadus) }, true)
-        yield ("Ev", [| 0xC4uy |], ArgRegister SP, true)
-        yield ("Ew", [| 0xC7uy |], ArgRegister DI, true)
-        yield ("Gb", [| 0x00uy |], ArgRegister AL, true)
-        yield ("Gv", [| 0xD8uy |], ArgRegister BX, true)
+        yield ("Ev", [| 0xC4uy |], ArgRegister16 SP, true)
+        yield ("Ew", [| 0xC7uy |], ArgRegister16 DI, true)
+        yield ("Gb", [| 0x00uy |], ArgRegister8 AL, true)
+        yield ("Gv", [| 0xD8uy |], ArgRegister16 BX, true)
         yield ("Jb", [| 0xEEuy |], ArgOffset(W8 0xeeuy), false)
         yield ("Jv", [| 0x0Duy; 0xF0uy |], ArgOffset(W16 0xf00dus), false)
         yield ("Ib", [| 0xF0uy |], ArgImmediate(W8 0xf0uy), false)
@@ -153,10 +153,10 @@ let ``pargument tests data`` : obj array seq =
         yield ("Ob", [| 0xADuy; 0xDEuy |], 
                ArgDereference { DrefType = MrmTDisp
                                 DrefDisp = Some(W16 0xdeadus) }, false)
-        yield ("Sw", [| 0x00uy |], ArgRegister ES, true)
-        yield ("Sw", [| 0x08uy |], ArgRegister CS, true)
-        yield ("Sw", [| 0x10uy |], ArgRegister SS, true)
-        yield ("Sw", [| 0x18uy |], ArgRegister DS, true)
+        yield ("Sw", [| 0x00uy |], ArgRegisterSeg ES, true)
+        yield ("Sw", [| 0x08uy |], ArgRegisterSeg CS, true)
+        yield ("Sw", [| 0x10uy |], ArgRegisterSeg SS, true)
+        yield ("Sw", [| 0x18uy |], ArgRegisterSeg DS, true)
         yield ("Ap", [| 0x0Duy; 0xF0uy; 0xADuy; 0xDEuy |], 
                ArgAddress({ Segment = 0xdeadus
                             Offset = 0xf00dus }), false)
@@ -165,7 +165,7 @@ let ``pargument tests data`` : obj array seq =
         yield ("Mp", [| 0x2Euy; 0xF0uy; 0xDDuy |], 
                ArgDereference { DrefType = MrmTDisp
                                 DrefDisp = Some(W16 0xDDF0us) }, true)
-        yield ("Mp", [| 0xD8uy |], ArgRegister AX, true)
+        yield ("Mp", [| 0xD8uy |], ArgRegister16 AX, true)
     }
     |> Seq.map (fun (a, b, c, d) -> 
            [| box a

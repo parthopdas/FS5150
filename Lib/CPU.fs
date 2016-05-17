@@ -97,24 +97,18 @@ module CPU =
             | BP -> mb.CPU.BP <- data
             | SI -> mb.CPU.SI <- data
             | DI -> mb.CPU.DI <- data
-            | CS -> mb.CPU.CS <- data
-            | DS -> mb.CPU.DS <- data
-            | ES -> mb.CPU.ES <- data
-            | SS -> mb.CPU.SS <- data
-            | IP -> mb.CPU.IP <- data
-            | _ -> failwithf "%A is not a 16 bit register" reg
             (), mb
         innerFn : State<unit, Motherboard>
     
-    /// getSegReg : SegRegiter -> State<Word16,Motherboard>
-    let getSegReg segReg = 
+    /// getRegSeg : RegiterSeg -> State<Word16,Motherboard>
+    let getRegSeg segReg = 
         let innerFn mb = 
             let data = 
                 match segReg with
-                | SegRegister.CS -> mb.CPU.CS
-                | SegRegister.DS -> mb.CPU.DS
-                | SegRegister.ES -> mb.CPU.ES
-                | SegRegister.SS -> mb.CPU.SS
+                | CS -> mb.CPU.CS
+                | DS -> mb.CPU.DS
+                | ES -> mb.CPU.ES
+                | SS -> mb.CPU.SS
             data, mb
         innerFn : State<Word16, Motherboard>
     
@@ -131,12 +125,6 @@ module CPU =
                 | BP -> mb.CPU.BP
                 | SI -> mb.CPU.SI
                 | DI -> mb.CPU.DI
-                | CS -> mb.CPU.CS
-                | DS -> mb.CPU.DS
-                | ES -> mb.CPU.ES
-                | SS -> mb.CPU.SS
-                | IP -> mb.CPU.IP
-                | _ -> failwithf "%A is not a 16 bit register" reg
             data, mb
         innerFn : State<Word16, Motherboard>
     
@@ -183,15 +171,15 @@ module CPU =
         (+) <!> reg <*> disp
     
     /// getSegOverrideForEA : ModRegRm option -> State<Word16,Motherboard>
-    let getSegOverrideForEA (usess :bool) : State<SegRegister,Motherboard> =
+    let getSegOverrideForEA (usess :bool) : State<RegisterSeg,Motherboard> =
         let innerFn mb =
             let sr =
                 mb.CPU.SegOverride 
-                |> Option.orElse (if usess then Some SegRegister.SS else None)
-                |> Option.getOrElse SegRegister.DS
+                |> Option.orElse (if usess then Some SS else None)
+                |> Option.getOrElse DS
 
             sr, mb
-        innerFn : State<SegRegister, Motherboard>
+        innerFn : State<RegisterSeg, Motherboard>
 
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr instr = 
@@ -203,10 +191,10 @@ module CPU =
             | _ -> failwithnyi instr
         | Mneumonic "MOV" -> 
             match instr.Args with
-            | [ ArgRegister AX; ArgImmediate(W16 c) ] -> (setReg16 AX c) *> (incrIP instr.Length)
-            | [ ArgRegister r1; ArgRegister r2 ] -> ((getReg16 r2) >>= (setReg16 r1)) *> (incrIP instr.Length)
+            | [ ArgRegister16 AX; ArgImmediate(W16 c) ] -> (setReg16 AX c) *> (incrIP instr.Length)
+            | [ ArgRegister16 r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setReg16 r1)) *> (incrIP instr.Length)
             | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
-                (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getSegReg) <*> getEA dref >>= writeWord16 c) *> (incrIP instr.Length)
+                (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref >>= writeWord16 c) *> (incrIP instr.Length)
                 // TODO: DP2: Implement signed offset 
             | _ -> failwithnyi instr
         | Mneumonic "CLI" -> 

@@ -31,7 +31,7 @@ module PC =
           mutable PF : bool
           mutable CF : bool
           
-          mutable SegOverride : SegRegister option }
+          mutable SegOverride : RegisterSeg option }
     
     type MemoryBlock = Word8 array
     
@@ -61,6 +61,7 @@ module PC =
                 SS = 0us
                 ES = 0us
                 
+                // TODO: P2D: Implement using case union
                 OF = false
                 DF = false
                 IF = false 
