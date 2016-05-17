@@ -63,10 +63,10 @@ module CPU =
               Offset = mb.CPU.IP }, mb
         innerFn : State<Address, Motherboard>
     
-    /// setIF value : State<unit,Motherboard>
-    let setIF value = 
-        let innerFn mb = 
-            mb.CPU.IF <- value
+    /// setFlag : flag -> value -> State<unit,Motherboard>
+    let setFlag flag value = 
+        let innerFn mb =
+            mb.CPU.Flags.[flag] <- value
             (), mb
         innerFn : State<unit, Motherboard>
         
@@ -86,17 +86,17 @@ module CPU =
         innerFn : State<unit, Motherboard>
     
     /// setReg16 : Regiter -> Word16 -> State<unit,Motherboard>
-    let setReg16 reg data = 
+    let setReg16 reg value = 
         let innerFn mb = 
             match reg with
-            | AX -> mb.CPU.AX <- data
-            | BX -> mb.CPU.BX <- data
-            | CX -> mb.CPU.CX <- data
-            | DX -> mb.CPU.DX <- data
-            | SP -> mb.CPU.SP <- data
-            | BP -> mb.CPU.BP <- data
-            | SI -> mb.CPU.SI <- data
-            | DI -> mb.CPU.DI <- data
+            | AX -> mb.CPU.AX <- value
+            | BX -> mb.CPU.BX <- value
+            | CX -> mb.CPU.CX <- value
+            | DX -> mb.CPU.DX <- value
+            | SP -> mb.CPU.SP <- value
+            | BP -> mb.CPU.BP <- value
+            | SI -> mb.CPU.SI <- value
+            | DI -> mb.CPU.DI <- value
             (), mb
         innerFn : State<unit, Motherboard>
     
@@ -111,6 +111,17 @@ module CPU =
                 | SS -> mb.CPU.SS
             data, mb
         innerFn : State<Word16, Motherboard>
+    
+    /// setRegSeg : RegiterSeg -> State<unit,Motherboard>
+    let setRegSeg segReg value = 
+        let innerFn mb = 
+            match segReg with
+            | CS -> mb.CPU.CS <- value
+            | DS -> mb.CPU.DS <- value
+            | ES -> mb.CPU.ES <- value
+            | SS -> mb.CPU.SS <- value
+            (), mb
+        innerFn : State<unit, Motherboard>
     
     /// getReg16 : Regiter -> State<Word16,Motherboard>
     let getReg16 reg = 
@@ -192,14 +203,14 @@ module CPU =
         | Mneumonic "MOV" -> 
             match instr.Args with
             | [ ArgRegister16 AX; ArgImmediate(W16 c) ] -> (setReg16 AX c) *> (incrIP instr.Length)
-            | [ ArgRegister16 r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setReg16 r1)) *> (incrIP instr.Length)
+            | [ ArgRegisterSeg r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setRegSeg r1)) *> (incrIP instr.Length)
             | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
                 (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref >>= writeWord16 c) *> (incrIP instr.Length)
                 // TODO: DP2: Implement signed offset 
             | _ -> failwithnyi instr
         | Mneumonic "CLI" -> 
             match instr.Args with
-            | [ ] -> setIF false *> (incrIP instr.Length)
+            | [ ] -> setFlag IF false *> (incrIP instr.Length)
             | _ -> failwithnyi instr
         | _ -> failwithnyi instr
     

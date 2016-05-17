@@ -2,9 +2,33 @@
 
 module PC = 
     open InstructionSet
+    open System
+    open System.Collections.Generic
     open System.IO
     open System.Reflection
-    open System
+    
+    type Flags = 
+        | OF
+        | DF
+        | IF
+        | TF
+        | SF
+        | ZF
+        | AF
+        | PF
+        | CF
+    
+    let flagNames = 
+        [ (OF, ("OV", "NV"))
+          (DF, ("DN", "UP"))
+          (IF, ("EI", "DI"))
+          (TF, ("", ""))
+          (SF, ("NG", "PL"))
+          (ZF, ("ZR", "NZ"))
+          (AF, ("AC", "NA"))
+          (PF, ("PE", "PO"))
+          (CF, ("CY", "NC")) ]
+        |> Map.ofList
     
     type CPU = 
         { mutable AX : Word16
@@ -20,17 +44,7 @@ module PC =
           mutable DS : Word16
           mutable SS : Word16
           mutable ES : Word16
-
-          mutable OF : bool
-          mutable DF : bool
-          mutable IF : bool 
-          mutable TF : bool 
-          mutable SF : bool
-          mutable ZF : bool
-          mutable AF : bool
-          mutable PF : bool
-          mutable CF : bool
-          
+          Flags : Dictionary<Flags, bool>
           mutable SegOverride : RegisterSeg option }
     
     type MemoryBlock = Word8 array
@@ -40,11 +54,21 @@ module PC =
           RAM : MemoryBlock
           BIOS : MemoryBlock }
         override x.ToString() = 
-            let l1 = sprintf "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X" x.CPU.AX x.CPU.BX x.CPU.CX x.CPU.DX x.CPU.SP x.CPU.BP x.CPU.SI x.CPU.DI
+            let l1 = 
+                sprintf "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X" x.CPU.AX x.CPU.BX 
+                    x.CPU.CX x.CPU.DX x.CPU.SP x.CPU.BP x.CPU.SI x.CPU.DI
             let l2 = sprintf "DS=%04X  ES=%04X  SS=%04X  CS=%04X  IP=%04X" x.CPU.DS x.CPU.ES x.CPU.SS x.CPU.CS x.CPU.IP
-            let fs = sprintf "%s %s %s %s %s %s %s %s" (if x.CPU.OF then "OV" else "NV") (if x.CPU.DF then "DN" else "UP") (if x.CPU.IF then "EI" else "DI") (if x.CPU.SF then "NG" else "PL") (if x.CPU.ZF then "ZR" else "NZ") (if x.CPU.AF then "AC" else "NA") (if x.CPU.PF then "PE" else "PO") (if x.CPU.CF then "CY" else "NC")
+            
+            let fs = 
+                x.CPU.Flags.Keys
+                |> Seq.map (fun k -> 
+                       flagNames
+                       |> Map.find k
+                       |> (if x.CPU.Flags.[k] then fst
+                           else snd))
+                |> String.concat " "
             sprintf "%s\n%s   %s" l1 l2 fs
-
+    
     let initMotherBoard() : Motherboard = 
         { CPU = 
               { AX = 0us
@@ -60,22 +84,24 @@ module PC =
                 DS = 0us
                 SS = 0us
                 ES = 0us
-                
-                // TODO: P2D: Implement using case union
-                OF = false
-                DF = false
-                IF = false 
-                TF = false 
-                SF = false
-                ZF = false
-                AF = false
-                PF = false
-                CF = false
-
+                Flags = 
+                    [ (OF, false)
+                      (DF, false)
+                      (IF, false)
+                      (TF, false)
+                      (SF, false)
+                      (ZF, false)
+                      (AF, false)
+                      (PF, false)
+                      (CF, false) ]
+                    |> List.fold (fun acc e -> 
+                           acc.Add(fst e, snd e)
+                           acc) (new Dictionary<Flags, bool>())
                 SegOverride = None }
           RAM = Array.zeroCreate 0x100000
-          BIOS = (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
-                |> Path.GetFullPath
-                |> Path.GetDirectoryName
-                |> fun p -> Path.Combine(p, "PCXTBIOS.BIN")
-                |> File.ReadAllBytes }
+          BIOS = 
+              (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
+              |> Path.GetFullPath
+              |> Path.GetDirectoryName
+              |> fun p -> Path.Combine(p, "PCXTBIOS.BIN")
+              |> File.ReadAllBytes }
