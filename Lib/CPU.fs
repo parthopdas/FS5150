@@ -4,6 +4,7 @@ module CPU =
     open Disassembler
     open FSharpx
     open FSharpx.State
+    open FSharpx.Text
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     open Lib.Parser.Core
@@ -21,7 +22,15 @@ module CPU =
         |> InstructionSetLoader.loadInstructionSet
     
     /// flatten :: Address -> uint32
-    let flatten addr = ((uint32) addr.Segment <<< 4) + (uint32) addr.Offset |> uint32
+    let private flatten addr = 
+        ((uint32) addr.Segment <<< 4) + (uint32) addr.Offset
+        |> (&&&) 0xFFFFFu
+        |> uint32
+    
+    /// createAddr Word16 -> Word16 -> Address
+    let createAddr segment offset = 
+        { Segment = segment
+          Offset = offset }
     
     /// incrAddress :: Word16 -> Address -> Address
     let incrAddress n addr = { addr with Address.Offset = ((addr.Offset + n) &&& 0xFFFFus) }
@@ -30,9 +39,22 @@ module CPU =
     let readWord8 addr = 
         let innerFn mb = 
             match flatten addr with
-            | i when i > 0xFE000u -> mb.BIOS.[(int32) (i - 0xFE000u)], mb
-            | _ -> failwithf "Memory area '%s' not accessible" (addr.ToString())
+            | i when i >= 0xFE000u && i < 0x100000u -> mb.BIOS.[(int32) (i - 0xFE000u)], mb
+            | i -> mb.RAM.[(int32) i], mb
         innerFn : State<Word8, Motherboard>
+    
+    /// writeWord8 :: Address -> Word8 -> State<unit,Motherboard>
+    let writeWord8 value addr = 
+        let innerFn mb = 
+            match flatten addr with
+            | i when i >= 0xFE000u && i < 0x100000u -> ()
+            | i -> mb.RAM.[(int32) i] <- value
+            (), mb
+        innerFn : State<unit, Motherboard>
+    
+    /// writeWord16 :: Word8 -> Address -> State<unit,Motherboard>
+    let writeWord16 (value : Word16) addr = 
+        (writeWord8 ((uint8) (value &&& 0xFFus)) addr) >>. (writeWord8 ((uint8) (value >>> 8)) (incrAddress 1us addr))
     
     /// getCSIP : State<Address,Motherboard>
     let getCSIP = 
@@ -82,7 +104,7 @@ module CPU =
         let innerFn mb = 
             let data = 
                 match reg with
-                | AX -> mb.CPU.AX 
+                | AX -> mb.CPU.AX
                 | BX -> mb.CPU.BX
                 | CX -> mb.CPU.CX
                 | DX -> mb.CPU.DX
@@ -117,10 +139,33 @@ module CPU =
         // TODO: P2D: We are shortcircuting the monad here. How to build a stack of monads like State<Parser<_>>
         runOnInput (pinstruction csip instructionSet) instrBytes
     
-    let failwithnyi instr = failwithf "%O - Not implemented" (instr.ToString())
-
+    /// getEffectiveAddress :: Dereference -> State<Address,Motherboard>
+    let getEA deref = 
+        let reg = 
+            match deref.DrefType with
+            | MrmTBXSI -> (+) <!> getReg16 BX <*> getReg16 SI
+            | MrmTBXDI -> (+) <!> getReg16 BX <*> getReg16 DI
+            | MrmTBPSI -> (+) <!> getReg16 BP <*> getReg16 SI
+            | MrmTBPDI -> (+) <!> getReg16 BP <*> getReg16 SI
+            | MrmTSI -> getReg16 SI
+            | MrmTDI -> getReg16 DI
+            | MrmTDisp -> 0us |> State.returnM
+            | MrmTBX -> getReg16 BX
+            | MrmTBP -> getReg16 BP
+        
+        let disp = 
+            deref.DrefDisp
+            |> Option.fold (fun acc e -> 
+                   acc + match e with
+                         | W8 w8 -> (uint16) w8
+                         | W16 w16 -> w16) 0us
+            |> State.returnM
+        
+        (+) <!> reg <*> disp
+    
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr instr = 
+        let failwithnyi instr = failwithf "%O - Not implemented" (instr.ToString())
         match instr.Mneumonic with
         | Mneumonic "JMP" -> 
             match instr.Args with
@@ -130,11 +175,23 @@ module CPU =
             match instr.Args with
             | [ ArgRegister AX; ArgImmediate(W16 c) ] -> (setReg16 AX c) *> (incrIP instr.Length)
             | [ ArgRegister r1; ArgRegister r2 ] -> ((getReg16 r2) >>= (setReg16 r1)) *> (incrIP instr.Length)
+            | [ ArgDereference deref; ArgImmediate(W16 c) ] -> 
+                (createAddr <!> (0us |> returnM) <*> getEA deref >>= writeWord16 c) *> (incrIP instr.Length)
             | _ -> failwithnyi instr
         | _ -> failwithnyi instr
     
-    /// dumpMotherboard :: Motherboard -> Result<string>
-    let dumpMotherboard mb = 
+    /// stepCPU :: Motherboard -> Result<Motherboard> 
+    let stepCPU mb = 
+        mb
+        |> State.eval fetchInstr
+        ||> decodeInstr
+        |> Result.map fst
+        |> Result.bind (executeInstr >> Result.unit)
+        // TODO: P2D: Is short circuting this early OK?
+        |> Result.bind (fun s -> State.exec s mb |> Result.unit)
+    
+    /// dumpRegisters :: Motherboard -> Result<string>
+    let dumpRegisters mb = 
         let toStr x = x.ToString()
         
         let rinstr = 
@@ -151,12 +208,49 @@ module CPU =
         
         Result.lift2 (sprintf "%s\n%s") rmbstr rinstr
     
-    /// stepCPU :: Motherboard -> Result<Motherboard> 
-    let stepCPU mb = 
-        mb
-        |> State.eval fetchInstr
-        ||> decodeInstr
-        |> Result.map fst
-        |> Result.bind (executeInstr >> Result.unit)
-        // TODO: P2D: Is short circuting this early OK?
-        |> Result.bind (fun s -> State.exec s mb |> Result.unit)
+    /// dumpMemory :: Address -> Motherboard -> Result<string>
+    let dumpMemory addr mb = 
+        let bytesToPrint = 128
+        let bytesPerLine = 0x10
+        
+        let sbs = 
+            [ for i in 0..(bytesToPrint - 1) do
+                  yield incrAddress ((uint16) i) addr ]
+            |> List.map readWord8
+            |> State.sequence
+        
+        let l1 = 
+            mb
+            |> State.eval sbs
+            |> List.mapi (fun i e -> i / bytesPerLine, e)
+        
+        let m1 = 
+            List.foldBack (fun (eK, eV) acc -> 
+                let m, l = 
+                    acc
+                    |> Map.tryFind eK
+                    |> Option.fold (fun _ e -> (Map.remove eK acc), e) (acc, [])
+                m |> Map.add eK (eV :: l)) l1 Map.empty
+        
+        let lines = 
+            Map.foldBack (fun eK eT acc -> 
+                let a = incrAddress ((uint16) (eK * bytesPerLine)) addr
+                
+                let bstr = 
+                    eT
+                    |> List.map (sprintf "%02x ")
+                    |> String.concat ""
+                
+                let pstr = 
+                    eT
+                    |> List.map (fun w -> 
+                           let c = (char) w
+                           if Char.IsControl(c) then "."
+                           else c.ToString())
+                    |> String.concat ""
+                
+                (sprintf "%O %O %O" a bstr pstr) :: acc) m1 []
+        
+        lines
+        |> Strings.joinLines
+        |> Result.unit

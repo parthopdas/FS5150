@@ -1,14 +1,19 @@
 ﻿// return an integer exit code
 module Program
 
+open FSharpx.Text
+open FSharpx.Text.Regex.Compiled
 open Lib
+open Lib.Domain.InstructionSet
 open Lib.Domain.PC
 open Lib.Parser.Core
 open System
+open System.Globalization
 
 type DbgCommand = 
-    | Step of AsyncReplyChannel<Result<string>>
-    | Dump of AsyncReplyChannel<Result<string>>
+    | Trace of AsyncReplyChannel<Result<string>>
+    | Register of AsyncReplyChannel<Result<string>>
+    | Dump of Address * AsyncReplyChannel<Result<string>>
 
 type DbgAgent() = 
     
@@ -18,15 +23,20 @@ type DbgAgent() =
                 let! command = inbox.Receive()
                 let newState = 
                     match command with
-                    | Step(rc) -> 
+                    | Trace(rc) -> 
                         let mb' = mb |> Result.bind CPU.stepCPU
                         mb'
-                        |> Result.bind CPU.dumpMotherboard
+                        |> Result.bind CPU.dumpRegisters
                         |> rc.Reply
                         mb'
-                    | Dump(rc) -> 
+                    | Register(rc) -> 
                         mb
-                        |> Result.bind CPU.dumpMotherboard
+                        |> Result.bind CPU.dumpRegisters
+                        |> rc.Reply
+                        mb
+                    | Dump(a, rc) -> 
+                        mb
+                        |> Result.bind (CPU.dumpMemory a)
                         |> rc.Reply
                         mb
                 return! loop newState
@@ -37,20 +47,40 @@ type DbgAgent() =
         |> loop
     
     let mailboxProc = MailboxProcessor.Start processor
-    member __.Step() = mailboxProc.PostAndReply Step
-    member __.Dump() = mailboxProc.PostAndReply Dump
+    member __.Trace() = mailboxProc.PostAndReply Trace
+    member __.Register() = mailboxProc.PostAndReply Register
+    member __.Dump a = mailboxProc.PostAndReply(fun rc -> Dump(a, rc))
+
+let (|TraceCmdFormat|_|) = Regex.tryMatch "t"
+let (|RegisterCmdFormat|_|) = Regex.tryMatch "r"
+
+let (|DumpCmdFormat|_|) input = 
+    match Regex.tryMatch "d ([0-9a-f]{1,4}):([0-9a-f]{1,4})" input with
+    | Some am -> 
+        Some { Segment = UInt16.Parse(am.Groups.[0].Value, NumberStyles.HexNumber)
+               Offset = UInt16.Parse(am.Groups.[1].Value, NumberStyles.HexNumber) }
+    | None -> None
 
 [<EntryPoint>]
 let main _ = 
-    printfn "IBM 5150 Emulator. (c) 2016, Partho P. Das"
+    printf "IBM 5150 Emulator. (c) 2016, Partho P. Das"
     let dbg = DbgAgent()
-    printf "\n%s" (dbg.Dump().ToString())
+    
     let rec loop() = 
-        printf "\n[s, d] - "
-        match Console.ReadKey().Key with
-        | ConsoleKey.S -> printf "\n%s" (dbg.Step().ToString())
-        | ConsoleKey.D -> printf "\n%s" (dbg.Dump().ToString())
-        | _ -> ()
+        printf "\n-"
+        let execCmd = 
+            function 
+            | TraceCmdFormat _ -> dbg.Trace()
+            | RegisterCmdFormat _ -> dbg.Register()
+            | DumpCmdFormat a -> dbg.Dump(a)
+            | _ -> "" |> Result.unit
+        Console.ReadLine()
+        |> execCmd
+        |> printf "%O"
         loop()
     loop()
     0
+(*
+ Signed offset
+ Segment register selection
+ *)

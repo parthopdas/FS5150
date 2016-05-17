@@ -242,7 +242,7 @@ let ``pinstruction tests data`` : obj array seq =
         (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD     ADC\t[DDF0], BP") 
         (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 EA0DF0ADBA   JMP\tBAAD:F00D") 
         (* 6 Args + GRP *)  yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 810634013200 ADD\t[0134], 0032") 
-        (* 6 Args + GRP *)  yield ([| 0xC7uy; 0x06uy; 0x72uy; 0x00uy; 0x00uy; 0x00uy |], "0000:0000 C70672000000 MOV\t[0072], 0000") 
+        (* 6 Args *)        yield ([| 0xC7uy; 0x06uy; 0x72uy; 0x00uy; 0x00uy; 0x00uy |], "0000:0000 C70672000000 MOV\t[0072], 0000") 
     }
     |> Seq.map (fun (a, b) -> 
            [| box a

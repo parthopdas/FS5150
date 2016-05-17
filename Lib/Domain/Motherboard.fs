@@ -26,6 +26,7 @@ module PC =
     
     type Motherboard = 
         { CPU : CPU
+          RAM : MemoryBlock
           BIOS : MemoryBlock }
         override x.ToString() = 
             let l1 = sprintf "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X" x.CPU.AX x.CPU.BX x.CPU.CX x.CPU.DX x.CPU.SP x.CPU.BP x.CPU.SI x.CPU.DI
@@ -48,6 +49,7 @@ module PC =
                 DS = 0us
                 SS = 0us
                 ES = 0us }
+          RAM = Array.zeroCreate (0x100000)
           BIOS = (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
                 |> Path.GetFullPath
                 |> Path.GetDirectoryName
