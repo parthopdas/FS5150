@@ -146,12 +146,12 @@ module Disassembler =
     /// pmodRegRm :: Parser<ModRegRM>
     let pmodRegRm<'a> : Parser<ModRegRM, 'a> = 
         let parseReg w8 = 
-            ((w8 >>> 0b11) &&& 0b111uy)
+            ((w8 >>> 3) &&& 0b111uy)
             |> getModRegType
             |> returnP
         
         let parseRmArgs w8 = 
-            let parseMrm w8 = (w8 >>> 0b110, w8 &&& 0b111uy)
+            let parseMrm w8 = (w8 >>> 6, w8 &&& 0b111uy)
             
             let parseRmArgs (mo, rm) = 
                 let createRmaDeref f d = 
@@ -307,9 +307,10 @@ module Disassembler =
                     |> Mneumonic
                     |> returnP
                 
-                let parseArgs = (ocas, (([], mrm) |> returnP))
-                                ||> List.foldBack (fun e acc -> acc >>= pargument e)
+                let parseArgs = ((([], mrm) |> returnP), ocas)
+                                ||> List.fold (fun acc e -> acc >>= pargument e)
                                 |>> fst
+                                >>= (List.rev >> returnP)
                 (fun a b -> a, b) <!> (parseMneumonic oc) <*> parseArgs
             is
             |> popCode
