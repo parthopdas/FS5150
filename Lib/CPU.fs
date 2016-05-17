@@ -27,6 +27,18 @@ module CPU =
         |> (&&&) 0xFFFFFu
         |> uint32
     
+    let inline getHiByte w16 =
+        w16 >>> 8 |> uint8 : Word8
+    
+    let inline getLoByte w16 =
+        w16 &&& 0x00FFus |> uint8 : Word8
+    
+    let inline setHiByte w16 (value : Word8) =
+        ((uint16)value <<< 8) + (uint16)(getLoByte w16) : Word16
+    
+    let inline setLoByte w16 (value : Word8) =
+        (uint16)(getHiByte w16) + ((uint16)value) : Word16
+    
     /// createAddr Word16 -> Word16 -> Address
     let createAddr segment offset = 
         { Segment = segment
@@ -54,7 +66,7 @@ module CPU =
     
     /// writeWord16 :: Word8 -> Address -> State<unit,Motherboard>
     let writeWord16 (value : Word16) addr = 
-        (writeWord8 ((uint8) (value &&& 0xFFus)) addr) >>. (writeWord8 ((uint8) (value >>> 8)) (incrAddress 1us addr))
+        (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (incrAddress 1us addr))
     
     /// getCSIP : State<Address,Motherboard>
     let getCSIP = 
@@ -84,22 +96,7 @@ module CPU =
             mb.CPU.IP <- (mb.CPU.IP + n) &&& 0xFFFFus
             (), mb
         innerFn : State<unit, Motherboard>
-    
-    /// setReg16 : Regiter -> Word16 -> State<unit,Motherboard>
-    let setReg16 reg value = 
-        let innerFn mb = 
-            match reg with
-            | AX -> mb.CPU.AX <- value
-            | BX -> mb.CPU.BX <- value
-            | CX -> mb.CPU.CX <- value
-            | DX -> mb.CPU.DX <- value
-            | SP -> mb.CPU.SP <- value
-            | BP -> mb.CPU.BP <- value
-            | SI -> mb.CPU.SI <- value
-            | DI -> mb.CPU.DI <- value
-            (), mb
-        innerFn : State<unit, Motherboard>
-    
+
     /// getRegSeg : RegiterSeg -> State<Word16,Motherboard>
     let getRegSeg segReg = 
         let innerFn mb = 
@@ -122,6 +119,37 @@ module CPU =
             | SS -> mb.CPU.SS <- value
             (), mb
         innerFn : State<unit, Motherboard>
+
+    /// getReg8 : Regiter -> State<Word8,Motherboard>
+    let getReg8 reg = 
+        let innerFn mb = 
+            let data = 
+                match reg with
+                | AL -> getLoByte mb.CPU.AX
+                | AH -> getHiByte mb.CPU.AX
+                | BL -> getLoByte mb.CPU.BX
+                | BH -> getHiByte mb.CPU.BX
+                | CL -> getLoByte mb.CPU.CX 
+                | CH -> getHiByte mb.CPU.CX
+                | DL -> getLoByte mb.CPU.DX
+                | DH -> getHiByte mb.CPU.DX
+            data, mb
+        innerFn : State<Word8, Motherboard>
+    
+    /// setReg8 : Regiter -> Word8 -> State<unit,Motherboard>
+    let setReg8 reg value = 
+        let innerFn mb = 
+            match reg with
+            | AL -> mb.CPU.AX <- setLoByte mb.CPU.AX value
+            | AH -> mb.CPU.AX <- setHiByte mb.CPU.AX value
+            | BL -> mb.CPU.BX <- setLoByte mb.CPU.BX value
+            | BH -> mb.CPU.BX <- setHiByte mb.CPU.BX value
+            | CL -> mb.CPU.CX <- setLoByte mb.CPU.CX value
+            | CH -> mb.CPU.CX <- setHiByte mb.CPU.CX value
+            | DL -> mb.CPU.DX <- setLoByte mb.CPU.DX value
+            | DH -> mb.CPU.DX <- setHiByte mb.CPU.DX value
+            (), mb
+        innerFn : State<unit, Motherboard>
     
     /// getReg16 : Regiter -> State<Word16,Motherboard>
     let getReg16 reg = 
@@ -138,6 +166,21 @@ module CPU =
                 | DI -> mb.CPU.DI
             data, mb
         innerFn : State<Word16, Motherboard>
+    
+    /// setReg16 : Regiter -> Word16 -> State<unit,Motherboard>
+    let setReg16 reg value = 
+        let innerFn mb = 
+            match reg with
+            | AX -> mb.CPU.AX <- value
+            | BX -> mb.CPU.BX <- value
+            | CX -> mb.CPU.CX <- value
+            | DX -> mb.CPU.DX <- value
+            | SP -> mb.CPU.SP <- value
+            | BP -> mb.CPU.BP <- value
+            | SI -> mb.CPU.SI <- value
+            | DI -> mb.CPU.DI <- value
+            (), mb
+        innerFn : State<unit, Motherboard>
     
     /// fetchInstr : State<(Address * InputState<_>),Motherboard> 
     let fetchInstr = 
@@ -202,7 +245,8 @@ module CPU =
             | _ -> failwithnyi instr
         | Mneumonic "MOV" -> 
             match instr.Args with
-            | [ ArgRegister16 AX; ArgImmediate(W16 c) ] -> (setReg16 AX c) *> (incrIP instr.Length)
+            | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> (setReg8 r c) *> (incrIP instr.Length)
+            | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> (setReg16 r c) *> (incrIP instr.Length)
             | [ ArgRegisterSeg r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setRegSeg r1)) *> (incrIP instr.Length)
             | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
                 (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref >>= writeWord16 c) *> (incrIP instr.Length)
@@ -211,6 +255,10 @@ module CPU =
         | Mneumonic "CLI" -> 
             match instr.Args with
             | [ ] -> setFlag IF false *> (incrIP instr.Length)
+            | _ -> failwithnyi instr
+        | Mneumonic "CLD" -> 
+            match instr.Args with
+            | [ ] -> setFlag DF false *> (incrIP instr.Length)
             | _ -> failwithnyi instr
         | _ -> failwithnyi instr
     
