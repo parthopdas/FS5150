@@ -20,7 +20,9 @@ module PC =
           mutable CS : Word16
           mutable DS : Word16
           mutable SS : Word16
-          mutable ES : Word16 }
+          mutable ES : Word16
+          
+          mutable SegOverride : SegRegister option }
     
     type MemoryBlock = Word8 array
     
@@ -48,8 +50,10 @@ module PC =
                 CS = 0xFFFFus
                 DS = 0us
                 SS = 0us
-                ES = 0us }
-          RAM = Array.zeroCreate (0x100000)
+                ES = 0us
+                
+                SegOverride = None }
+          RAM = Array.create (0x100000) 0xfeuy
           BIOS = (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
                 |> Path.GetFullPath
                 |> Path.GetDirectoryName

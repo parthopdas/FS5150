@@ -173,14 +173,23 @@ module Disassembler =
             w8
             |> parseMrm
             |> parseRmArgs
+
+        let parseUseSS w8 = 
+            match (w8 >>> 6, w8 &&& 0b111uy) with
+            | (0uy, 2uy) | (0uy, 3uy) -> true
+            | (1uy, 2uy) | (1uy, 3uy) | (1uy, 6uy) -> true
+            | (2uy, 2uy) | (2uy, 3uy) | (2uy, 6uy) -> true
+            | _ -> false
+            |> returnP
         
-        let createpModRegRm (reg, rm) = 
+        let createpModRegRm (reg, rm, usess) = 
             returnP { ModReg = reg
-                      ModRM = rm }
+                      ModRM = rm
+                      MRUseSS = usess }
         
-        let f a b = a, b
+        let f a b c = a, b, c
         pword8
-        >>= (fun w8 -> f <!> parseReg w8 <*> parseRmArgs w8)
+        >>= (fun w8 -> f <!> parseReg w8 <*> parseRmArgs w8 <*> parseUseSS w8)
         >>= createpModRegRm
         <@> "ModRegRM"
     
@@ -309,16 +318,16 @@ module Disassembler =
                 
                 let parseArgs = ((([], mrm) |> returnP), ocas)
                                 ||> List.fold (fun acc e -> acc >>= pargument e)
-                                |>> fst
-                                >>= (List.rev >> returnP)
+                                >>= (fun (args, mrrm) -> (args |> List.rev, mrrm) |> returnP)
                 (fun a b -> a, b) <!> (parseMneumonic oc) <*> parseArgs
             is
             |> popCode
             >>= parseMAndAs
         
-        let createInstruction a (m, args) bs = 
+        let createInstruction a (m, (args, mrrm)) bs = 
             { Address = a
               Mneumonic = m
+              UseSS = mrrm |> Option.fold (fun _ e -> e.MRUseSS) false
               Args = args
               Bytes = bs }
         

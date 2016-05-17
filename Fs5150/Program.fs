@@ -80,7 +80,3 @@ let main _ =
         loop()
     loop()
     0
-(*
- Signed offset
- Segment register selection
- *)

@@ -47,48 +47,50 @@ let ``pword32 can parse word32``() =
 
 let ``pmodRegRm tests data`` : obj array seq = 
     seq { 
-        yield ([| 0b11000001uy |], MregT0, RmaReg MregT1)
-        yield ([| 0b11011010uy |], MregT3, RmaReg MregT2)
+        yield ([| 0b11000001uy |], MregT0, RmaReg MregT1, false)
+        yield ([| 0b11011010uy |], MregT3, RmaReg MregT2, false)
         yield ([| 0b00100000uy |], MregT4, 
                RmaDeref { DrefType = MrmTBXSI
-                          DrefDisp = None })
+                          DrefDisp = None }, false)
         yield ([| 0b01101001uy; 0xdeuy |], MregT5, 
                RmaDeref { DrefType = MrmTBXDI
-                          DrefDisp = Some(W8 0xdeuy) })
+                          DrefDisp = Some(W8 0xdeuy) }, false)
         yield ([| 0b10110010uy; 0xaduy; 0xbauy |], MregT6, 
                RmaDeref { DrefType = MrmTBPSI
-                          DrefDisp = Some(W16 0xbaadus) })
+                          DrefDisp = Some(W16 0xbaadus) }, true)
         yield ([| 0b10111011uy; 0x0duy; 0xf0uy |], MregT7, 
                RmaDeref { DrefType = MrmTBPDI
-                          DrefDisp = Some(W16 0xf00dus) })
+                          DrefDisp = Some(W16 0xf00dus) }, true)
         yield ([| 0b01110100uy; 0xbeuy |], MregT6, 
                RmaDeref { DrefType = MrmTSI
-                          DrefDisp = Some(W8 0xbeuy) })
+                          DrefDisp = Some(W8 0xbeuy) }, false)
         yield ([| 0b00101101uy |], MregT5, 
                RmaDeref { DrefType = MrmTDI
-                          DrefDisp = None })
+                          DrefDisp = None }, false)
         yield ([| 0b00100110uy; 0x0duy; 0xf0uy |], MregT4, 
                RmaDeref { DrefType = MrmTDisp
-                          DrefDisp = Some(W16 0xf00dus) })
+                          DrefDisp = Some(W16 0xf00dus) }, false)
         yield ([| 0b01011111uy; 0xebuy |], MregT3, 
                RmaDeref { DrefType = MrmTBX
-                          DrefDisp = Some(W8 0xebuy) })
+                          DrefDisp = Some(W8 0xebuy) }, false)
         yield ([| 0b10010110uy; 0xefuy; 0xbeuy |], MregT2, 
                RmaDeref { DrefType = MrmTBP
-                          DrefDisp = Some(W16 0xbeefus) })
+                          DrefDisp = Some(W16 0xbeefus) }, true)
     }
-    |> Seq.map (fun (a, b, c) -> 
+    |> Seq.map (fun (a, b, c, d) -> 
            [| box a
               box b
-              box c |])
+              box c
+              box d |])
 
 [<Theory>]
 [<MemberData("pmodRegRm tests data")>]
-let ``pmodRegRm tests`` (bs, reg, rm) : unit = 
+let ``pmodRegRm tests`` (bs, reg, rm, usess) : unit = 
     match runOnInput pmodRegRm (bs |> fromBytes ()) with
     | Success(mrm, is) -> 
         mrm |> should equal { ModReg = reg
-                              ModRM = rm }
+                              ModRM = rm
+                              MRUseSS = usess }
         is.Position.Offset |> should equal bs.Length
     | _ -> failwithf "Test failed: %A %A %A" bs reg rm
 
@@ -236,17 +238,18 @@ let ``popCode tests`` (bs, oc, args, hasMrm) : unit =
 
 let ``pinstruction tests data`` : obj array seq = 
     seq {    
-        (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 37           AAA\t") 
-        (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 04FF         ADD\tAL, FF") 
-        (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 E80DF0       CALL\tF00D") 
-        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD     ADC\t[DDF0], BP") 
-        (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 EA0DF0ADBA   JMP\tBAAD:F00D") 
-        (* 6 Args + GRP *)  yield ([| 0x81uy; 0x06uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 810634013200 ADD\t[0134], 0032") 
-        (* 6 Args *)        yield ([| 0xC7uy; 0x06uy; 0x72uy; 0x00uy; 0x00uy; 0x00uy |], "0000:0000 C70672000000 MOV\t[0072], 0000") 
+        (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 37           AAA\t", false) 
+        (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 04FF         ADD\tAL, FF", false) 
+        (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 E80DF0       CALL\tF00D", false) 
+        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD     ADC\t[DDF0], BP", false) 
+        (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 EA0DF0ADBA   JMP\tBAAD:F00D", false) 
+        (* 6 Args + GRP *)  yield ([| 0x81uy; 0b10000110uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 818634013200 ADD\t[BP+0134], 0032", true) 
+        (* 6 Args *)        yield ([| 0xC7uy; 0x06uy; 0x72uy; 0x00uy; 0x00uy; 0x00uy |], "0000:0000 C70672000000 MOV\t[0072], 0000", false) 
     }
-    |> Seq.map (fun (a, b) -> 
+    |> Seq.map (fun (a, b, c) -> 
            [| box a
-              box b |])
+              box b
+              box c |])
 
 let is = 
     (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
@@ -258,11 +261,12 @@ let is =
 
 [<Theory>]
 [<MemberData("pinstruction tests data")>]
-let ``pinstruction tests`` (bs, instr) : unit = 
+let ``pinstruction tests`` (bs, instr, usess) : unit = 
     let csip = { Segment = 0us; Offset = 0us }
     match runOnInput (pinstruction csip is) (bs |> fromBytes { Offset = 0 }) with
     | Success(i, is) -> 
         i.ToString() |> should equal instr
+        i.UseSS |> should equal usess
         is.Position.Offset |> should equal bs.Length
     | Failure(pl, pe, pp) -> failwithf "Test failed: %A %A: %A %A %A" bs instr pl pe pp
 

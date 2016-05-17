@@ -99,6 +99,18 @@ module CPU =
             (), mb
         innerFn : State<unit, Motherboard>
     
+    /// getSegReg : SegRegiter -> State<Word16,Motherboard>
+    let getSegReg segReg = 
+        let innerFn mb = 
+            let data = 
+                match segReg with
+                | SegRegister.CS -> mb.CPU.CS
+                | SegRegister.DS -> mb.CPU.DS
+                | SegRegister.ES -> mb.CPU.ES
+                | SegRegister.SS -> mb.CPU.SS
+            data, mb
+        innerFn : State<Word16, Motherboard>
+    
     /// getReg16 : Regiter -> State<Word16,Motherboard>
     let getReg16 reg = 
         let innerFn mb = 
@@ -163,6 +175,17 @@ module CPU =
         
         (+) <!> reg <*> disp
     
+    /// getSegOverrideForEA : ModRegRm option -> State<Word16,Motherboard>
+    let getSegOverrideForEA (usess :bool) : State<SegRegister,Motherboard> =
+        let innerFn mb =
+            let sr =
+                mb.CPU.SegOverride 
+                |> Option.orElse (if usess then Some SegRegister.SS else None)
+                |> Option.getOrElse SegRegister.DS
+
+            sr, mb
+        innerFn : State<SegRegister, Motherboard>
+
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr instr = 
         let failwithnyi instr = failwithf "%O - Not implemented" (instr.ToString())
@@ -175,8 +198,9 @@ module CPU =
             match instr.Args with
             | [ ArgRegister AX; ArgImmediate(W16 c) ] -> (setReg16 AX c) *> (incrIP instr.Length)
             | [ ArgRegister r1; ArgRegister r2 ] -> ((getReg16 r2) >>= (setReg16 r1)) *> (incrIP instr.Length)
-            | [ ArgDereference deref; ArgImmediate(W16 c) ] -> 
-                (createAddr <!> (0us |> returnM) <*> getEA deref >>= writeWord16 c) *> (incrIP instr.Length)
+            | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
+                (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getSegReg) <*> getEA dref >>= writeWord16 c) *> (incrIP instr.Length)
+                // TODO: DP2: Implement signed offset 
             | _ -> failwithnyi instr
         | _ -> failwithnyi instr
     

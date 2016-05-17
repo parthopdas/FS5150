@@ -94,7 +94,14 @@ module InstructionSet =
 
     type ModRegRM = 
         { ModReg : ModRegType
-          ModRM : RmArgs }
+          ModRM : RmArgs
+          MRUseSS : bool }
+
+    type SegRegister = 
+        | CS
+        | DS
+        | ES
+        | SS
 
     type Register = 
         | AL
@@ -138,6 +145,7 @@ module InstructionSet =
     type Instruction = 
         { Address : Address
           Mneumonic : Mneumonic
+          UseSS : bool
           Args : Argument list
           Bytes : Word8[] }
         override x.ToString() = 
