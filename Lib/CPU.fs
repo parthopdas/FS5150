@@ -63,6 +63,13 @@ module CPU =
               Offset = mb.CPU.IP }, mb
         innerFn : State<Address, Motherboard>
     
+    /// setIF value : State<unit,Motherboard>
+    let setIF value = 
+        let innerFn mb = 
+            mb.CPU.IF <- value
+            (), mb
+        innerFn : State<unit, Motherboard>
+        
     /// setCSIP : State<unit,Motherboard>
     let setCSIP addr = 
         let innerFn mb = 
@@ -201,6 +208,10 @@ module CPU =
             | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
                 (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getSegReg) <*> getEA dref >>= writeWord16 c) *> (incrIP instr.Length)
                 // TODO: DP2: Implement signed offset 
+            | _ -> failwithnyi instr
+        | Mneumonic "CLI" -> 
+            match instr.Args with
+            | [ ] -> setIF false *> (incrIP instr.Length)
             | _ -> failwithnyi instr
         | _ -> failwithnyi instr
     
