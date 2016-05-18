@@ -47,12 +47,13 @@ module PC =
           Flags : Dictionary<Flags, bool>
           mutable SegOverride : RegisterSeg option }
     
-    type MemoryBlock = Word8 array
+    type MemoryBlock<'a> = 'a array
     
     type Motherboard = 
         { CPU : CPU
-          RAM : MemoryBlock
-          BIOS : MemoryBlock }
+          RAM : MemoryBlock<Word8>
+          PortRAM : MemoryBlock<Word16>
+          BIOS : MemoryBlock<Word8> }
         override x.ToString() = 
             let l1 = 
                 sprintf "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X" x.CPU.AX x.CPU.BX 
@@ -99,6 +100,7 @@ module PC =
                            acc) (new Dictionary<Flags, bool>())
                 SegOverride = None }
           RAM = Array.zeroCreate 0x100000
+          PortRAM = Array.zeroCreate 4096
           BIOS = 
               (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
               |> Path.GetFullPath

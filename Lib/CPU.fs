@@ -68,6 +68,36 @@ module CPU =
     let writeWord16 (value : Word16) addr = 
         (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (incrAddress 1us addr))
     
+    /// outPort16to16 :: Word16 -> Word16 -> State<unit,Motherboard>
+    let outPort16to16 (pno : Word16) (value : Word16) = 
+        let innerFn mb = 
+            if pno < 4096us then mb.PortRAM.[(int)pno] <- (uint16)value
+            match pno with
+            | i when i >= 0x20us && i <= 0x21us -> () //failwith "8259 - Write To Port - NYI"
+            | i when i >= 0x40us && i <= 0x43us -> () //failwith "8253 - Write To Port - NYI"
+            | i when i = 0x61us -> () //failwith "Speaker - Write To Port - NYI"
+            | i when i >= 0x388us && i <= 0x389us -> () //failwith "Adlib pass-through - Write To Port - NYI"
+            | i when i >= 0x3C7us && i <= 0x3C9us -> () //failwith "MCGA/VGA DAC read palette index - Write To Port - NYI"
+            | i when i = 0x3D4us -> () //failwith "CGA/VGA CRTC register select index - Write To Port - NYI"
+            | i when i = 0x3D5us -> () //failwith "CGA/VGA CRTC register data - Write To Port - NYI"
+            | i when i = 0x3D9us -> () //failwith "? - Write To Port - NYI"
+            | i when i >= 0x3F8us && i <= 0x3FFus -> () //failwith "COM1 - Write To Port - NYI"
+            | _ -> ()
+            (), mb
+        innerFn : State<unit, Motherboard>
+    
+    /// outPort8to8 :: Word8 -> Word8 -> State<unit,Motherboard>
+    let outPort8to8 (pno : Word8) (value : Word8) = 
+        outPort16to16 ((uint16)pno) ((uint16)value)
+    
+    /// outPort8to16 :: Word16 -> Word8 -> State<unit,Motherboard>
+    let outPort8to16 (pno : Word16) (value : Word8) = 
+        outPort16to16 ((uint16)pno) ((uint16)value)
+    
+    /// outPort16to8 :: Word8 -> Word16 -> State<unit,Motherboard>
+    let outPort16to8 (pno : Word8) (value : Word16) = 
+        outPort16to16 ((uint16)pno) ((uint16)value)
+
     /// getCSIP : State<Address,Motherboard>
     let getCSIP = 
         let innerFn mb = 
@@ -87,13 +117,6 @@ module CPU =
         let innerFn mb = 
             mb.CPU.CS <- addr.Segment
             mb.CPU.IP <- addr.Offset
-            (), mb
-        innerFn : State<unit, Motherboard>
-    
-    /// incrIP : Word16 -> State<unit,Motherboard>
-    let incrIP n = 
-        let innerFn mb = 
-            mb.CPU.IP <- (mb.CPU.IP + n) &&& 0xFFFFus
             (), mb
         innerFn : State<unit, Motherboard>
 
@@ -238,29 +261,44 @@ module CPU =
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr instr = 
         let failwithnyi instr = failwithf "%O - Not implemented" (instr.ToString())
-        match instr.Mneumonic with
-        | Mneumonic "JMP" -> 
-            match instr.Args with
-            | [ ArgAddress a ] -> setCSIP a
+        let ns = None |> State.returnM
+        let exec = 
+            match instr.Mneumonic with
+            | Mneumonic "JMP" -> 
+                match instr.Args with
+                | [ ArgAddress a ] -> a |> Some |> State.returnM
+                | _ -> failwithnyi instr
+            | Mneumonic "MOV" -> 
+                match instr.Args with
+                | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> (setReg8 r c) *> ns
+                | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> (setReg16 r c) *> ns
+                | [ ArgRegisterSeg r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setRegSeg r1)) *> ns
+                | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
+                    (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref >>= writeWord16 c) *> ns
+                    // TODO: DP2: Implement signed offset 
+                | _ -> failwithnyi instr
+            | Mneumonic "CLI" -> 
+                match instr.Args with
+                | [ ] -> setFlag IF false *> ns
+                | _ -> failwithnyi instr
+            | Mneumonic "CLD" -> 
+                match instr.Args with
+                | [ ] -> setFlag DF false *> ns
+                | _ -> failwithnyi instr
+            | Mneumonic "OUT" -> 
+                match instr.Args with
+                | [ ArgImmediate(W8 c); ArgRegister8 r ] -> (getReg8 r >>= outPort8to8 c) *> ns
+                | [ ArgRegister16 pno; ArgRegister8 v ] -> 
+                    (getReg16 pno >>= (fun pno -> getReg8 v >>= (outPort8to16 pno))) *> ns
+                | _ -> failwithnyi instr
+            | Mneumonic "INC" -> 
+                match instr.Args with
+                | [ ArgRegister8 r ] -> ((+) 1uy <!> getReg8 r >>= setReg8 r) *> ns
+                | _ -> failwithnyi instr
             | _ -> failwithnyi instr
-        | Mneumonic "MOV" -> 
-            match instr.Args with
-            | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> (setReg8 r c) *> (incrIP instr.Length)
-            | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> (setReg16 r c) *> (incrIP instr.Length)
-            | [ ArgRegisterSeg r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setRegSeg r1)) *> (incrIP instr.Length)
-            | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
-                (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref >>= writeWord16 c) *> (incrIP instr.Length)
-                // TODO: DP2: Implement signed offset 
-            | _ -> failwithnyi instr
-        | Mneumonic "CLI" -> 
-            match instr.Args with
-            | [ ] -> setFlag IF false *> (incrIP instr.Length)
-            | _ -> failwithnyi instr
-        | Mneumonic "CLD" -> 
-            match instr.Args with
-            | [ ] -> setFlag DF false *> (incrIP instr.Length)
-            | _ -> failwithnyi instr
-        | _ -> failwithnyi instr
+        exec 
+        >>= (fun x -> Option.fold (fun _ e -> e |> State.returnM) (incrAddress instr.Length <!> getCSIP) x) 
+        >>= setCSIP
     
     /// stepCPU :: Motherboard -> Result<Motherboard> 
     let stepCPU mb = 
