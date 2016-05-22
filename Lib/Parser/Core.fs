@@ -132,3 +132,8 @@ module Core =
         let (<*>) = apply
 
         let lift2 f x1 x2 = unit f <*> x1 <*> x2
+
+        let fold fS fF = function
+            | Success a -> fS a
+            | Failure (l, e, p) -> fF (l, e, p)
+

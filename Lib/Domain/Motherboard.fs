@@ -50,7 +50,7 @@ module PC =
     type MemoryBlock<'a> = 'a array
     
     type Motherboard = 
-        { mutable ExecedCount : int 
+        { mutable ExecutedCount : int 
           CPU : CPU
           RAM : MemoryBlock<Word8>
           PortRAM : MemoryBlock<Word16>
@@ -72,7 +72,7 @@ module PC =
             sprintf "%s\n%s   %s" l1 l2 fs
     
     let initMotherBoard() : Motherboard = 
-        { ExecedCount = 0
+        { ExecutedCount = 0
           CPU = 
               { AX = 0us
                 BX = 3us

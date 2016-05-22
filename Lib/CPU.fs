@@ -13,6 +13,7 @@ module CPU =
     open System.IO
     open System.Reflection
     open System.Globalization
+    open FSharpx.Functional
     
     let instructionSet = 
         (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
@@ -48,7 +49,7 @@ module CPU =
     /// incrExecedCount :: unit -> State<unit,Motherboard>
     let incrExecedCount () = 
         let innerFn mb = 
-            (mb.ExecedCount <- mb.ExecedCount + 1), mb
+            (mb.ExecutedCount <- mb.ExecutedCount + 1), mb
         innerFn : State<unit, Motherboard>
     
     /// incrAddress :: Word16 -> Address -> Address
@@ -407,34 +408,39 @@ module CPU =
     let inline tee fn x = x |> fn |> ignore; x
     
     type I8088Agent() = 
-
     
         let processor (inbox : MailboxProcessor<I8088Command>) = 
-            let rec loop (mb : Result<Motherboard>) = 
+            let rec nextCmd (mb, br) = 
+                let noChangeInBreak = (Prelude.flip Prelude.tuple2 br) |> Result.map
                 async { 
-                    let! command = inbox.TryReceive -1
-                    match command with
-                    | Some(Trace(rc)) -> 
-                        let mb' = mb |> Result.bind stepCPU
-                        mb'
-                        |> Result.bind dumpRegisters
-                        |> rc.Reply
-                        return! mb' |> loop
-                    | Some(Register(rc)) -> 
-                        mb 
-                        |> Result.bind dumpRegisters
-                        |> rc.Reply
-                        return! mb |> loop
-                    | Some(Dump(a, rc)) -> 
-                        mb
-                        |> Result.bind (dumpMemory a)
-                        |> rc.Reply
-                        return! mb |> loop
-                    | None -> 
-                        return! mb |> Result.bind stepCPU |> loop
+                    let! command = inbox.TryReceive (if br then -1 else 0)
+                    let f =
+                        match command with
+                        | Some(Trace(rc)) -> 
+                            stepCPU
+                            >> tee (Result.bind dumpRegisters >> rc.Reply)
+                            >> noChangeInBreak
+
+                        | Some(Register(rc)) -> 
+                            tee (dumpRegisters >> rc.Reply) >> Result.unit
+                            >> noChangeInBreak
+
+                        | Some(Dump(a, rc)) -> 
+                            tee (dumpMemory a >> rc.Reply) >> Result.unit
+                            >> noChangeInBreak
+
+                        | None -> 
+                            stepCPU 
+                            >> Result.bind (fun mb -> (mb, mb.ExecutedCount = 6) |> Result.unit) 
+
+                    return! mb |> f |> loop
                 }
+
+            and loop = Result.fold nextCmd (fun _ -> async { return () })
+
             ()
             |> initMotherBoard
+            |> Prelude.flip Prelude.tuple2 false
             |> Result.unit
             |> loop
     
