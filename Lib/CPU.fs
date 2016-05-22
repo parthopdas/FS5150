@@ -12,6 +12,7 @@ module CPU =
     open System
     open System.IO
     open System.Reflection
+    open System.Globalization
     
     let instructionSet = 
         (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
@@ -43,6 +44,12 @@ module CPU =
     let createAddr segment offset = 
         { Segment = segment
           Offset = offset }
+    
+    /// incrExecedCount :: unit -> State<unit,Motherboard>
+    let incrExecedCount () = 
+        let innerFn mb = 
+            (mb.ExecedCount <- mb.ExecedCount + 1), mb
+        innerFn : State<unit, Motherboard>
     
     /// incrAddress :: Word16 -> Address -> Address
     let incrAddress n addr = { addr with Address.Offset = ((addr.Offset + n) &&& 0xFFFFus) }
@@ -205,24 +212,6 @@ module CPU =
             (), mb
         innerFn : State<unit, Motherboard>
     
-    /// fetchInstr : State<(Address * InputState<_>),Motherboard> 
-    let fetchInstr = 
-        let inputFromStartAddr a0 = 
-            [ for i in 0..5 do
-                  yield incrAddress ((uint16) i) a0 ]
-            |> List.map readWord8
-            |> State.sequence
-            |> State.bind (Array.ofList
-                           >> fromBytes { Offset = 0 }
-                           >> State.returnM)
-            |> State.bind (fun is -> (a0, is) |> State.returnM)
-        getCSIP |> State.bind inputFromStartAddr : State<Address * InputState<_>, Motherboard>
-    
-    /// decodeInstr :: Address -> InputState<_> -> Result<Instruction * InputState<_>>
-    let decodeInstr csip instrBytes = 
-        // TODO: P2D: We are shortcircuting the monad here. How to build a stack of monads like State<Parser<_>>
-        runOnInput (pinstruction csip instructionSet) instrBytes
-    
     /// getEffectiveAddress :: Dereference -> State<Address,Motherboard>
     let getEA deref = 
         let reg = 
@@ -254,9 +243,26 @@ module CPU =
                 mb.CPU.SegOverride 
                 |> Option.orElse (if usess then Some SS else None)
                 |> Option.getOrElse DS
-
             sr, mb
         innerFn : State<RegisterSeg, Motherboard>
+    
+    /// fetchInstr : State<(Address * InputState<_>),Motherboard> 
+    let fetchInstr = 
+        let inputFromStartAddr a0 = 
+            [ for i in 0..5 do
+                  yield incrAddress ((uint16) i) a0 ]
+            |> List.map readWord8
+            |> State.sequence
+            |> State.bind (Array.ofList
+                           >> fromBytes { Offset = 0 }
+                           >> State.returnM)
+            |> State.bind (fun is -> (a0, is) |> State.returnM)
+        getCSIP |> State.bind inputFromStartAddr : State<Address * InputState<_>, Motherboard>
+    
+    /// decodeInstr :: Address -> InputState<_> -> Result<Instruction * InputState<_>>
+    let decodeInstr csip instrBytes = 
+        // TODO: P2D: We are shortcircuting the monad here. How to build a stack of monads like State<Parser<_>>
+        runOnInput (pinstruction csip instructionSet) instrBytes
 
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr instr = 
@@ -267,6 +273,7 @@ module CPU =
             | Mneumonic "JMP" -> 
                 match instr.Args with
                 | [ ArgAddress a ] -> a |> Some |> State.returnM
+                | [ ArgOffset(W16 o) ] -> getCSIP >>= (fun csip -> { csip with Offset = csip.Offset + instr.Length + o } |> Some |> State.returnM)
                 | _ -> failwithnyi instr
             | Mneumonic "MOV" -> 
                 match instr.Args with
@@ -295,10 +302,17 @@ module CPU =
                 match instr.Args with
                 | [ ArgRegister8 r ] -> ((+) 1uy <!> getReg8 r >>= setReg8 r) *> ns
                 | _ -> failwithnyi instr
+            | Mneumonic "XOR" -> 
+                match instr.Args with
+                | [ ArgRegister16 r1; ArgRegister16 r2 ] -> 
+                    (getReg16 r1 >>= (fun r1 -> getReg16 r2 >>= (fun r2 -> r1 ^^^ r2 |> State.returnM))) *> ns
+                | _ -> failwithnyi instr
             | _ -> failwithnyi instr
+
         exec 
-        >>= (fun x -> Option.fold (fun _ e -> e |> State.returnM) (incrAddress instr.Length <!> getCSIP) x) 
+        >>= Option.fold (fun _ e -> e |> State.returnM) (incrAddress instr.Length <!> getCSIP) 
         >>= setCSIP
+        >>= incrExecedCount
     
     /// stepCPU :: Motherboard -> Result<Motherboard> 
     let stepCPU mb = 
@@ -374,3 +388,58 @@ module CPU =
         lines
         |> Strings.joinLines
         |> Result.unit
+
+    type I8088Command = 
+        | Trace of AsyncReplyChannel<Result<string>>
+        | Register of AsyncReplyChannel<Result<string>>
+        | Dump of Address * AsyncReplyChannel<Result<string>>
+
+    let (|TraceCmdFormat|_|) = Regex.tryMatch "t"
+    let (|RegisterCmdFormat|_|) = Regex.tryMatch "r"
+
+    let (|DumpCmdFormat|_|) input = 
+        match Regex.tryMatch "d ([0-9a-f]{1,4}):([0-9a-f]{1,4})" input with
+        | Some am -> 
+            Some { Segment = UInt16.Parse(am.Groups.[0].Value, NumberStyles.HexNumber)
+                   Offset = UInt16.Parse(am.Groups.[1].Value, NumberStyles.HexNumber) }
+        | None -> None
+
+    let inline tee fn x = x |> fn |> ignore; x
+    
+    type I8088Agent() = 
+
+    
+        let processor (inbox : MailboxProcessor<I8088Command>) = 
+            let rec loop (mb : Result<Motherboard>) = 
+                async { 
+                    let! command = inbox.TryReceive -1
+                    match command with
+                    | Some(Trace(rc)) -> 
+                        let mb' = mb |> Result.bind stepCPU
+                        mb'
+                        |> Result.bind dumpRegisters
+                        |> rc.Reply
+                        return! mb' |> loop
+                    | Some(Register(rc)) -> 
+                        mb 
+                        |> Result.bind dumpRegisters
+                        |> rc.Reply
+                        return! mb |> loop
+                    | Some(Dump(a, rc)) -> 
+                        mb
+                        |> Result.bind (dumpMemory a)
+                        |> rc.Reply
+                        return! mb |> loop
+                    | None -> 
+                        return! mb |> Result.bind stepCPU |> loop
+                }
+            ()
+            |> initMotherBoard
+            |> Result.unit
+            |> loop
+    
+        let mailboxProc = MailboxProcessor.Start processor
+        member __.Trace() = mailboxProc.PostAndReply Trace
+        member __.Register() = mailboxProc.PostAndReply Register
+        member __.Dump a = mailboxProc.PostAndReply(fun rc -> Dump(a, rc))
+

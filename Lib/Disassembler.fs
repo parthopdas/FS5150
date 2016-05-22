@@ -5,6 +5,7 @@ module Disassembler =
     open Lib.Domain.InstructionSet
     open Lib.Parser.Combinators
     open Lib.Parser.Core
+    open FSharpx.Functional
     
     let private modRegIndexMap = 
         [ (0b000uy, MregT0)
@@ -187,9 +188,8 @@ module Disassembler =
                       ModRM = rm
                       MRUseSS = usess }
         
-        let f a b c = a, b, c
         pword8
-        >>= (fun w8 -> f <!> parseReg w8 <*> parseRmArgs w8 <*> parseUseSS w8)
+        >>= (fun w8 -> Prelude.tuple3 <!> parseReg w8 <*> parseRmArgs w8 <*> parseUseSS w8)
         >>= createpModRegRm
         <@> "ModRegRM"
     
