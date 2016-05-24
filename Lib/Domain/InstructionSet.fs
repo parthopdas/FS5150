@@ -126,7 +126,7 @@ module InstructionSet =
     type Argument = 
         | ArgAddress of Address
         | ArgConstant of Constant
-        | ArgOffset of WordData
+        | ArgOffset of Word16
         | ArgRegister8 of Register8
         | ArgRegister16 of Register16
         | ArgRegisterSeg of RegisterSeg
@@ -136,7 +136,7 @@ module InstructionSet =
             match x with
             | ArgAddress a -> sprintf "%O" a
             | ArgConstant x -> sprintf "%O" x
-            | ArgOffset o -> sprintf "%O" o
+            | ArgOffset o -> sprintf "%04X" o
             | ArgRegister8 r -> sprintf "%A" r
             | ArgRegister16 r -> sprintf "%A" r
             | ArgRegisterSeg r -> sprintf "%A" r

@@ -221,13 +221,12 @@ module Disassembler =
                 mrm.ModReg
                 |> getRegister aoc
                 |> appendArg, Some mrm)
-            | [ 'J'; 'b' ] -> W8
+            | [ 'J'; 'b' ] -> Common.signExtend
                               >> ArgOffset
                               <!> pword8
                               |>> appendArg
                               |>> withMrm
-            | [ 'J'; 'v' ] -> W16
-                              >> ArgOffset
+            | [ 'J'; 'v' ] -> ArgOffset
                               <!> pword16
                               |>> appendArg
                               |>> withMrm

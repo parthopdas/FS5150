@@ -8,14 +8,23 @@ module PC =
     open System.Reflection
     
     type Flags = 
+        /// Overflow - Signed number exceeds capacity of result
         | OF
+        /// Direction - Set by user to indication direction of string instructions
         | DF
+        /// Interrupt - Enable or disable hardware interrupts
         | IF
+        /// Trap - Single step
         | TF
+        /// Sign - Results sign bit from compare/substract ops
         | SF
+        /// Zero - Result is zero from compare/substract ops
         | ZF
+        /// Adjust - ?
         | AF
+        /// Parity - ?
         | PF
+        /// Carry - Unsigned number exceeds capacity of result
         | CF
     
     let flagNames = 

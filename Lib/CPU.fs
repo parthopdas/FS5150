@@ -23,12 +23,6 @@ module CPU =
         |> File.ReadAllText
         |> InstructionSetLoader.loadInstructionSet
     
-    /// flatten :: Address -> uint32
-    let private flatten addr = 
-        ((uint32) addr.Segment <<< 4) + (uint32) addr.Offset
-        |> (&&&) 0xFFFFFu
-        |> uint32
-    
     let inline getHiByte w16 =
         w16 >>> 8 |> uint8 : Word8
     
@@ -40,6 +34,12 @@ module CPU =
     
     let inline setLoByte w16 (value : Word8) =
         (uint16)(getHiByte w16) + ((uint16)value) : Word16
+    
+    /// flatten :: Address -> uint32
+    let private flatten addr = 
+        ((uint32) addr.Segment <<< 4) + (uint32) addr.Offset
+        |> (&&&) 0xFFFFFu
+        |> uint32
     
     /// createAddr Word16 -> Word16 -> Address
     let createAddr segment offset = 
@@ -112,6 +112,12 @@ module CPU =
             { Segment = mb.CPU.CS
               Offset = mb.CPU.IP }, mb
         innerFn : State<Address, Motherboard>
+    
+    /// getFlag : flag -> State<bool,Motherboard>
+    let getFlag flag = 
+        let innerFn mb =
+            mb.CPU.Flags.[flag], mb
+        innerFn : State<bool, Motherboard>
     
     /// setFlag : flag -> value -> State<unit,Motherboard>
     let setFlag flag value = 
@@ -197,6 +203,49 @@ module CPU =
                 | DI -> mb.CPU.DI
             data, mb
         innerFn : State<Word16, Motherboard>
+
+    let parity = [|
+        true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true; 
+        false; true; true; false; true; false; false; true; true; false; false; true; false; true; true; false;
+        false; true; true; false; true; false; false; true; true; false; false; true; false; true; true; false; 
+        true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true;
+        false; true; true; false; true; false; false; true; true; false; false; true; false; true; true; false; 
+        true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true;
+        true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true; 
+        false; true; true; false; true; false; false; true; true; false; false; true; false; true; true; false;
+        false; true; true; false; true; false; false; true; true; false; false; true; false; true; true; false; 
+        true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true;
+        true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true; 
+        false; true; true; false; true; false; false; true; true; false; false; true; false; true; true; false;
+        true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true; 
+        false; true; true; false; true; false; false; true; true; false; false; true; false; true; true; false;
+        false; true; true; false; true; false; false; true; true; false; false; true; false; true; true; false; 
+        true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true;
+    |]
+
+    /// flagSzp16 : Word16 -> State<unit,Motherboard>
+    let flagSZP16 w16 = 
+        (setFlag SF (w16 &&& 0x8000us = 0x8000us))
+        *> (setFlag ZF (w16 = 0us))
+        *> (setFlag PF (parity.[(int)(w16 &&& 255us)]))
+
+    /// flagLog16 : Word16 -> State<unit,Motherboard>
+    let flagLog16 (w16 : Word16) = 
+        flagSZP16 w16 *> (setFlag CF false) *> (setFlag OF false)  
+
+    let flagAdd16 (v1 : Word16, v2 : Word16) = 
+        let dst = (uint32)v1 + (uint32)v2
+        (flagSZP16 ((uint16)dst))
+        *> (setFlag CF (dst &&& 0xFFFF0000ul <> 0ul))
+        *> (setFlag OF (((dst ^^^ (uint32)v1) &&& (dst ^^^ (uint32)v2) &&& 0x8000ul) = 0x8000ul))
+        *> (setFlag AF ( ( ((uint32)v1 ^^^ (uint32)v2 ^^^ dst) &&& 0x10ul) = 0x10ul))
+
+    let flagSub16 (v1 : Word16, v2 : Word16) = 
+        let dst = (uint32)v1 - (uint32)v2
+        (flagSZP16 ((uint16)dst))
+        *> (setFlag CF (dst &&& 0xFFFF0000ul <> 0ul))
+        *> (setFlag OF (((dst ^^^ (uint32)v1) &&& ((uint32)v1 ^^^ (uint32)v2) &&& 0x8000ul) <> 0ul))
+        *> (setFlag AF ( ( ((uint32)v1 ^^^ (uint32)v2 ^^^ dst) &&& 0x10ul) <> 0ul))
     
     /// setReg16 : Regiter -> Word16 -> State<unit,Motherboard>
     let setReg16 reg value = 
@@ -265,25 +314,123 @@ module CPU =
         // TODO: P2D: We are shortcircuting the monad here. How to build a stack of monads like State<Parser<_>>
         runOnInput (pinstruction csip instructionSet) instrBytes
 
+    let opXor16 v1v2 =
+        let res = v1v2 ||> (^^^)
+        flagLog16 res *> (res |> State.returnM)
+
+    let opAdd16 v1v2 =
+        let res = v1v2 ||> (+)
+        flagAdd16 v1v2 *> (res |> State.returnM)
+
+    let opSub16 v1v2 =
+        let res = v1v2 ||> (-)
+        flagSub16 v1v2 *> (res |> State.returnM)
+
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr instr = 
         let failwithnyi instr = failwithf "%O - Not implemented" (instr.ToString())
         let ns = None |> State.returnM
+        let getAndIncrIPIf n flg = if flg then getCSIP >>= (incrAddress n >> Some >> State.returnM) else None |> State.returnM 
         let exec = 
             match instr.Mneumonic with
             | Mneumonic "JMP" -> 
                 match instr.Args with
                 | [ ArgAddress a ] -> a |> Some |> State.returnM
-                | [ ArgOffset(W16 o) ] -> getCSIP >>= (fun csip -> { csip with Offset = csip.Offset + instr.Length + o } |> Some |> State.returnM)
+                | [ ArgOffset(w16) ] -> 
+                    getCSIP >>= (incrAddress (instr.Length + w16) >> Some >> State.returnM)
+                | _ -> failwithnyi instr
+            | Mneumonic "JB" -> 
+                match instr.Args with
+                | [ ArgOffset(w16) ] -> 
+                    getFlag CF >>= getAndIncrIPIf (instr.Length + w16)
+                | _ -> failwithnyi instr
+            | Mneumonic "JNB" -> 
+                match instr.Args with
+                | [ ArgOffset(w16) ] -> 
+                    getFlag CF >>= (not >> getAndIncrIPIf (instr.Length + w16))
+                | _ -> failwithnyi instr
+            | Mneumonic "JO" -> 
+                match instr.Args with
+                | [ ArgOffset(w16) ] -> 
+                    getFlag OF >>= getAndIncrIPIf (instr.Length + w16)
+                | _ -> failwithnyi instr
+            | Mneumonic "JNO" -> 
+                match instr.Args with
+                | [ ArgOffset(w16) ] -> 
+                    getFlag OF >>= (not >> getAndIncrIPIf (instr.Length + w16))
+                | _ -> failwithnyi instr
+            | Mneumonic "JS" -> 
+                match instr.Args with
+                | [ ArgOffset(w16) ] -> 
+                    getFlag SF >>= getAndIncrIPIf (instr.Length + w16)
+                | _ -> failwithnyi instr
+            | Mneumonic "JZ" -> 
+                match instr.Args with
+                | [ ArgOffset(w16) ] -> 
+                    getFlag ZF >>= getAndIncrIPIf (instr.Length + w16)
+                | _ -> failwithnyi instr
+            | Mneumonic "JNZ" -> 
+                match instr.Args with
+                | [ ArgOffset(w16) ] -> 
+                    getFlag ZF >>= (not >> getAndIncrIPIf (instr.Length + w16))
+                | _ -> failwithnyi instr
+            | Mneumonic "JPE" -> 
+                match instr.Args with
+                | [ ArgOffset(w16) ] -> 
+                    getFlag PF >>= getAndIncrIPIf (instr.Length + w16)
+                | _ -> failwithnyi instr
+            | Mneumonic "JPO" -> 
+                match instr.Args with
+                | [ ArgOffset(w16) ] -> 
+                    getFlag PF >>= (not >> getAndIncrIPIf (instr.Length + w16))
+                | _ -> failwithnyi instr
+            | Mneumonic "ADD" -> 
+                match instr.Args with
+                | [ ArgRegister16 AX; ArgImmediate(W16 c) ] -> 
+                    (Prelude.tuple2 <!> getReg16 AX <*> (c |> State.returnM) >>= opAdd16 >>= setReg16 AX) *> ns 
+                | _ -> failwithnyi instr
+            | Mneumonic "INC" -> 
+                match instr.Args with
+                | [ ArgRegister16 AX ] -> 
+                    let add1 = Prelude.tuple2 <!> getReg16 AX <*> (1us |> State.returnM) >>= opAdd16 >>= setReg16 AX
+                    (getFlag CF <* add1 >>= setFlag CF) *> ns 
+                | _ -> failwithnyi instr
+            | Mneumonic "NOT" -> 
+                match instr.Args with
+                | [ ArgRegister16 r ] -> 
+                    ((~~~) <!> getReg16 r >>= setReg16 r) *> ns 
+                | _ -> failwithnyi instr
+            | Mneumonic "SHL" -> 
+                match instr.Args with
+                | [ ArgRegister16 AX; ArgConstant w8 ] -> 
+                    let folder acc _ =
+                        acc >>= (fun v -> setFlag CF (v &&& 0x8000us <> 0us) *> setReg16 AX ((v <<< 1) &&& 0xFFFFus) *> getReg16 AX)
+
+                    let doShl = [1 .. (int)w8] |> List.fold folder (getReg16 AX)
+
+                    ((Prelude.tuple2 <!> doShl <*> getFlag CF)
+                        >>= (fun (s, cf) -> (setFlag OF ((w8 = 1uy) && (cf = ((s >>> 15) = 1us)))) *> flagSZP16 s))
+                    *> ns 
+                | _ -> failwithnyi instr
+            | Mneumonic "SUB" -> 
+                match instr.Args with
+                | [ ArgRegister16 AX; ArgImmediate(W16 c) ] -> 
+                    (Prelude.tuple2 <!> getReg16 AX <*> (c |> State.returnM) >>= opSub16 >>= setReg16 AX) *> ns 
+                | _ -> failwithnyi instr
+            | Mneumonic "CMP" -> 
+                match instr.Args with
+                | [ ArgRegister16 AX; ArgImmediate(W16 c) ] -> 
+                    (Prelude.tuple2 <!> getReg16 AX <*> (c |> State.returnM) >>= flagSub16) *> ns 
                 | _ -> failwithnyi instr
             | Mneumonic "MOV" -> 
                 match instr.Args with
                 | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> (setReg8 r c) *> ns
                 | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> (setReg16 r c) *> ns
+                | [ ArgRegister16 r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setReg16 r1)) *> ns
                 | [ ArgRegisterSeg r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setRegSeg r1)) *> ns
+                | [ ArgRegister16 r1; ArgRegisterSeg r2 ] -> ((getRegSeg r2) >>= (setReg16 r1)) *> ns
                 | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
                     (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref >>= writeWord16 c) *> ns
-                    // TODO: DP2: Implement signed offset 
                 | _ -> failwithnyi instr
             | Mneumonic "CLI" -> 
                 match instr.Args with
@@ -299,14 +446,12 @@ module CPU =
                 | [ ArgRegister16 pno; ArgRegister8 v ] -> 
                     (getReg16 pno >>= (fun pno -> getReg8 v >>= (outPort8to16 pno))) *> ns
                 | _ -> failwithnyi instr
-            | Mneumonic "INC" -> 
-                match instr.Args with
-                | [ ArgRegister8 r ] -> ((+) 1uy <!> getReg8 r >>= setReg8 r) *> ns
-                | _ -> failwithnyi instr
             | Mneumonic "XOR" -> 
                 match instr.Args with
                 | [ ArgRegister16 r1; ArgRegister16 r2 ] -> 
-                    (getReg16 r1 >>= (fun r1 -> getReg16 r2 >>= (fun r2 -> r1 ^^^ r2 |> State.returnM))) *> ns
+                    (Prelude.tuple2 <!> getReg16 r1 <*> getReg16 r2 >>= opXor16 >>= setReg16 r1) *> ns 
+                | [ ArgRegister16 r1; ArgImmediate(W16 w16) ] -> 
+                    (Prelude.tuple2 <!> getReg16 r1 <*> (w16 |> State.returnM) >>= opXor16 >>= setReg16 r1) *> ns 
                 | _ -> failwithnyi instr
             | _ -> failwithnyi instr
 
@@ -405,33 +550,31 @@ module CPU =
                    Offset = UInt16.Parse(am.Groups.[1].Value, NumberStyles.HexNumber) }
         | None -> None
 
-    let inline tee fn x = x |> fn |> ignore; x
-    
     type I8088Agent() = 
     
         let processor (inbox : MailboxProcessor<I8088Command>) = 
             let rec nextCmd (mb, br) = 
-                let noChangeInBreak = (Prelude.flip Prelude.tuple2 br) |> Result.map
+                let continueWithBr = (Prelude.flip Prelude.tuple2 br) |> Result.map
                 async { 
                     let! command = inbox.TryReceive (if br then -1 else 0)
                     let f =
                         match command with
                         | Some(Trace(rc)) -> 
                             stepCPU
-                            >> tee (Result.bind dumpRegisters >> rc.Reply)
-                            >> noChangeInBreak
+                            >> Common.tee (Result.bind dumpRegisters >> rc.Reply)
+                            >> continueWithBr
 
                         | Some(Register(rc)) -> 
-                            tee (dumpRegisters >> rc.Reply) >> Result.unit
-                            >> noChangeInBreak
+                            Common.tee (dumpRegisters >> rc.Reply) >> Result.unit
+                            >> continueWithBr
 
                         | Some(Dump(a, rc)) -> 
-                            tee (dumpMemory a >> rc.Reply) >> Result.unit
-                            >> noChangeInBreak
+                            Common.tee (dumpMemory a >> rc.Reply) >> Result.unit
+                            >> continueWithBr
 
                         | None -> 
                             stepCPU 
-                            >> Result.bind (fun mb -> (mb, mb.ExecutedCount = 6) |> Result.unit) 
+                            >> Result.bind (fun mb -> (mb, mb.ExecutedCount = 55) |> Result.unit) 
 
                     return! mb |> f |> loop
                 }
@@ -440,7 +583,8 @@ module CPU =
 
             ()
             |> initMotherBoard
-            |> Prelude.flip Prelude.tuple2 false
+            |> Prelude.tuple2 false
+            |> Prelude.swap
             |> Result.unit
             |> loop
     

@@ -58,6 +58,7 @@
   </Target>
   <ItemGroup>
     <None Include="packages.config" />
+    <Compile Include="Common.fs" />
     <Compile Include="Parser\Input.fs" />
     <Compile Include="Parser\Core.fs" />
     <Compile Include="Parser\Combinators.fs" />
