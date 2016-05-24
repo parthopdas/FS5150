@@ -65,9 +65,17 @@
     <Compile Include="Parser\Tokens.fs" />
     <Compile Include="Domain\InstructionSet.fs" />
     <Compile Include="Domain\Motherboard.fs" />
-    <Compile Include="InstructionSetLoader.fs" />
-    <Compile Include="Disassembler.fs" />
-    <Compile Include="CPU.fs" />
+    <Compile Include="CPU\InstructionSetLoader.fs" />
+    <Compile Include="CPU\Disassembler.fs" />
+    <Compile Include="CPU\Execution.Common.fs" />
+    <Compile Include="CPU\Execution.Data.fs" />
+    <Compile Include="CPU\Execution.Arithmetic.fs" />
+    <Compile Include="CPU\Execution.Logic.fs" />
+    <Compile Include="CPU\Execution.String.fs" />
+    <Compile Include="CPU\Execution.Control.fs" />
+    <Compile Include="CPU\Execution.Processor.fs" />
+    <Compile Include="CPU\FDE.fs" />
+    <Compile Include="CPU\I8088.fs" />
     <None Include="app.config" />
     <None Include="8086_table.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

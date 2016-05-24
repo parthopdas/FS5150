@@ -1,9 +1,9 @@
 ﻿// return an integer exit code
 module Program
 
-open Lib.CPU
-open Lib.Parser.Core
 open System
+open Lib.CPU.I8088
+open Lib.Parser.Core
 
 (*
  Incomplete implementations:

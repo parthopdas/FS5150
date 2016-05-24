@@ -29,11 +29,7 @@ module InstructionSet =
     type MachineCode = 
         { Bytes : Word8 array }
     
-    type Mneumonic = 
-        | Mneumonic of string
-        override x.ToString() = 
-            match x with
-            | Mneumonic m -> m
+    type Mneumonic = string
     
     type Constant = Word8
     

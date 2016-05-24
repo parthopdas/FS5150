@@ -3,13 +3,13 @@
 open Xunit
 open FsCheck
 open FsUnit.Xunit
-open Lib.Disassembler
 open Lib.Domain.InstructionSet
 open Lib.Parser.Core
 open Lib.Parser.TextInput
 open System
 open System.IO
 open System.Reflection
+open Lib.CPU.Disassembler
 
 [<Fact>]
 let ``pword8 can parse word8``() = 
@@ -257,7 +257,7 @@ let is =
     |> Path.GetDirectoryName
     |> fun p -> Path.Combine(p, "8086_table.txt")
     |> File.ReadAllText
-    |> Lib.InstructionSetLoader.loadInstructionSet
+    |> Lib.CPU.InstructionSetLoader.loadInstructionSet
 
 [<Theory>]
 [<MemberData("pinstruction tests data")>]

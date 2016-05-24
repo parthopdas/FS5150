@@ -1,4 +1,4 @@
-﻿namespace Lib
+﻿namespace Lib.CPU
 
 module Disassembler = 
     open FSharpx.Text
@@ -6,6 +6,7 @@ module Disassembler =
     open Lib.Parser.Combinators
     open Lib.Parser.Core
     open FSharpx.Functional
+    open Lib
     
     let private modRegIndexMap = 
         [ (0b000uy, MregT0)
@@ -311,7 +312,6 @@ module Disassembler =
             let parseMAndAs (oc, ocas, mrm) = 
                 let parseMneumonic oc = 
                     oc
-                    |> Mneumonic
                     |> returnP
                 
                 let parseArgs = ((([], mrm) |> returnP), ocas)

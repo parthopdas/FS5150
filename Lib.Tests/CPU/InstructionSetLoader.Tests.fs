@@ -2,9 +2,8 @@
 
 open FsUnit.Xunit
 open Lib.Domain.InstructionSet
-open Lib.InstructionSetLoader
+open Lib.CPU.InstructionSetLoader
 open Xunit
-
 
 [<Fact>]
 let ``Ignore comments and empty lines`` () = 
