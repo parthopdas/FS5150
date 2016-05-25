@@ -84,4 +84,4 @@ module FDE =
             >>= Option.fold (fun _ e -> e |> State.returnM) (incrAddress instr.Length <!> getCSIP)
             >>= setCSIP
             >>= incrExecedCount
-        | None -> failwithnyi instr
+        | None -> nyi instr

@@ -62,8 +62,8 @@ module PC =
         { mutable ExecutedCount : int 
           CPU : CPU
           RAM : MemoryBlock<Word8>
-          PortRAM : MemoryBlock<Word16>
-          BIOS : MemoryBlock<Word8> }
+          ReadOnly : MemoryBlock<bool>
+          PortRAM : MemoryBlock<Word8> }
         override x.ToString() = 
             let l1 = 
                 sprintf "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X" x.CPU.AX x.CPU.BX 
@@ -79,42 +79,3 @@ module PC =
                            else snd))
                 |> String.concat " "
             sprintf "%s\n%s   %s" l1 l2 fs
-    
-    let initMotherBoard() : Motherboard = 
-        { ExecutedCount = 0
-          CPU = 
-              { AX = 0us
-                BX = 3us
-                CX = 1us
-                DX = 2us
-                SP = 0us
-                BP = 0us
-                SI = 0us
-                DI = 0us
-                IP = 0us
-                CS = 0xFFFFus
-                DS = 0us
-                SS = 0us
-                ES = 0us
-                Flags = 
-                    [ (OF, false)
-                      (DF, false)
-                      (IF, false)
-                      (TF, false)
-                      (SF, false)
-                      (ZF, false)
-                      (AF, false)
-                      (PF, false)
-                      (CF, false) ]
-                    |> List.fold (fun acc e -> 
-                           acc.Add(fst e, snd e)
-                           acc) (new Dictionary<Flags, bool>())
-                SegOverride = None }
-          RAM = Array.zeroCreate 0x100000
-          PortRAM = Array.zeroCreate 4096
-          BIOS = 
-              (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
-              |> Path.GetFullPath
-              |> Path.GetDirectoryName
-              |> fun p -> Path.Combine(p, "PCXTBIOS.BIN")
-              |> File.ReadAllBytes }

@@ -10,9 +10,9 @@ module Processor =
     let execCLI instr = 
         match instr.Args with
         | [] -> setFlag IF false *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr
     
     let execCLD instr = 
         match instr.Args with
         | [] -> setFlag DF false *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr

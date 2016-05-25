@@ -5,14 +5,62 @@ module I8088 =
     open FSharpx.Functional
     open FSharpx.Text
     open Lib
+    open Lib.CPU.Execution.Common
     open Lib.CPU.Execution.FDE
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     open Lib.Parser.Core
     open System
+    open System.Collections.Generic
     open System.Globalization
-    open Lib.CPU.Execution.Common
+    open System.IO
+    open System.Reflection
     
+    let initMotherBoard() : Motherboard = 
+        { ExecutedCount = 0
+          CPU = 
+              { AX = 0us
+                BX = 3us
+                CX = 1us
+                DX = 2us
+                SP = 0us
+                BP = 0us
+                SI = 0us
+                DI = 0us
+                IP = 0us
+                CS = 0xFFFFus
+                DS = 0us
+                SS = 0us
+                ES = 0us
+                Flags = 
+                    [ (OF, false)
+                      (DF, false)
+                      (IF, false)
+                      (TF, false)
+                      (SF, false)
+                      (ZF, false)
+                      (AF, false)
+                      (PF, false)
+                      (CF, false) ]
+                    |> List.fold (fun acc e -> 
+                           acc.Add(fst e, snd e)
+                           acc) (Dictionary<Flags, bool>())
+                SegOverride = None }
+          RAM = Array.zeroCreate 0x100000
+          ReadOnly = Array.zeroCreate 0x100000
+          PortRAM = Array.zeroCreate 0x10000 }
+
+    let loadBinary fname addr ro mb =
+        (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
+        |> Path.GetFullPath
+        |> Path.GetDirectoryName
+        |> fun p -> Path.Combine(p, fname)
+        |> File.ReadAllBytes
+        |> (fun bs -> Array.blit bs 0 mb.RAM addr bs.Length; bs.Length)
+        |> (fun len -> Array.fill mb.ReadOnly addr len ro)
+
+        mb
+                  
     /// stepCPU :: Motherboard -> Result<Motherboard> 
     let stepCPU mb = 
         mb
@@ -134,6 +182,9 @@ module I8088 =
             and loop = Result.fold nextCmd (fun _ -> async { return () })
             ()
             |> initMotherBoard
+            |> loadBinary "PCXTBIOS.BIN" 0xFE000 true
+            |> loadBinary "VIDEOROM.BIN" 0xC0000 true
+            |> loadBinary "ROMBASIC.BIN" 0xF6000 false
             |> Prelude.tuple2 false
             |> Prelude.swap
             |> Result.unit

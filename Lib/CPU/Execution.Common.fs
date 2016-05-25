@@ -2,122 +2,60 @@
 
 module Common = 
     open FSharpx
+    open FSharpx.Functional
     open FSharpx.State
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     
-    let inline getHiByte w16 =
-        w16 >>> 8 |> uint8 : Word8
+    (* Byte/Word/Address manipulation *)
+    let inline (!<>) (w8 : Word8) : Word16 = (uint16) w8
+    let inline (!><) (w16 : Word16) : Word8 = (uint8) w16
+    let inline getHiByte w16 : Word8 = w16 >>> 8 |> uint8
+    let inline getLoByte w16 : Word8 = w16 &&& 0x00FFus |> uint8
+    let inline setHiByte w16 (value : Word8) : Word16 = ((uint16) value <<< 8) + (uint16) (getLoByte w16)
+    let inline setLoByte w16 (value : Word8) : Word16 = (uint16) (getHiByte w16) + ((uint16) value)
+    let inline makeWord16 (hi : Word8, lo : Word8) : Word16 = !<>hi <<< 8 ||| !<>lo
     
-    let inline getLoByte w16 =
-        w16 &&& 0x00FFus |> uint8 : Word8
-    
-    let inline setHiByte w16 (value : Word8) =
-        ((uint16)value <<< 8) + (uint16)(getLoByte w16) : Word16
-    
-    let inline setLoByte w16 (value : Word8) =
-        (uint16)(getHiByte w16) + ((uint16)value) : Word16
-    
-    /// flatten :: Address -> uint32
-    let private flatten addr = 
+    let inline flatten addr = 
         ((uint32) addr.Segment <<< 4) + (uint32) addr.Offset
         |> (&&&) 0xFFFFFu
         |> uint32
     
-    /// createAddr Word16 -> Word16 -> Address
-    let createAddr segment offset = 
+    let inline incrAddress n addr = { addr with Address.Offset = ((addr.Offset + n) &&& 0xFFFFus) }
+    
+    let inline createAddr segment offset = 
         { Segment = segment
           Offset = offset }
     
-    /// incrExecedCount :: unit -> State<unit,Motherboard>
-    let incrExecedCount () = 
-        let innerFn mb = 
-            (mb.ExecutedCount <- mb.ExecutedCount + 1), mb
+    (* CPU Statistics *)
+    let incrExecedCount() = 
+        let innerFn mb = (mb.ExecutedCount <- mb.ExecutedCount + 1), mb
         innerFn : State<unit, Motherboard>
     
-    /// incrAddress :: Word16 -> Address -> Address
-    let incrAddress n addr = { addr with Address.Offset = ((addr.Offset + n) &&& 0xFFFFus) }
-    
-    /// readWord8 :: Address -> State<Word8,Motherboard>
-    let readWord8 addr = 
-        let innerFn mb = 
-            match flatten addr with
-            | i when i >= 0xFE000u && i < 0x100000u -> mb.BIOS.[(int32) (i - 0xFE000u)], mb
-            | i -> mb.RAM.[(int32) i], mb
-        innerFn : State<Word8, Motherboard>
-    
-    /// writeWord8 :: Address -> Word8 -> State<unit,Motherboard>
-    let writeWord8 value addr = 
-        let innerFn mb = 
-            match flatten addr with
-            | i when i >= 0xFE000u && i < 0x100000u -> ()
-            | i -> mb.RAM.[(int32) i] <- value
-            (), mb
-        innerFn : State<unit, Motherboard>
-    
-    /// writeWord16 :: Word8 -> Address -> State<unit,Motherboard>
-    let writeWord16 (value : Word16) addr = 
-        (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (incrAddress 1us addr))
-    
-    /// outPort16to16 :: Word16 -> Word16 -> State<unit,Motherboard>
-    let outPort16to16 (pno : Word16) (value : Word16) = 
-        let innerFn mb = 
-            if pno < 4096us then mb.PortRAM.[(int)pno] <- (uint16)value
-            match pno with
-            | i when i >= 0x20us && i <= 0x21us -> () //failwith "8259 - Write To Port - NYI"
-            | i when i >= 0x40us && i <= 0x43us -> () //failwith "8253 - Write To Port - NYI"
-            | i when i = 0x61us -> () //failwith "Speaker - Write To Port - NYI"
-            | i when i >= 0x388us && i <= 0x389us -> () //failwith "Adlib pass-through - Write To Port - NYI"
-            | i when i >= 0x3C7us && i <= 0x3C9us -> () //failwith "MCGA/VGA DAC read palette index - Write To Port - NYI"
-            | i when i = 0x3D4us -> () //failwith "CGA/VGA CRTC register select index - Write To Port - NYI"
-            | i when i = 0x3D5us -> () //failwith "CGA/VGA CRTC register data - Write To Port - NYI"
-            | i when i = 0x3D9us -> () //failwith "? - Write To Port - NYI"
-            | i when i >= 0x3F8us && i <= 0x3FFus -> () //failwith "COM1 - Write To Port - NYI"
-            | _ -> ()
-            (), mb
-        innerFn : State<unit, Motherboard>
-    
-    /// outPort8to8 :: Word8 -> Word8 -> State<unit,Motherboard>
-    let outPort8to8 (pno : Word8) (value : Word8) = 
-        outPort16to16 ((uint16)pno) ((uint16)value)
-    
-    /// outPort8to16 :: Word16 -> Word8 -> State<unit,Motherboard>
-    let outPort8to16 (pno : Word16) (value : Word8) = 
-        outPort16to16 ((uint16)pno) ((uint16)value)
-    
-    /// outPort16to8 :: Word8 -> Word16 -> State<unit,Motherboard>
-    let outPort16to8 (pno : Word8) (value : Word16) = 
-        outPort16to16 ((uint16)pno) ((uint16)value)
-
-    /// getCSIP : State<Address,Motherboard>
-    let getCSIP = 
-        let innerFn mb = 
-            { Segment = mb.CPU.CS
-              Offset = mb.CPU.IP }, mb
-        innerFn : State<Address, Motherboard>
-    
-    /// getFlag : flag -> State<bool,Motherboard>
+    (* Register IO *)
     let getFlag flag = 
-        let innerFn mb =
-            mb.CPU.Flags.[flag], mb
+        let innerFn mb = mb.CPU.Flags.[flag], mb
         innerFn : State<bool, Motherboard>
     
-    /// setFlag : flag -> value -> State<unit,Motherboard>
     let setFlag flag value = 
-        let innerFn mb =
+        let innerFn mb = 
             mb.CPU.Flags.[flag] <- value
             (), mb
         innerFn : State<unit, Motherboard>
-        
-    /// setCSIP : State<unit,Motherboard>
+    
     let setCSIP addr = 
         let innerFn mb = 
             mb.CPU.CS <- addr.Segment
             mb.CPU.IP <- addr.Offset
             (), mb
         innerFn : State<unit, Motherboard>
-
-    /// getRegSeg : RegiterSeg -> State<Word16,Motherboard>
+    
+    let getCSIP = 
+        let innerFn mb = 
+            { Segment = mb.CPU.CS
+              Offset = mb.CPU.IP }, mb
+        innerFn : State<Address, Motherboard>
+    
     let getRegSeg segReg = 
         let innerFn mb = 
             let data = 
@@ -129,7 +67,6 @@ module Common =
             data, mb
         innerFn : State<Word16, Motherboard>
     
-    /// setRegSeg : RegiterSeg -> State<unit,Motherboard>
     let setRegSeg segReg value = 
         let innerFn mb = 
             match segReg with
@@ -139,8 +76,7 @@ module Common =
             | SS -> mb.CPU.SS <- value
             (), mb
         innerFn : State<unit, Motherboard>
-
-    /// getReg8 : Regiter -> State<Word8,Motherboard>
+    
     let getReg8 reg = 
         let innerFn mb = 
             let data = 
@@ -149,14 +85,13 @@ module Common =
                 | AH -> getHiByte mb.CPU.AX
                 | BL -> getLoByte mb.CPU.BX
                 | BH -> getHiByte mb.CPU.BX
-                | CL -> getLoByte mb.CPU.CX 
+                | CL -> getLoByte mb.CPU.CX
                 | CH -> getHiByte mb.CPU.CX
                 | DL -> getLoByte mb.CPU.DX
                 | DH -> getHiByte mb.CPU.DX
             data, mb
         innerFn : State<Word8, Motherboard>
     
-    /// setReg8 : Regiter -> Word8 -> State<unit,Motherboard>
     let setReg8 reg value = 
         let innerFn mb = 
             match reg with
@@ -171,7 +106,6 @@ module Common =
             (), mb
         innerFn : State<unit, Motherboard>
     
-    /// getReg16 : Regiter -> State<Word16,Motherboard>
     let getReg16 reg = 
         let innerFn mb = 
             let data = 
@@ -187,7 +121,6 @@ module Common =
             data, mb
         innerFn : State<Word16, Motherboard>
     
-    /// setReg16 : Regiter -> Word16 -> State<unit,Motherboard>
     let setReg16 reg value = 
         let innerFn mb = 
             match reg with
@@ -202,7 +135,90 @@ module Common =
             (), mb
         innerFn : State<unit, Motherboard>
     
-    /// getEffectiveAddress :: Dereference -> State<Address,Motherboard>
+    let parity = 
+        [| true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true; false; 
+           true; true; false; true; false; false; true; true; false; false; true; false; true; true; false; false; true; 
+           true; false; true; false; false; true; true; false; false; true; false; true; true; false; true; false; false; 
+           true; false; true; true; false; false; true; true; false; true; false; false; true; false; true; true; false; 
+           true; false; false; true; true; false; false; true; false; true; true; false; true; false; false; true; false; 
+           true; true; false; false; true; true; false; true; false; false; true; true; false; false; true; false; true; 
+           true; false; false; true; true; false; true; false; false; true; false; true; true; false; true; false; false; 
+           true; true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true; 
+           true; false; false; true; false; true; true; false; true; false; false; true; false; true; true; false; false; 
+           true; true; false; true; false; false; true; true; false; false; true; false; true; true; false; false; true; 
+           true; false; true; false; false; true; false; true; true; false; true; false; false; true; true; false; false; 
+           true; false; true; true; false; true; false; false; true; false; true; true; false; false; true; true; false; 
+           true; false; false; true; false; true; true; false; true; false; false; true; true; false; false; true; false; 
+           true; true; false; false; true; true; false; true; false; false; true; true; false; false; true; false; true; 
+           true; false; true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; 
+           true |]
+    let flagSZP16 w16 = 
+        (setFlag SF (w16 &&& 0x8000us = 0x8000us)) *> (setFlag ZF (w16 = 0us)) 
+        *> (setFlag PF (parity.[(int) (w16 &&& 255us)]))
+    
+    (* Memory IO *)
+    let readWord8 addr = 
+        let innerFn mb = 
+            let addr = int32 (flatten addr)
+            mb.RAM.[addr], mb
+        innerFn : State<Word8, Motherboard>
+    
+    let writeWord8 value addr = 
+        let innerFn mb = 
+            let addr = int32 (flatten addr)
+            if not mb.ReadOnly.[addr] then mb.RAM.[addr] <- value
+            (), mb
+        innerFn : State<unit, Motherboard>
+    
+    let writeWord16 (value : Word16) addr = 
+        (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (incrAddress 1us addr))
+    (* Device IO *)
+    let portReadCallbacks : Map<Word16, Word16 -> Word8> = Map.empty
+    
+    let portRead (pno : Word16) = 
+        let innerFn mb = 
+            let pval = 
+                match pno with
+                | 0x62us -> 0x00uy
+                | 0x60us | 0x61us | 0x63us | 0x64us -> mb.PortRAM.[(int) pno]
+                | _ -> 
+                    portReadCallbacks
+                    |> Map.tryFind pno
+                    |> Option.fold (fun _ e -> e pno) 0xFFuy
+            pval, mb
+        innerFn : State<Word8, Motherboard>
+    
+    let portRead16Callbacks : Map<Word16, Word16 -> Word16> = Map.empty
+    
+    let portRead16 (pno : Word16) = 
+        let ifNoCallback = Prelude.tuple2 <!> portRead (pno + 1us) <*> portRead pno >>= (makeWord16 >> State.returnM)
+        portRead16Callbacks
+        |> Map.tryFind pno
+        |> Option.fold (fun _ e -> e pno |> State.returnM) ifNoCallback : State<Word16, Motherboard>
+    
+    let portWriteCallbacks : Map<Word16, Word16 -> Word8 -> unit> = Map.empty
+    
+    let portWrite (pno : Word16) (value : Word8) = 
+        let innerFn mb = 
+            mb.PortRAM.[(int) pno] <- value
+            match pno with
+            | 0x61us -> printfn "Writing to port 61 (%d)- Enabling/disabing speaker NYI" value
+            | _ -> ()
+            portWriteCallbacks
+            |> Map.tryFind pno
+            |> Option.fold (fun _ e -> e pno value) ()
+            (), mb
+        innerFn : State<unit, Motherboard>
+    
+    let portWrite16Callbacks : Map<Word16, Word16 -> Word16 -> unit> = Map.empty
+    
+    let portWrite16 (pno : Word16) (value : Word16) = 
+        let ifNoCallback = portWrite pno !><value *> portWrite pno !><(value >>> 8)
+        portWrite16Callbacks
+        |> Map.tryFind pno
+        |> Option.fold (fun _ e -> e pno value |> State.returnM) ifNoCallback : State<unit, Motherboard>
+    
+    (* Segmented Address calculations *)
     let getEA deref = 
         let reg = 
             match deref.DrefType with
@@ -226,38 +242,16 @@ module Common =
         
         (+) <!> reg <*> disp
     
-    /// getSegOverrideForEA : ModRegRm option -> State<Word16,Motherboard>
-    let getSegOverrideForEA (usess :bool) : State<RegisterSeg,Motherboard> =
-        let innerFn mb =
-            let sr =
-                mb.CPU.SegOverride 
-                |> Option.orElse (if usess then Some SS else None)
+    let getSegOverrideForEA (usess : bool) : State<RegisterSeg, Motherboard> = 
+        let innerFn mb = 
+            let sr = 
+                mb.CPU.SegOverride
+                |> Option.orElse (if usess then Some SS
+                                  else None)
                 |> Option.getOrElse DS
             sr, mb
         innerFn : State<RegisterSeg, Motherboard>
-
-    let failwithnyi instr = failwithf "%O - Not implemented" (instr.ToString())
-
-    let ns<'T> : State<'T option, Motherboard> = None |> State.returnM
     
-    let parity = 
-        [| true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true; false; 
-           true; true; false; true; false; false; true; true; false; false; true; false; true; true; false; false; true; 
-           true; false; true; false; false; true; true; false; false; true; false; true; true; false; true; false; false; 
-           true; false; true; true; false; false; true; true; false; true; false; false; true; false; true; true; false; 
-           true; false; false; true; true; false; false; true; false; true; true; false; true; false; false; true; false; 
-           true; true; false; false; true; true; false; true; false; false; true; true; false; false; true; false; true; 
-           true; false; false; true; true; false; true; false; false; true; false; true; true; false; true; false; false; 
-           true; true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true; 
-           true; false; false; true; false; true; true; false; true; false; false; true; false; true; true; false; false; 
-           true; true; false; true; false; false; true; true; false; false; true; false; true; true; false; false; true; 
-           true; false; true; false; false; true; false; true; true; false; true; false; false; true; true; false; false; 
-           true; false; true; true; false; true; false; false; true; false; true; true; false; false; true; true; false; 
-           true; false; false; true; false; true; true; false; true; false; false; true; true; false; false; true; false; 
-           true; true; false; false; true; true; false; true; false; false; true; true; false; false; true; false; true; 
-           true; false; true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; 
-           true |]
-
-    let flagSZP16 w16 = 
-        (setFlag SF (w16 &&& 0x8000us = 0x8000us)) *> (setFlag ZF (w16 = 0us)) 
-        *> (setFlag PF (parity.[(int) (w16 &&& 255us)]))
+    (* Miscellenous helpers *)
+    let inline nyi instr = failwithf "%O - Not implemented" (instr.ToString())
+    let inline ns<'T> : State<'T option, Motherboard> = None |> State.returnM

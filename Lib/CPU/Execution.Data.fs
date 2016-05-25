@@ -15,11 +15,11 @@ module Data =
         | [ ArgRegister16 r1; ArgRegisterSeg r2 ] -> ((getRegSeg r2) >>= (setReg16 r1)) *> ns
         | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
             (createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref >>= writeWord16 c) *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr
     
     let execOUT instr = 
         match instr.Args with
-        | [ ArgImmediate(W8 c); ArgRegister8 r ] -> (getReg8 r >>= outPort8to8 c) *> ns
+        | [ ArgImmediate(W8 c); ArgRegister8 r ] -> (getReg8 r >>= portWrite !<>c) *> ns
         | [ ArgRegister16 pno; ArgRegister8 v ] -> 
-            (getReg16 pno >>= (fun pno -> getReg8 v >>= (outPort8to16 pno))) *> ns
-        | _ -> failwithnyi instr
+            (getReg16 pno >>= (fun pno -> getReg8 v >>= portWrite pno)) *> ns
+        | _ -> nyi instr

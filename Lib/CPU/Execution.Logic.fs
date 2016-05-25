@@ -17,7 +17,7 @@ module Logic =
     let execNOT instr = 
         match instr.Args with
         | [ ArgRegister16 r ] -> ((~~~) <!> getReg16 r >>= setReg16 r) *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr
     
     let execSHL instr = 
         match instr.Args with
@@ -28,7 +28,7 @@ module Logic =
             let doShl = [ 1..(int) w8 ] |> List.fold folder (getReg16 AX)
             ((Prelude.tuple2 <!> doShl <*> getFlag CF) 
              >>= (fun (s, cf) -> (setFlag OF ((w8 = 1uy) && (cf = ((s >>> 15) = 1us)))) *> flagSZP16 s)) *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr
     
     let execXOR instr = 
         match instr.Args with
@@ -42,4 +42,4 @@ module Logic =
              >>= opXor16
              >>= setReg16 r1)
             *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr

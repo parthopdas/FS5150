@@ -35,7 +35,7 @@ module Arithmetic =
              >>= opAdd16
              >>= setReg16 AX)
             *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr
     
     let execINC instr = 
         match instr.Args with
@@ -45,7 +45,7 @@ module Arithmetic =
                 >>= opAdd16
                 >>= setReg16 AX
             (getFlag CF <* add1 >>= setFlag CF) *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr
     
     let execSUB instr = 
         match instr.Args with
@@ -54,10 +54,10 @@ module Arithmetic =
              >>= opSub16
              >>= setReg16 AX)
             *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr
     
     let execCMP instr = 
         match instr.Args with
         | [ ArgRegister16 AX; ArgImmediate(W16 c) ] -> 
             (Prelude.tuple2 <!> getReg16 AX <*> (c |> State.returnM) >>= flagSub16) *> ns
-        | _ -> failwithnyi instr
+        | _ -> nyi instr
