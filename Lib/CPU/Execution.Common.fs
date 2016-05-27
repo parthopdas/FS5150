@@ -21,7 +21,7 @@ module Common =
         |> (&&&) 0xFFFFFu
         |> uint32
     
-    let inline incrAddress n addr = { addr with Address.Offset = ((addr.Offset + n) &&& 0xFFFFus) }
+    let inline (|++) n addr = { addr with Address.Offset = ((addr.Offset + n) &&& 0xFFFFus) }
     
     let inline createAddr segment offset = 
         { Segment = segment
@@ -163,6 +163,9 @@ module Common =
             mb.RAM.[addr], mb
         innerFn : State<Word8, Motherboard>
     
+    let readWord16 addr = 
+        Prelude.tuple2 <!> readWord8 (1us |++ addr) <*> readWord8 addr >>= (makeWord16 >> State.returnM)
+    
     let writeWord8 value addr = 
         let innerFn mb = 
             let addr = int32 (flatten addr)
@@ -171,7 +174,8 @@ module Common =
         innerFn : State<unit, Motherboard>
     
     let writeWord16 (value : Word16) addr = 
-        (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (incrAddress 1us addr))
+        (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (1us |++ addr))
+
     (* Device IO *)
     let portReadCallbacks : Map<Word16, Word16 -> Word8> = Map.empty
     
@@ -251,6 +255,18 @@ module Common =
                 |> Option.getOrElse DS
             sr, mb
         innerFn : State<RegisterSeg, Motherboard>
+
+    let setSegOverride sr =
+        let innerFn mb = 
+            mb.CPU.SegOverride <- Some sr
+            (), mb
+        innerFn : State<unit, Motherboard>
+
+    let resetSegOverride =
+        let innerFn mb = 
+            mb.CPU.SegOverride <- None
+            (), mb
+        innerFn : State<unit, Motherboard>
     
     (* Miscellenous helpers *)
     let inline nyi instr = failwithf "%O - Not implemented" (instr.ToString())

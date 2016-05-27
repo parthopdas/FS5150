@@ -91,12 +91,12 @@ module I8088 =
     
     /// dumpMemory :: Address -> Motherboard -> Result<string>
     let dumpMemory addr mb = 
-        let bytesToPrint = 128
+        let bytesToPrint = 128us
         let bytesPerLine = 0x10
         
         let sbs = 
-            [ for i in 0..(bytesToPrint - 1) do
-                  yield incrAddress ((uint16) i) addr ]
+            [ for i in 0us..(bytesToPrint - 1us) do
+                  yield i |++ addr ]
             |> List.map readWord8
             |> State.sequence
         
@@ -115,7 +115,7 @@ module I8088 =
         
         let lines = 
             Map.foldBack (fun eK eT acc -> 
-                let a = incrAddress ((uint16) (eK * bytesPerLine)) addr
+                let a = ((uint16) (eK * bytesPerLine)) |++ addr
                 
                 let bstr = 
                     eT
@@ -173,7 +173,7 @@ module I8088 =
                             Common.tee (dumpMemory a >> rc.Reply)
                             >> Result.unit
                             >> continueWithBr
-                        | None -> stepCPU >> Result.bind (fun mb -> (mb, mb.ExecutedCount = 55) |> Result.unit)
+                        | None -> stepCPU >> Result.bind (fun mb -> (mb, mb.ExecutedCount = 110) |> Result.unit)
                     return! mb
                             |> f
                             |> loop

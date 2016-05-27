@@ -9,7 +9,8 @@ open Lib.Parser.Core
  Incomplete implementations:
  - Implement signed offset in dereference
  - NOT writes back only if (reg > 1) && (reg < 4)
- - ??? Another thing from today's implementation
+ - With CPU-Test BIOS Video mode doesnt work
+ - Interrupts cannot arrive between pairs of instruction like pop CS, etc.
  *)
 
 [<EntryPoint>]

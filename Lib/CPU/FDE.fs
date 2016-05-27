@@ -30,8 +30,8 @@ module FDE =
     /// fetchInstr : State<(Address * InputState<_>),Motherboard> 
     let fetchInstr = 
         let inputFromStartAddr a0 = 
-            [ for i in 0..5 do
-                  yield incrAddress ((uint16) i) a0 ]
+            [ for i in 0us..5us do
+                  yield i |++ a0 ]
             |> List.map readWord8
             |> State.sequence
             |> State.bind (Array.ofList
@@ -49,6 +49,10 @@ module FDE =
         [ (// Data
            "MOV", execMOV)
           ("OUT", execOUT)
+          ("CS:", execXS)
+          ("DS:", execXS)
+          ("ES:", execXS)
+          ("SS:", execXS)
           (// Arithmetic
            "ADD", execADD)
           ("SUB", execSUB)
@@ -81,7 +85,7 @@ module FDE =
         | Some exec -> 
             instr
             |> exec
-            >>= Option.fold (fun _ e -> e |> State.returnM) (incrAddress instr.Length <!> getCSIP)
+            >>= Option.fold (fun _ e -> e |> State.returnM) ((|++) instr.Length <!> getCSIP)
             >>= setCSIP
             >>= incrExecedCount
         | None -> nyi instr

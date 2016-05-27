@@ -9,7 +9,7 @@ module Control =
     
     let getAndIncrIPIf n flg = 
         if flg then 
-            getCSIP >>= (incrAddress n
+            getCSIP >>= ((|++) n
                          >> Some
                          >> State.returnM)
         else None |> State.returnM
@@ -21,7 +21,7 @@ module Control =
             |> Some
             |> State.returnM
         | [ ArgOffset(w16) ] -> 
-            getCSIP >>= (incrAddress (instr.Length + w16)
+            getCSIP >>= ((|++) (instr.Length + w16)
                          >> Some
                          >> State.returnM)
         | _ -> nyi instr
