@@ -76,4 +76,7 @@ module Arithmetic =
         match instr.Args with
         | [ ArgRegister16 AX; ArgImmediate(W16 c) ] -> 
             (Prelude.tuple2 <!> getReg16 AX <*> (c |> State.returnM) >>= flagSub16) *> ns
+        | [ ArgRegister16 r; ArgDereference dref ] -> 
+            let w16 = addressFromDref instr dref >>= readWord16
+            (Prelude.tuple2 <!> getReg16 r <*> w16 >>= flagSub16) *> ns
         | _ -> nyi instr

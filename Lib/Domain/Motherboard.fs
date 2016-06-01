@@ -54,7 +54,9 @@ module PC =
           mutable SS : Word16
           mutable ES : Word16
           Flags : Dictionary<Flags, bool>
-          mutable SegOverride : RegisterSeg option }
+          mutable Pending : bool
+          mutable SegOverride : RegisterSeg option
+          mutable RepType : RepetitionType option }
     
     type MemoryBlock<'a> = 'a array
     

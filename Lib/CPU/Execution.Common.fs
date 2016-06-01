@@ -223,7 +223,7 @@ module Common =
         |> Option.fold (fun _ e -> e pno value |> State.returnM) ifNoCallback : State<unit, Motherboard>
     
     (* Segmented Address calculations *)
-    let getEA deref = 
+    let private getEA deref = 
         let reg = 
             match deref.DrefType with
             | MrmTBXSI -> (+) <!> getReg16 BX <*> getReg16 SI
@@ -246,7 +246,7 @@ module Common =
         
         (+) <!> reg <*> disp
     
-    let getSegOverrideForEA (usess : bool) : State<RegisterSeg, Motherboard> = 
+    let private getSegOverrideForEA (usess : bool) : State<RegisterSeg, Motherboard> = 
         let innerFn mb = 
             let sr = 
                 mb.CPU.SegOverride
@@ -255,6 +255,9 @@ module Common =
                 |> Option.getOrElse DS
             sr, mb
         innerFn : State<RegisterSeg, Motherboard>
+
+    let addressFromDref instr dref = 
+        createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref
 
     let setSegOverride sr =
         let innerFn mb = 
@@ -265,6 +268,27 @@ module Common =
     let resetSegOverride =
         let innerFn mb = 
             mb.CPU.SegOverride <- None
+            (), mb
+        innerFn : State<unit, Motherboard>
+
+    (*  CPU State management *)
+    let resetPerLogicalInstructionState =
+        let innerFn mb = 
+            mb.CPU.SegOverride <- None
+            mb.CPU.RepType <- None
+            mb.CPU.Pending <- false
+            (), mb
+        innerFn : State<unit, Motherboard>
+
+    let resetPerPhysicalInstructionState =
+        let innerFn mb = 
+            mb.CPU.Pending <- false
+            (), mb
+        innerFn : State<unit, Motherboard>
+    
+    let setPending =
+        let innerFn mb = 
+            mb.CPU.Pending <- true
             (), mb
         innerFn : State<unit, Motherboard>
     

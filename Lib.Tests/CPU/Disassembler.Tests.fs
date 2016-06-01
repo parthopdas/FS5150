@@ -238,6 +238,7 @@ let ``popCode tests`` (bs, oc, args, hasMrm) : unit =
 
 let ``pinstruction tests data`` : obj array seq = 
     seq {    
+        (* 1 Arg  *)        yield ([| 0x26uy; |], "0000:0000 26           ES:*\t", false) 
         (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 37           AAA\t", false) 
         (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 04FF         ADD\tAL, FF", false) 
         (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 E80DF0       CALL\tF00D", false) 

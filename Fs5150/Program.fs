@@ -25,7 +25,8 @@ let main _ =
             | TraceCmdFormat _ -> dbg.Trace()
             | RegisterCmdFormat _ -> dbg.Register()
             | DumpCmdFormat a -> dbg.Dump(a)
-            | _ -> "" |> Result.unit
+            | UnassembleCmdFormat _ -> dbg.Unassemble()
+            | _ -> "" |> Result.returnM
         Console.ReadLine()
         |> execCmd
         |> printf "%O"

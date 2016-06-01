@@ -15,6 +15,7 @@ module I8088 =
     open System.Globalization
     open System.IO
     open System.Reflection
+    open Lib.Common
     
     let initMotherBoard() : Motherboard = 
         { ExecutedCount = 0
@@ -45,7 +46,9 @@ module I8088 =
                     |> List.fold (fun acc e -> 
                            acc.Add(fst e, snd e)
                            acc) (Dictionary<Flags, bool>())
-                SegOverride = None }
+                Pending = false
+                SegOverride = None
+                RepType = None }
           RAM = Array.zeroCreate 0x100000
           ReadOnly = Array.zeroCreate 0x100000
           PortRAM = Array.zeroCreate 0x10000 }
@@ -61,23 +64,29 @@ module I8088 =
 
         mb
                   
-    /// stepCPU :: Motherboard -> Result<Motherboard> 
-    let stepCPU mb = 
-        mb
-        |> State.eval fetchInstr
-        ||> decodeInstr
-        |> Result.map fst
-        |> Result.bind (executeInstr >> Result.unit)
-        // TODO: P2D: Is short circuting this early OK?
-        |> Result.bind (fun s -> State.exec s mb |> Result.unit)
-    
+    /// logicalStepCPU :: Motherboard -> Result<Motherboard> 
+    let logicalStepCPU mb = 
+        let rec executeAll mb = 
+            mb
+            |> State.eval (State.( *> ) resetPerPhysicalInstructionState createInputAtCSIP)
+            |> Prelude.uncurry decodeInstr
+            |> Result.map fst
+            |> Result.bind (executeInstr >> Result.returnM)
+            // TODO: P2D: Is short circuting this early OK?
+            |> Result.bind (fun s -> State.exec s mb |> Result.returnM)
+            |> Result.bind (fun mb -> if mb.CPU.Pending then (executeAll mb) else (Result.returnM mb))
+
+        let reset =
+            mb
+            |> State.eval resetPerLogicalInstructionState
+            |> Result.returnM
+        Result.( *> ) reset (executeAll mb)
+
     /// dumpRegisters :: Motherboard -> Result<string>
     let dumpRegisters mb = 
-        let toStr x = x.ToString()
-        
         let rinstr = 
             mb
-            |> State.eval fetchInstr
+            |> State.eval createInputAtCSIP
             ||> decodeInstr
             |> Result.map fst
             |> Result.map toStr
@@ -85,7 +94,7 @@ module I8088 =
         let rmbstr = 
             mb
             |> toStr
-            |> Result.unit
+            |> Result.returnM
         
         Result.lift2 (sprintf "%s\n%s") rmbstr rinstr
     
@@ -134,12 +143,30 @@ module I8088 =
         
         lines
         |> Strings.joinLines
-        |> Result.unit
+        |> Result.returnM
     
+    /// unassemble :: Motherboard -> Result<string>
+    let unassemble mb = 
+        let rec getInstrAt ith is n =
+            getCSIP
+            |> State.bind (fun a -> n |++ a |> createInputAt)
+            |> State.bind (Prelude.uncurry decodeInstr >> State.returnM)
+            |> Prelude.flip State.eval mb
+            |> Result.map fst
+            |> Result.bind (fun i -> 
+                            if ith = 0 then 
+                                i::is |> Result.returnM
+                            else
+                                getInstrAt (ith - 1) (i::is) (n + i.Length))
+        
+        getInstrAt 9 [] 0us
+        |> Result.bind (List.rev >> List.map toStr >> Strings.joinLines >> Result.returnM)
+        
     type I8088Command = 
         | Trace of AsyncReplyChannel<Result<string>>
         | Register of AsyncReplyChannel<Result<string>>
         | Dump of Address * AsyncReplyChannel<Result<string>>
+        | Unassemble of AsyncReplyChannel<Result<string>>
     
     let (|TraceCmdFormat|_|) = Regex.tryMatch "t"
     let (|RegisterCmdFormat|_|) = Regex.tryMatch "r"
@@ -150,6 +177,8 @@ module I8088 =
             Some { Segment = UInt16.Parse(am.Groups.[0].Value, NumberStyles.HexNumber)
                    Offset = UInt16.Parse(am.Groups.[1].Value, NumberStyles.HexNumber) }
         | None -> None
+
+    let (|UnassembleCmdFormat|_|) = Regex.tryMatch "u"
     
     type I8088Agent() = 
         
@@ -162,18 +191,22 @@ module I8088 =
                     let f = 
                         match command with
                         | Some(Trace(rc)) -> 
-                            stepCPU
+                            logicalStepCPU
                             >> Common.tee (Result.bind dumpRegisters >> rc.Reply)
                             >> continueWithBr
                         | Some(Register(rc)) -> 
                             Common.tee (dumpRegisters >> rc.Reply)
-                            >> Result.unit
+                            >> Result.returnM
                             >> continueWithBr
                         | Some(Dump(a, rc)) -> 
                             Common.tee (dumpMemory a >> rc.Reply)
-                            >> Result.unit
+                            >> Result.returnM
                             >> continueWithBr
-                        | None -> stepCPU >> Result.bind (fun mb -> (mb, mb.ExecutedCount = 110) |> Result.unit)
+                        | Some(Unassemble(rc)) -> 
+                            Common.tee (unassemble >> rc.Reply)
+                            >> Result.returnM
+                            >> continueWithBr
+                        | None -> logicalStepCPU >> Result.bind (fun mb -> (mb, mb.ExecutedCount = 105) |> Result.returnM)
                     return! mb
                             |> f
                             |> loop
@@ -187,10 +220,11 @@ module I8088 =
             |> loadBinary "ROMBASIC.BIN" 0xF6000 false
             |> Prelude.tuple2 false
             |> Prelude.swap
-            |> Result.unit
+            |> Result.returnM
             |> loop
         
         let mailboxProc = MailboxProcessor.Start processor
         member __.Trace() = mailboxProc.PostAndReply Trace
         member __.Register() = mailboxProc.PostAndReply Register
         member __.Dump a = mailboxProc.PostAndReply(fun rc -> Dump(a, rc))
+        member __.Unassemble() = mailboxProc.PostAndReply Unassemble

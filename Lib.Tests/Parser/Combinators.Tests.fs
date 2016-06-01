@@ -31,22 +31,22 @@ let ``Functor Law - composition``() =
 
 [<Fact>]
 let ``Applicative Law - identity``() = 
-    let law f s = run (returnP id <*> f) () s = run f () s
+    let law f s = run (returnM id <*> f) () s = run f () s
     Check.QuickThrowOnFailure law
 
 [<Fact>]
 let ``Applicative Law - homomorphism``() = 
-    let law f x s = run (returnP f <*> returnP x) () s = run (returnP (f x)) () s
+    let law f x s = run (returnM f <*> returnM x) () s = run (returnM (f x)) () s
     Check.QuickThrowOnFailure law
 
 [<Fact>]
 let ``Applicative Law - interchange``() = 
-    let law u y s = run (u <*> returnP y) () s = run (returnP ((|>) y) <*> u) () s
+    let law u y s = run (u <*> returnM y) () s = run (returnM ((|>) y) <*> u) () s
     Check.QuickThrowOnFailure law
 
 [<Fact>]
 let ``Applicative Law - composition``() = 
-    let law u v w s = run (returnP (<<) <*> u <*> v <*> w) () s = run (u <*> (v <*> w)) () s
+    let law u v w s = run (returnM (<<) <*> u <*> v <*> w) () s = run (u <*> (v <*> w)) () s
     Check.QuickThrowOnFailure law
 
 let parseABC = pstring "ABC" <?> "ABC"
@@ -180,12 +180,12 @@ let ``sepBy tests`` (i, c, r) : unit =
 
 [<Fact>]
 let ``Monad Law - Left identity - Wrap and unwrap round trip``() = 
-    let law f a s = run (returnP a >>= f) () s = run (f a) () s
+    let law f a s = run (returnM a >>= f) () s = run (f a) () s
     Check.QuickThrowOnFailure law
 
 [<Fact>]
 let ``Monad Law - Right identity - Unwrap and wrap round trip``() = 
-    let law f s = run (f >>= returnP) () s = run f () s
+    let law f s = run (f >>= returnM) () s = run f () s
     Check.QuickThrowOnFailure law
 
 [<Fact>]

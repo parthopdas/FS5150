@@ -133,6 +133,13 @@ module Disassembler =
           (MregT2, SS)
           (MregT3, DS) ]
         |> Map.ofList
+
+    let private prefixOps = 
+        [ ("CS:", 0)
+          ("DS:", 0)
+          ("ES:", 0)
+          ("SS:", 0) ]
+        |> Map.ofList
     
     /// puint8 :: Parser<Word8>
     let pword8<'a> : Parser<Word8, 'a> = satisfy (fun _ -> true) "word8" <@> "word8"
@@ -150,7 +157,7 @@ module Disassembler =
         let parseReg w8 = 
             ((w8 >>> 3) &&& 0b111uy)
             |> getModRegType
-            |> returnP
+            |> returnM
         
         let parseRmArgs w8 = 
             let parseMrm w8 = (w8 >>> 6, w8 &&& 0b111uy)
@@ -166,11 +173,11 @@ module Disassembler =
                 match (mo, rm) with
                 | (0b00uy, 0b110uy) -> pword16 |>> createRmaDeref W16
                 | (0b00uy, _) -> 
-                    returnP (RmaDeref { DrefType = getModRmType mo rm
+                    returnM (RmaDeref { DrefType = getModRmType mo rm
                                         DrefDisp = None })
                 | (0b01uy, _) -> pword8 |>> createRmaDeref W8
                 | (0b10uy, _) -> pword16 |>> createRmaDeref W16
-                | (0b11uy, _) -> returnP (RmaReg(getModRegType rm))
+                | (0b11uy, _) -> returnM (RmaReg(getModRegType rm))
                 | _ -> failwithf "MOD value = %A is unexpected." mo
             w8
             |> parseMrm
@@ -182,10 +189,10 @@ module Disassembler =
             | (1uy, 2uy) | (1uy, 3uy) | (1uy, 6uy) -> true
             | (2uy, 2uy) | (2uy, 3uy) | (2uy, 6uy) -> true
             | _ -> false
-            |> returnP
+            |> returnM
         
         let createpModRegRm (reg, rm, usess) = 
-            returnP { ModReg = reg
+            returnM { ModReg = reg
                       ModRM = rm
                       MRUseSS = usess }
         
@@ -199,7 +206,7 @@ module Disassembler =
         let getRegister aoc r = aocRegMap.[(aoc, r)]
         let withMrm a = a, mrm
         let appendArg a = a :: args
-        let cpmodRegRm = mrm |> Option.fold (fun _ e -> (returnP e) <@> "cached MRM") (pmodRegRm <@> "raw MRM")
+        let cpmodRegRm = mrm |> Option.fold (fun _ e -> (returnM e) <@> "cached MRM") (pmodRegRm <@> "raw MRM")
         
         let parseDrefOrReg aoc = 
             cpmodRegRm |>> (fun mrm -> 
@@ -255,13 +262,13 @@ module Disassembler =
             | [ '1' ] -> 
                 1uy
                 |> ArgConstant
-                |> returnP
+                |> returnM
                 |>> appendArg
                 |>> withMrm
             | [ '3' ] -> 
                 3uy
                 |> ArgConstant
-                |> returnP
+                |> returnM
                 |>> appendArg
                 |>> withMrm
             | [ 'M'; 'p' ] -> parseDrefOrReg 'p'
@@ -271,7 +278,7 @@ module Disassembler =
              r
              |> appendArg
              |> withMrm
-             |> returnP
+             |> returnM
          | None -> 
              desc
              |> Seq.toList
@@ -299,32 +306,33 @@ module Disassembler =
         
         let parseOcg (o, a) = 
             if (Strings.startsWith "GRP" o) then pmodRegRm |>> getOcg o a
-            else (o, a, None) |> returnP
+            else (o, a, None) |> returnM
         parseOc
         >>= parseOcg
         <@> "OpCode"
     
     /// pinstruction :: Address -> InstructionSet -> Parser<Instruction>
     let pinstruction csip is = 
-        let parseAddress = returnP csip
+        let parseAddress = returnM csip
         
         let parseMneumonicAndArgs = 
             let parseMAndAs (oc, ocas, mrm) = 
                 let parseMneumonic oc = 
-                    oc
-                    |> returnP
+                    (oc, Map.tryFind oc prefixOps <> None)
+                    |> returnM
                 
-                let parseArgs = ((([], mrm) |> returnP), ocas)
+                let parseArgs = ((([], mrm) |> returnM), ocas)
                                 ||> List.fold (fun acc e -> acc >>= pargument e)
-                                >>= (fun (args, mrrm) -> (args |> List.rev, mrrm) |> returnP)
-                (fun a b -> a, b) <!> (parseMneumonic oc) <*> parseArgs
+                                >>= (fun (args, mrrm) -> (args |> List.rev, mrrm) |> returnM)
+                Prelude.tuple2 <!> (parseMneumonic oc) <*> parseArgs
             is
             |> popCode
             >>= parseMAndAs
         
-        let createInstruction a (m, (args, mrrm)) bs = 
+        let createInstruction a ((m, isP), (args, mrrm)) bs = 
             { Address = a
               Mneumonic = m
+              IsPrefix = isP
               UseSS = mrrm |> Option.fold (fun _ e -> e.MRUseSS) false
               Args = args
               Bytes = bs }

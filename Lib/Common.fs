@@ -10,3 +10,4 @@ module Common =
         else 
             (uint16)w8 ||| 0xFF00us
 
+    let toStr x = x.ToString()

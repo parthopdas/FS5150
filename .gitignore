@@ -34,3 +34,4 @@ ipch/
 *.sdf
 *.opensdf
 *.sublime-workspace
+*.vspx

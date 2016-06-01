@@ -18,6 +18,7 @@ module FDE =
     open System
     open System.IO
     open System.Reflection
+    open FSharpx.Functional
     
     let instructionSet = 
         (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
@@ -27,18 +28,20 @@ module FDE =
         |> File.ReadAllText
         |> InstructionSetLoader.loadInstructionSet
     
+    let createInputAt a0 = 
+        [ for i in 0us..5us do
+                yield i |++ a0 ]
+        |> List.map readWord8
+        |> State.sequence
+        |> State.bind (Array.ofList
+                        >> fromBytes { Offset = 0 }
+                        >> State.returnM)
+        |> State.bind (Prelude.tuple2 a0 >> State.returnM)
+        : State<(Address * InputState<_>),Motherboard> 
+
     /// fetchInstr : State<(Address * InputState<_>),Motherboard> 
-    let fetchInstr = 
-        let inputFromStartAddr a0 = 
-            [ for i in 0us..5us do
-                  yield i |++ a0 ]
-            |> List.map readWord8
-            |> State.sequence
-            |> State.bind (Array.ofList
-                           >> fromBytes { Offset = 0 }
-                           >> State.returnM)
-            |> State.bind (fun is -> (a0, is) |> State.returnM)
-        getCSIP |> State.bind inputFromStartAddr : State<Address * InputState<_>, Motherboard>
+    let createInputAtCSIP = 
+        getCSIP >>= createInputAt : State<Address * InputState<_>, Motherboard>
     
     /// decodeInstr :: Address -> InputState<_> -> Result<Instruction * InputState<_>>
     let decodeInstr csip instrBytes = 
@@ -82,9 +85,8 @@ module FDE =
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr instr = 
         match (instr.Mneumonic, executors) ||> Map.tryFind with
-        | Some exec -> 
-            instr
-            |> exec
+        | Some executor -> 
+            executor instr
             >>= Option.fold (fun _ e -> e |> State.returnM) ((|++) instr.Length <!> getCSIP)
             >>= setCSIP
             >>= incrExecedCount

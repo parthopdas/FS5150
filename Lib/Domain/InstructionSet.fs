@@ -142,6 +142,7 @@ module InstructionSet =
     type Instruction = 
         { Address : Address
           Mneumonic : Mneumonic
+          IsPrefix : bool
           UseSS : bool
           Args : Argument list
           Bytes : Word8 [] }
@@ -156,6 +157,10 @@ module InstructionSet =
                              x.Args
                              |> List.map (fun e -> e.ToString())
                              |> Array.ofList))
-            sprintf "%O %s %O\t%O" x.Address fmtBytes x.Mneumonic fmtArgs
+            sprintf "%O %s %O%s\t%O" x.Address fmtBytes x.Mneumonic (if x.IsPrefix then "*" else "") fmtArgs
         
         member x.Length : Word16 = uint16 x.Bytes.Length
+
+    type RepetitionType =
+        | TillZero
+        | TillNotZero
