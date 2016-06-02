@@ -7,56 +7,24 @@ module I8088 =
     open Lib
     open Lib.CPU.Execution.Common
     open Lib.CPU.Execution.FDE
+    open Lib.Common
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     open Lib.Parser.Core
     open System
-    open System.Collections.Generic
+    open System.Diagnostics
     open System.Globalization
     open System.IO
     open System.Reflection
-    open Lib.Common
-    open System.Diagnostics
     
     let initMotherBoard() : Motherboard = 
         { SW = new Stopwatch()
-          CPU = 
-              { AX = 0us
-                BX = 3us
-                CX = 1us
-                DX = 2us
-                SP = 0us
-                BP = 0us
-                SI = 0us
-                DI = 0us
-                IP = 0us
-                CS = 0xFFFFus
-                DS = 0us
-                SS = 0us
-                ES = 0us
-                Flags = 
-                    [ (OF, false)
-                      (DF, false)
-                      (IF, false)
-                      (TF, false)
-                      (SF, false)
-                      (ZF, false)
-                      (AF, false)
-                      (PF, false)
-                      (CF, false) ]
-                    |> List.fold (fun acc e -> 
-                           acc.Add(fst e, snd e)
-                           acc) (Dictionary<Flags, bool>())
-                Pending = false
-                SegOverride = None
-                RepType = None
-                ITicks = 0L
-                ICount = 0L }
+          CPU = initialCPU()
           RAM = Array.zeroCreate 0x100000
           ReadOnly = Array.zeroCreate 0x100000
           PortRAM = Array.zeroCreate 0x10000 }
-
-    let loadBinary fname addr ro mb =
+    
+    let loadBinary fname addr ro mb = 
         (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
         |> Path.GetFullPath
         |> Path.GetDirectoryName
@@ -64,18 +32,19 @@ module I8088 =
         |> File.ReadAllBytes
         |> (fun bs -> Array.blit bs 0 mb.RAM addr bs.Length; bs.Length)
         |> (fun len -> Array.fill mb.ReadOnly addr len ro)
-
         mb
-        
-    let getStats mb =
+    
+    let getStats mb = 
         sprintf 
-            "[Timer: %s] Count = %d, Ticks = %d, Average = %fips" 
+            "[Timer: %s] Count = %d, Ticks = %d, Average = %.6fmips" 
             (if Stopwatch.IsHighResolution && not mb.SW.IsRunning then "OK" else "NOT OK") 
             mb.CPU.ICount 
             mb.CPU.ITicks
-            (((float)Stopwatch.Frequency) / ((float)mb.CPU.ITicks / (float)mb.CPU.ICount))
+            (((float)Stopwatch.Frequency) / ((float)mb.CPU.ITicks / (float)mb.CPU.ICount) / 1000000.0)
         |> Result.returnM
-                  
+    
+    let resetCPUState = State.exec resetCPU >> Result.returnM
+    
     /// logicalStepCPU :: Motherboard -> Result<Motherboard> 
     let logicalStepCPU mb = 
         let rec physicalStepCPU mb = 
@@ -87,13 +56,13 @@ module I8088 =
                             let s = State.( <* ) (i |> executeInstr) afterPhysicalInstruction
                             let mb' = s |> Prelude.flip State.exec mb
                             if mb'.CPU.Pending then (physicalStepCPU mb') else (Result.returnM mb'))
-
-        let reset =
+        
+        let reset = 
             mb
             |> State.eval beforeLogicalInstruction
             |> Result.returnM
         Result.( *> ) reset (physicalStepCPU mb)
-
+    
     /// dumpRegisters :: Motherboard -> Result<string>
     let dumpRegisters mb = 
         let rinstr = 
@@ -159,21 +128,20 @@ module I8088 =
     
     /// unassemble :: Motherboard -> Result<string>
     let unassemble mb = 
-        let rec getInstrAt ith is n =
+        let rec getInstrAt ith is n = 
             getCSIP
             |> State.bind (fun a -> n |++ a |> createInputAt)
             |> State.bind (Prelude.uncurry decodeInstr >> State.returnM)
             |> Prelude.flip State.eval mb
             |> Result.map fst
             |> Result.bind (fun i -> 
-                            if ith = 0 then 
-                                i::is |> Result.returnM
-                            else
-                                getInstrAt (ith - 1) (i::is) (n + i.Length))
-        
-        getInstrAt 9 [] 0us
-        |> Result.bind (List.rev >> List.map toStr >> Strings.joinLines >> Result.returnM)
-        
+                   if ith = 0 then i :: is |> Result.returnM
+                   else getInstrAt (ith - 1) (i :: is) (n + i.Length))
+        getInstrAt 9 [] 0us |> Result.bind (List.rev
+                                            >> List.map toStr
+                                            >> Strings.joinLines
+                                            >> Result.returnM)
+    
     type I8088Command = 
         | Stats of AsyncReplyChannel<Result<string>>
         | Trace of AsyncReplyChannel<Result<string>>
@@ -191,7 +159,7 @@ module I8088 =
             Some { Segment = UInt16.Parse(am.Groups.[0].Value, NumberStyles.HexNumber)
                    Offset = UInt16.Parse(am.Groups.[1].Value, NumberStyles.HexNumber) }
         | None -> None
-
+    
     let (|UnassembleCmdFormat|_|) = Regex.tryMatch "u"
     
     type I8088Agent() = 
@@ -204,7 +172,7 @@ module I8088 =
                                                     else 0)
                     let f = 
                         match command with
-                        | Some(Stats(rc)) ->
+                        | Some(Stats(rc)) -> 
                             (fun mb -> mb |> Result.returnM)
                             >> Common.tee (Result.bind getStats >> rc.Reply)
                             >> continueWithBr
@@ -224,7 +192,14 @@ module I8088 =
                             Common.tee (unassemble >> rc.Reply)
                             >> Result.returnM
                             >> continueWithBr
-                        | None -> logicalStepCPU >> Result.bind (fun mb -> (mb, mb.CPU.ICount = 105L) |> Result.returnM)
+                        | None -> 
+                            logicalStepCPU >> Result.bind (fun mb -> 
+                                                  let x = 
+                                                      if mb.CPU.ICount % 105L = 0L then resetCPUState
+                                                      else Result.returnM
+                                                  mb
+                                                  |> x
+                                                  |> Result.bind (fun mb -> (mb, false) |> Result.returnM))
                     return! mb
                             |> f
                             |> loop

@@ -1,7 +1,10 @@
 ﻿namespace Lib
 
 module Common =
+    open System.Diagnostics
 
+    let inline dprintfn fmt = Printf.ksprintf Debug.WriteLine fmt
+    
     let inline tee fn x = x |> fn |> ignore; x
 
     let signExtend (w8 : uint8) : uint16 = 

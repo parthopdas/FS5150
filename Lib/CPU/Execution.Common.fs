@@ -6,6 +6,41 @@ module Common =
     open FSharpx.State
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
+    open System.Collections.Generic
+    open Lib.Common
+    
+    let initialCPU() = 
+        { AX = 0us
+          BX = 3us
+          CX = 1us
+          DX = 2us
+          SP = 0us
+          BP = 0us
+          SI = 0us
+          DI = 0us
+          IP = 0us
+          CS = 0xFFFFus
+          DS = 0us
+          SS = 0us
+          ES = 0us
+          Flags = 
+              [ (OF, false)
+                (DF, false)
+                (IF, false)
+                (TF, false)
+                (SF, false)
+                (ZF, false)
+                (AF, false)
+                (PF, false)
+                (CF, false) ]
+              |> List.fold (fun acc e -> 
+                     acc.Add(fst e, snd e)
+                     acc) (Dictionary<Flags, bool>())
+          Pending = false
+          SegOverride = None
+          RepType = None
+          ITicks = 0L
+          ICount = 0L }
     
     (* Byte/Word/Address manipulation *)
     let inline (!<>) (w8 : Word8) : Word16 = (uint16) w8
@@ -170,7 +205,6 @@ module Common =
     
     let writeWord16 (value : Word16) addr = 
         (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (1us |++ addr))
-
     (* Device IO *)
     let portReadCallbacks : Map<Word16, Word16 -> Word8> = Map.empty
     
@@ -201,7 +235,7 @@ module Common =
         let innerFn mb = 
             mb.PortRAM.[(int) pno] <- value
             match pno with
-            | 0x61us -> printfn "Writing to port 61 (%d)- Enabling/disabing speaker NYI" value
+            | 0x61us -> () // TODO: P2D: dprintfn "Writing to port 61 (%d)- Enabling/disabing speaker NYI" value
             | _ -> ()
             portWriteCallbacks
             |> Map.tryFind pno
@@ -250,39 +284,39 @@ module Common =
                 |> Option.getOrElse DS
             sr, mb
         innerFn : State<RegisterSeg, Motherboard>
-
+    
     let addressFromDref instr dref = 
         createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref
-
-    let setSegOverride sr =
+    
+    let setSegOverride sr = 
         let innerFn mb = 
             mb.CPU.SegOverride <- Some sr
             (), mb
         innerFn : State<unit, Motherboard>
-
-    let resetSegOverride =
+    
+    let resetSegOverride = 
         let innerFn mb = 
             mb.CPU.SegOverride <- None
             (), mb
         innerFn : State<unit, Motherboard>
-
+    
     (*  CPU State management *)
-    let beforeLogicalInstruction =
+    let beforeLogicalInstruction = 
         let innerFn mb = 
             mb.CPU.SegOverride <- None
             mb.CPU.RepType <- None
             mb.CPU.Pending <- false
             (), mb
         innerFn : State<unit, Motherboard>
-
-    let beforePhysicalInstruction =
+    
+    let beforePhysicalInstruction = 
         let innerFn mb = 
             mb.SW.Restart()
             mb.CPU.Pending <- false
             (), mb
         innerFn : State<unit, Motherboard>
-
-    let afterPhysicalInstruction =
+    
+    let afterPhysicalInstruction = 
         let innerFn mb = 
             mb.CPU.ICount <- mb.CPU.ICount + 1L
             mb.SW.Stop()
@@ -290,9 +324,18 @@ module Common =
             (), mb
         innerFn : State<unit, Motherboard>
     
-    let setPending =
+    let setPending = 
         let innerFn mb = 
             mb.CPU.Pending <- true
+            (), mb
+        innerFn : State<unit, Motherboard>
+    
+    let resetCPU = 
+        let innerFn mb = 
+            let init = initialCPU()
+            init.ICount <- mb.CPU.ICount
+            init.ITicks <- mb.CPU.ITicks
+            mb.CPU <- init
             (), mb
         innerFn : State<unit, Motherboard>
     

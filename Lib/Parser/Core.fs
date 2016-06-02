@@ -3,8 +3,6 @@
 module Core = 
     open TextInput
     
-    let inline dprintfn fmt = Printf.ksprintf System.Diagnostics.Debug.WriteLine fmt
-    
     type ParserLabel = string
     
     type ParserError = 

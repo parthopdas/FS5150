@@ -65,7 +65,7 @@ module PC =
     
     type Motherboard = 
         { SW : Stopwatch
-          CPU : CPU
+          mutable CPU : CPU
           RAM : MemoryBlock<Word8>
           ReadOnly : MemoryBlock<bool>
           PortRAM : MemoryBlock<Word8> }
