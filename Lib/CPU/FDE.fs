@@ -89,5 +89,4 @@ module FDE =
             executor instr
             >>= Option.fold (fun _ e -> e |> State.returnM) ((|++) instr.Length <!> getCSIP)
             >>= setCSIP
-            >>= incrExecedCount
         | None -> nyi instr

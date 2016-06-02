@@ -27,11 +27,6 @@ module Common =
         { Segment = segment
           Offset = offset }
     
-    (* CPU Statistics *)
-    let incrExecedCount() = 
-        let innerFn mb = (mb.ExecutedCount <- mb.ExecutedCount + 1), mb
-        innerFn : State<unit, Motherboard>
-    
     (* Register IO *)
     let getFlag flag = 
         let innerFn mb = mb.CPU.Flags.[flag], mb
@@ -272,7 +267,7 @@ module Common =
         innerFn : State<unit, Motherboard>
 
     (*  CPU State management *)
-    let resetPerLogicalInstructionState =
+    let beforeLogicalInstruction =
         let innerFn mb = 
             mb.CPU.SegOverride <- None
             mb.CPU.RepType <- None
@@ -280,9 +275,18 @@ module Common =
             (), mb
         innerFn : State<unit, Motherboard>
 
-    let resetPerPhysicalInstructionState =
+    let beforePhysicalInstruction =
         let innerFn mb = 
+            mb.SW.Restart()
             mb.CPU.Pending <- false
+            (), mb
+        innerFn : State<unit, Motherboard>
+
+    let afterPhysicalInstruction =
+        let innerFn mb = 
+            mb.CPU.ICount <- mb.CPU.ICount + 1L
+            mb.SW.Stop()
+            mb.CPU.ITicks <- mb.CPU.ITicks + mb.SW.ElapsedTicks
             (), mb
         innerFn : State<unit, Motherboard>
     

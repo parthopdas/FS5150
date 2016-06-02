@@ -16,9 +16,10 @@ module I8088 =
     open System.IO
     open System.Reflection
     open Lib.Common
+    open System.Diagnostics
     
     let initMotherBoard() : Motherboard = 
-        { ExecutedCount = 0
+        { SW = new Stopwatch()
           CPU = 
               { AX = 0us
                 BX = 3us
@@ -48,7 +49,9 @@ module I8088 =
                            acc) (Dictionary<Flags, bool>())
                 Pending = false
                 SegOverride = None
-                RepType = None }
+                RepType = None
+                ITicks = 0L
+                ICount = 0L }
           RAM = Array.zeroCreate 0x100000
           ReadOnly = Array.zeroCreate 0x100000
           PortRAM = Array.zeroCreate 0x10000 }
@@ -63,24 +66,33 @@ module I8088 =
         |> (fun len -> Array.fill mb.ReadOnly addr len ro)
 
         mb
+        
+    let getStats mb =
+        sprintf 
+            "[Timer: %s] Count = %d, Ticks = %d, Average = %fips" 
+            (if Stopwatch.IsHighResolution && not mb.SW.IsRunning then "OK" else "NOT OK") 
+            mb.CPU.ICount 
+            mb.CPU.ITicks
+            (((float)Stopwatch.Frequency) / ((float)mb.CPU.ITicks / (float)mb.CPU.ICount))
+        |> Result.returnM
                   
     /// logicalStepCPU :: Motherboard -> Result<Motherboard> 
     let logicalStepCPU mb = 
-        let rec executeAll mb = 
+        let rec physicalStepCPU mb = 
             mb
-            |> State.eval (State.( *> ) resetPerPhysicalInstructionState createInputAtCSIP)
+            |> State.eval (State.( *> ) beforePhysicalInstruction createInputAtCSIP)
             |> Prelude.uncurry decodeInstr
             |> Result.map fst
-            |> Result.bind (executeInstr >> Result.returnM)
-            // TODO: P2D: Is short circuting this early OK?
-            |> Result.bind (fun s -> State.exec s mb |> Result.returnM)
-            |> Result.bind (fun mb -> if mb.CPU.Pending then (executeAll mb) else (Result.returnM mb))
+            |> Result.bind (fun i -> 
+                            let s = State.( <* ) (i |> executeInstr) afterPhysicalInstruction
+                            let mb' = s |> Prelude.flip State.exec mb
+                            if mb'.CPU.Pending then (physicalStepCPU mb') else (Result.returnM mb'))
 
         let reset =
             mb
-            |> State.eval resetPerLogicalInstructionState
+            |> State.eval beforeLogicalInstruction
             |> Result.returnM
-        Result.( *> ) reset (executeAll mb)
+        Result.( *> ) reset (physicalStepCPU mb)
 
     /// dumpRegisters :: Motherboard -> Result<string>
     let dumpRegisters mb = 
@@ -163,16 +175,18 @@ module I8088 =
         |> Result.bind (List.rev >> List.map toStr >> Strings.joinLines >> Result.returnM)
         
     type I8088Command = 
+        | Stats of AsyncReplyChannel<Result<string>>
         | Trace of AsyncReplyChannel<Result<string>>
         | Register of AsyncReplyChannel<Result<string>>
         | Dump of Address * AsyncReplyChannel<Result<string>>
         | Unassemble of AsyncReplyChannel<Result<string>>
     
-    let (|TraceCmdFormat|_|) = Regex.tryMatch "t"
-    let (|RegisterCmdFormat|_|) = Regex.tryMatch "r"
+    let (|StatsCmdFormat|_|) = Regex.tryMatch "^stats$"
+    let (|TraceCmdFormat|_|) = Regex.tryMatch "^t$"
+    let (|RegisterCmdFormat|_|) = Regex.tryMatch "^r$"
     
     let (|DumpCmdFormat|_|) input = 
-        match Regex.tryMatch "d ([0-9a-f]{1,4}):([0-9a-f]{1,4})" input with
+        match Regex.tryMatch "^d ([0-9a-f]{1,4}):([0-9a-f]{1,4})$" input with
         | Some am -> 
             Some { Segment = UInt16.Parse(am.Groups.[0].Value, NumberStyles.HexNumber)
                    Offset = UInt16.Parse(am.Groups.[1].Value, NumberStyles.HexNumber) }
@@ -190,6 +204,10 @@ module I8088 =
                                                     else 0)
                     let f = 
                         match command with
+                        | Some(Stats(rc)) ->
+                            (fun mb -> mb |> Result.returnM)
+                            >> Common.tee (Result.bind getStats >> rc.Reply)
+                            >> continueWithBr
                         | Some(Trace(rc)) -> 
                             logicalStepCPU
                             >> Common.tee (Result.bind dumpRegisters >> rc.Reply)
@@ -206,7 +224,7 @@ module I8088 =
                             Common.tee (unassemble >> rc.Reply)
                             >> Result.returnM
                             >> continueWithBr
-                        | None -> logicalStepCPU >> Result.bind (fun mb -> (mb, mb.ExecutedCount = 105) |> Result.returnM)
+                        | None -> logicalStepCPU >> Result.bind (fun mb -> (mb, mb.CPU.ICount = 105L) |> Result.returnM)
                     return! mb
                             |> f
                             |> loop
@@ -224,6 +242,7 @@ module I8088 =
             |> loop
         
         let mailboxProc = MailboxProcessor.Start processor
+        member __.Stats() = mailboxProc.PostAndReply Stats
         member __.Trace() = mailboxProc.PostAndReply Trace
         member __.Register() = mailboxProc.PostAndReply Register
         member __.Dump a = mailboxProc.PostAndReply(fun rc -> Dump(a, rc))

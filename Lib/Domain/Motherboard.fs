@@ -6,6 +6,7 @@ module PC =
     open System.Collections.Generic
     open System.IO
     open System.Reflection
+    open System.Diagnostics
     
     type Flags = 
         /// Overflow - Signed number exceeds capacity of result
@@ -56,12 +57,14 @@ module PC =
           Flags : Dictionary<Flags, bool>
           mutable Pending : bool
           mutable SegOverride : RegisterSeg option
-          mutable RepType : RepetitionType option }
+          mutable RepType : RepetitionType option
+          mutable ITicks : int64
+          mutable ICount : int64 }
     
     type MemoryBlock<'a> = 'a array
     
     type Motherboard = 
-        { mutable ExecutedCount : int 
+        { SW : Stopwatch
           CPU : CPU
           RAM : MemoryBlock<Word8>
           ReadOnly : MemoryBlock<bool>
