@@ -22,6 +22,7 @@ let main _ =
         printf "\n-"
         let execCmd = 
             function 
+            | StatsCmdFormat _ -> dbg.Stats()
             | TraceCmdFormat _ -> dbg.Trace()
             | RegisterCmdFormat _ -> dbg.Register()
             | DumpCmdFormat a -> dbg.Dump(a)
