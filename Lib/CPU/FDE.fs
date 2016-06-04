@@ -29,14 +29,9 @@ module FDE =
         |> InstructionSetLoader.loadInstructionSet
     
     let createInputAt a0 = 
-        [ for i in 0us..5us do
-                yield i |++ a0 ]
-        |> List.map readWord8
-        |> State.sequence
-        |> State.bind (Array.ofList
-                        >> fromBytes { Offset = 0 }
-                        >> State.returnM)
-        |> State.bind (Prelude.tuple2 a0 >> State.returnM)
+        a0
+        |> read6Bytes
+        |> State.bind (fun bs -> (a0, (fromBytes { Offset = 0 } bs)) |> State.returnM)
         : State<(Address * InputState<_>),Motherboard> 
 
     /// fetchInstr : State<(Address * InputState<_>),Motherboard> 
@@ -45,9 +40,18 @@ module FDE =
     
     /// decodeInstr :: Address -> InputState<_> -> Result<Instruction * InputState<_>>
     let decodeInstr csip instrBytes = 
+#if PERF
+        ({ Address = { Segment = 0us; Offset = 0us }
+           Mneumonic = "CLD"
+           IsPrefix = false
+           UseSS = false
+           Args = []
+           Bytes = [| 0x26uy |] }, fromBytes [|0us; 0us; 0us; 0us; 0us; 0us|]) |> Result.returnM
+#else
         // TODO: P2D: We are shortcircuting the monad here. How to build a stack of monads like State<Parser<_>>
         runOnInput (pinstruction csip instructionSet) instrBytes
-    
+#endif
+
     let executors = 
         [ (// Data
            "MOV", execMOV)
@@ -83,10 +87,14 @@ module FDE =
         |> Map.ofList
     
     /// executeInstr :: Instruction -> State<unit,Motherboard>
-    let executeInstr instr = 
+    let inline executeInstr instr = 
+#if PERF
+        execCLD instr
+#else
         match (instr.Mneumonic, executors) ||> Map.tryFind with
         | Some executor -> 
             executor instr
             >>= Option.fold (fun _ e -> e |> State.returnM) ((|++) instr.Length <!> getCSIP)
             >>= setCSIP
         | None -> nyi instr
+#endif

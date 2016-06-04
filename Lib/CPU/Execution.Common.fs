@@ -7,7 +7,6 @@ module Common =
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     open System.Collections.Generic
-    open Lib.Common
     
     let initialCPU() = 
         { AX = 0us
@@ -55,6 +54,8 @@ module Common =
         ((uint32) addr.Segment <<< 4) + (uint32) addr.Offset
         |> (&&&) 0xFFFFFu
         |> uint32
+
+    let inline incrFlatAddr n addr = (addr + n) &&& 0xFFFFFu
     
     let inline (|++) n addr = { addr with Address.Offset = ((addr.Offset + n) &&& 0xFFFFus) }
     
@@ -193,6 +194,17 @@ module Common =
             mb.RAM.[addr], mb
         innerFn : State<Word8, Motherboard>
     
+    let read6Bytes addr = 
+        let innerFn mb = 
+            let a0 = flatten (addr)
+            [| mb.RAM.[int32 (incrFlatAddr 0u a0)]
+               mb.RAM.[int32 (incrFlatAddr 1u a0)]
+               mb.RAM.[int32 (incrFlatAddr 2u a0)]
+               mb.RAM.[int32 (incrFlatAddr 3u a0)]
+               mb.RAM.[int32 (incrFlatAddr 4u a0)]
+               mb.RAM.[int32 (incrFlatAddr 5u a0)] |], mb
+        innerFn : State<Word8[], Motherboard>
+        
     let readWord16 addr = 
         Prelude.tuple2 <!> readWord8 (1us |++ addr) <*> readWord8 addr >>= (makeWord16 >> State.returnM)
     

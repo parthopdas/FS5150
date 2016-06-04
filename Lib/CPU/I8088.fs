@@ -46,7 +46,7 @@ module I8088 =
     let resetCPUState = State.exec resetCPU >> Result.returnM
     
     /// logicalStepCPU :: Motherboard -> Result<Motherboard> 
-    let logicalStepCPU mb = 
+    let inline logicalStepCPU mb = 
         let rec physicalStepCPU mb = 
             mb
             |> State.eval (State.( *> ) beforePhysicalInstruction createInputAtCSIP)
@@ -143,24 +143,25 @@ module I8088 =
                                             >> Result.returnM)
     
     type I8088Command = 
+        | Break of AsyncReplyChannel<Result<string>>
+        | Dump of Address * AsyncReplyChannel<Result<string>>
+        | Register of AsyncReplyChannel<Result<string>>
         | Stats of AsyncReplyChannel<Result<string>>
         | Trace of AsyncReplyChannel<Result<string>>
-        | Register of AsyncReplyChannel<Result<string>>
-        | Dump of Address * AsyncReplyChannel<Result<string>>
         | Unassemble of AsyncReplyChannel<Result<string>>
     
-    let (|StatsCmdFormat|_|) = Regex.tryMatch "^stats$"
-    let (|TraceCmdFormat|_|) = Regex.tryMatch "^t$"
-    let (|RegisterCmdFormat|_|) = Regex.tryMatch "^r$"
     
+    let (|BreakCmdFormat|_|) = Regex.tryMatch "^b$"
     let (|DumpCmdFormat|_|) input = 
         match Regex.tryMatch "^d ([0-9a-f]{1,4}):([0-9a-f]{1,4})$" input with
         | Some am -> 
             Some { Segment = UInt16.Parse(am.Groups.[0].Value, NumberStyles.HexNumber)
                    Offset = UInt16.Parse(am.Groups.[1].Value, NumberStyles.HexNumber) }
         | None -> None
-    
-    let (|UnassembleCmdFormat|_|) = Regex.tryMatch "u"
+    let (|RegisterCmdFormat|_|) = Regex.tryMatch "^r$"
+    let (|StatsCmdFormat|_|) = Regex.tryMatch "^stats$"
+    let (|TraceCmdFormat|_|) = Regex.tryMatch "^t$"    
+    let (|UnassembleCmdFormat|_|) = Regex.tryMatch "^u$"
     
     type I8088Agent() = 
         
@@ -172,6 +173,9 @@ module I8088 =
                                                     else 0)
                     let f = 
                         match command with
+                        | Some(Break(rc)) ->
+                            rc.Reply("" |> Result.returnM) 
+                            fun mb -> (mb, true) |> Result.returnM
                         | Some(Stats(rc)) -> 
                             (fun mb -> mb |> Result.returnM)
                             >> Common.tee (Result.bind getStats >> rc.Reply)
@@ -217,8 +221,9 @@ module I8088 =
             |> loop
         
         let mailboxProc = MailboxProcessor.Start processor
+        member __.Break() = mailboxProc.PostAndReply Break
+        member __.Dump a = mailboxProc.PostAndReply(fun rc -> Dump(a, rc))
+        member __.Register() = mailboxProc.PostAndReply Register
         member __.Stats() = mailboxProc.PostAndReply Stats
         member __.Trace() = mailboxProc.PostAndReply Trace
-        member __.Register() = mailboxProc.PostAndReply Register
-        member __.Dump a = mailboxProc.PostAndReply(fun rc -> Dump(a, rc))
         member __.Unassemble() = mailboxProc.PostAndReply Unassemble

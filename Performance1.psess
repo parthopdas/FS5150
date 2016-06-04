@@ -36,7 +36,7 @@
   </PostinstrumentEvent>
   <Binaries>
     <ProjBinary>
-      <Path>Fs5150\obj\Debug\Fs5150.exe</Path>
+      <Path>Fs5150\obj\Release\Fs5150.exe</Path>
       <ArgumentTimestamp>01/01/0001 00:00:00</ArgumentTimestamp>
       <Instrument>true</Instrument>
       <Sample>true</Sample>
@@ -48,8 +48,8 @@
       <LaunchProject>true</LaunchProject>
       <OverrideProjectSettings>false</OverrideProjectSettings>
       <LaunchMethod>Executable</LaunchMethod>
-      <ExecutablePath>Fs5150\bin\Debug\Fs5150.exe</ExecutablePath>
-      <StartupDirectory>Fs5150\bin\Debug</StartupDirectory>
+      <ExecutablePath>Fs5150\bin\Release\Fs5150.exe</ExecutablePath>
+      <StartupDirectory>Fs5150\bin\Release</StartupDirectory>
       <NetAppHost>IIS</NetAppHost>
       <NetBrowser>InternetExplorer</NetBrowser>
       <ExcludeSmallFuncs>true</ExcludeSmallFuncs>
@@ -65,7 +65,7 @@
       <ProjName>Fs5150</ProjName>
     </ProjBinary>
     <ProjBinary>
-      <Path>Lib\obj\Debug\Lib.dll</Path>
+      <Path>Lib\obj\Release\Lib.dll</Path>
       <ArgumentTimestamp>01/01/0001 00:00:00</ArgumentTimestamp>
       <Instrument>true</Instrument>
       <Sample>true</Sample>
@@ -77,7 +77,7 @@
       <LaunchProject>true</LaunchProject>
       <OverrideProjectSettings>false</OverrideProjectSettings>
       <LaunchMethod>Executable</LaunchMethod>
-      <StartupDirectory>Lib\bin\Debug</StartupDirectory>
+      <StartupDirectory>Lib\bin\Release</StartupDirectory>
       <NetAppHost>IIS</NetAppHost>
       <NetBrowser>InternetExplorer</NetBrowser>
       <ExcludeSmallFuncs>true</ExcludeSmallFuncs>
@@ -93,7 +93,7 @@
       <ProjName>Lib</ProjName>
     </ProjBinary>
     <ProjBinary>
-      <Path>Lib.Tests\obj\Debug\Lib.Tests.dll</Path>
+      <Path>Lib.Tests\obj\Release\Lib.Tests.dll</Path>
       <ArgumentTimestamp>01/01/0001 00:00:00</ArgumentTimestamp>
       <Instrument>true</Instrument>
       <Sample>true</Sample>
@@ -105,7 +105,7 @@
       <LaunchProject>true</LaunchProject>
       <OverrideProjectSettings>false</OverrideProjectSettings>
       <LaunchMethod>Executable</LaunchMethod>
-      <StartupDirectory>Lib.Tests\bin\Debug</StartupDirectory>
+      <StartupDirectory>Lib.Tests\bin\Release</StartupDirectory>
       <NetAppHost>IIS</NetAppHost>
       <NetBrowser>InternetExplorer</NetBrowser>
       <ExcludeSmallFuncs>true</ExcludeSmallFuncs>
@@ -124,6 +124,21 @@
   <Reports>
     <Report>
       <Path>Fs5150160515.vspx</Path>
+    </Report>
+    <Report>
+      <Path>Fs5150160603.vsp</Path>
+    </Report>
+    <Report>
+      <Path>Fs5150160603(1).vsp</Path>
+    </Report>
+    <Report>
+      <Path>Fs5150160603(2).vsp</Path>
+    </Report>
+    <Report>
+      <Path>Fs5150160603.vspx</Path>
+    </Report>
+    <Report>
+      <Path>Fs5150160603(1).vspx</Path>
     </Report>
   </Reports>
   <Launches>

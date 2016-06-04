@@ -47,13 +47,16 @@ module Core =
     let run parser ius input = parser.ParserFn(fromStr ius input)
     
     let (<@>) (p : Parser<_, _>) label : Parser<_, _> = 
+#if TRACE_PARSER
         (*let innerFn2 (is : InputState<_>) = 
             dprintfn "%A: Entering %s" is.Position label
             let ret = runOnInput p is
             dprintfn "%A: Leaving %s (%O)" is.Position label ret
             ret
         { p with ParserFn = innerFn2 }*)
+#else
         p
+#endif
     
     /// setLabel :: string -> Parser<'a> -> Parser<'a>
     let setLabel pa label = 

@@ -22,10 +22,11 @@ let main _ =
         printf "\n-"
         let execCmd = 
             function 
+            | BreakCmdFormat _ -> dbg.Break()
+            | DumpCmdFormat a -> dbg.Dump(a)
+            | RegisterCmdFormat _ -> dbg.Register()
             | StatsCmdFormat _ -> dbg.Stats()
             | TraceCmdFormat _ -> dbg.Trace()
-            | RegisterCmdFormat _ -> dbg.Register()
-            | DumpCmdFormat a -> dbg.Dump(a)
             | UnassembleCmdFormat _ -> dbg.Unassemble()
             | _ -> "" |> Result.returnM
         Console.ReadLine()

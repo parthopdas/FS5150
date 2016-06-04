@@ -12,7 +12,11 @@ module Processor =
         | [] -> setFlag IF false *> ns
         | _ -> nyi instr
     
-    let execCLD instr = 
+    let inline execCLD instr = 
+#if PERF
+        ns
+#else
         match instr.Args with
         | [] -> setFlag DF false *> ns
         | _ -> nyi instr
+#endif
