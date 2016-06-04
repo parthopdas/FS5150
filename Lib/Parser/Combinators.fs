@@ -5,14 +5,11 @@ module Combinators =
     
     /// bindP :: ('a -> Parser<'b>) -> Parser<'a> -> Parser<'b>
     let bindP f p = 
-        let label = "unknown"
-        
         let innerFn8 is = 
             match runOnInput p is with
             | Success(c, remaining) -> runOnInput (f c) remaining
             | Failure(l, msg, pos) -> Failure(l, msg, pos)
-        { ParserFn = innerFn8
-          Label = label }
+        innerFn8 : Parser<_, _>
     
     /// (>>=) :: ('a -> Parser<'b>) -> Parser<'a> -> Parser<'b>
     let (>>=) p f = bindP f p
@@ -20,8 +17,7 @@ module Combinators =
     /// returnP :: 'a -> Parser<'a>
     let returnM a = 
         let innerFn9 is = Success(a, is)
-        { ParserFn = innerFn9
-          Label = sprintf "%A" a }
+        innerFn9 : Parser<_, _>
     
     /// andThen :: Parser<'a> -> Parser<'b> -> Parser<'a * 'b>
     let andThen p1 p2 = p1 >>= (fun a -> p2 >>= (fun b -> returnM (a, b)))
@@ -37,8 +33,7 @@ module Combinators =
                 let result2 = runOnInput p2 input
                 result2
             | Success(_) as s1 -> s1
-        { ParserFn = innerFn10
-          Label = sprintf "%s orElse %s" p1.Label p2.Label }
+        innerFn10 : Parser<_, _>
     
     let (<|>) = orElse
     
@@ -70,12 +65,11 @@ module Combinators =
     /// many :: Parser<'a> -> Parser<'a list>
     let many (pa : Parser<'a, _>) : Parser<'a list, _> = 
         let innerFn11 is = Success(get0OrMore pa is)
-        { ParserFn = innerFn11
-          Label = sprintf "many %s" pa.Label }
+        innerFn11 : Parser<_, _>
     
     /// many1 :: Parser<'a> -> Parser<'a list>
     let many1 (pa : Parser<'a, _>) : Parser<'a list, _> = 
-        pa >>= (fun h -> many pa >>= (fun t -> { returnM (h :: t) with Label = sprintf "many1 %s" pa.Label }))
+        pa >>= (fun h -> many pa >>= (fun t -> returnM (h :: t)))
     
     /// opt :: Parser<'a> -> Parser<'a option>
     let opt pa = pa |>> Some <|> returnM None

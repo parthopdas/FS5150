@@ -21,9 +21,7 @@ module Core =
             | Success a -> sprintf "%O" a
             | Failure(l, e, p) -> sprintf "... Error: %O %O %A" l e p.CurrentOffset
     
-    type Parser<'T, 'U> = 
-        { ParserFn : InputState<'U> -> Result<'T * InputState<'U>>
-          Label : ParserLabel }
+    type Parser<'T, 'U> = InputState<'U> -> Result<'T * InputState<'U>>
     
     /// satisfy :: (byte -> bool) -> ParserLabel -> Parser<byte>
     let satisfy predicate label = 
@@ -37,14 +35,13 @@ module Core =
                 else 
                     let msg = sprintf "Unexpected '%c'" (first |> char) |> ParserError
                     Failure(label, msg, parserPositionFromInputState is)
-        { ParserFn = innerFn1
-          Label = label }
+        innerFn1 : Parser<_, _>
     
     /// runOnInput :: Parser<'a> -> InputState -> Result<'a * InputState>
-    let runOnInput parser input = parser.ParserFn input
+    let runOnInput parser input = parser input
     
     /// run :: Parser<'a> -> string -> Result<'a * InputState>
-    let run parser ius input = parser.ParserFn(fromStr ius input)
+    let run parser ius input = parser(fromStr ius input)
     
     let (<@>) (p : Parser<_, _>) label : Parser<_, _> = 
 #if TRACE_PARSER
@@ -64,8 +61,7 @@ module Core =
             match runOnInput pa str with
             | Success a -> Success a
             | Failure(_, m, p) -> Failure(label, m, p)
-        { ParserFn = innerFn3
-          Label = label }
+        innerFn3 : Parser<_, _>
     
     /// <?> :: Parser<'a> -> string -> Parser<'a>
     let (<?>) = setLabel
@@ -74,30 +70,26 @@ module Core =
     let getPosition = 
         let innerFn4 is =
             Success(is.Position, is)
-        { ParserFn = innerFn4
-          Label = "getPosition" }
+        innerFn4 : Parser<_, _>
 
     /// getInputChunk :: Parser<byte[], 'a>
     let getInputChunk s c = 
         let innerFn5 is =
             Success(getInputChunk is s c, is)
-        { ParserFn = innerFn5
-          Label = "getPosition" }
+        innerFn5 : Parser<_, _>
 
     /// setUserState :: ('a -> 'a) -> Parser<'a, 'a>
     let setUserState f = 
         let innerFn6 is =
             let is' = { is with UserState = f is.UserState }
             Success(is'.UserState, is')
-        { ParserFn = innerFn6
-          Label = "updateUserState" }
+        innerFn6 : Parser<_, _>
 
     /// getUserState :: Parser<'a, 'a>
     let getUserState = 
         let innerFn7 is =
             Success(is.UserState, is)
-        { ParserFn = innerFn7
-          Label = "getUserState" }
+        innerFn7 : Parser<_, _>
     
     /// printResult :: Result<'a> -> string
     let printResult = 
