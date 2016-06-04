@@ -316,14 +316,21 @@ module Disassembler =
         let parseAddress = returnM csip
         
         let parseMneumonicAndArgs = 
-            let parseMAndAs (oc, ocas, mrm) = 
+            let parseMAndAs (oc, ocas : string list, mrm) = 
                 let parseMneumonic oc = 
                     (oc, Map.tryFind oc prefixOps <> None)
                     |> returnM
                 
-                let parseArgs = ((([], mrm) |> returnM), ocas)
-                                ||> List.fold (fun acc e -> acc >>= pargument e)
-                                >>= (fun (args, mrrm) -> (args |> List.rev, mrrm) |> returnM)
+                let parseArgs = 
+                    match ocas with
+                    | [] -> ([], mrm) |> returnM
+                    | [ ocas0 ] -> pargument ocas0 ([], mrm)
+                    | [ ocas0; ocas1 ] -> 
+                        pargument ocas0 ([], mrm)
+                        >>= (fun am -> pargument ocas1 am)
+                        >>= (fun (a, m) -> (List.rev a, m) |> returnM)
+                    | _ -> Prelude.undefined
+
                 Prelude.tuple2 <!> (parseMneumonic oc) <*> parseArgs
             is
             |> popCode

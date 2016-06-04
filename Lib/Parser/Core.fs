@@ -45,12 +45,12 @@ module Core =
     
     let (<@>) (p : Parser<_, _>) label : Parser<_, _> = 
 #if TRACE_PARSER
-        (*let innerFn2 (is : InputState<_>) = 
+        let innerFn2 (is : InputState<_>) = 
             dprintfn "%A: Entering %s" is.Position label
             let ret = runOnInput p is
             dprintfn "%A: Leaving %s (%O)" is.Position label ret
             ret
-        { p with ParserFn = innerFn2 }*)
+        { p with ParserFn = innerFn2 }
 #else
         p
 #endif
