@@ -186,38 +186,38 @@ let ``pargument tests`` (desc, bs, res, hasMrm) : unit =
 
 let instrSet = 
     { OpCodes = 
-          [ (0x00uy, [ "XX0" ])
-            (0x02uy, [ "XX2"; "arg0"; "arg1" ])
-            (0x03uy, [ "GRP0" ])
-            (0x04uy, [ "GRP1" ])
-            (0x05uy, [ "GRP2"; "arg0o"; "arg0o" ])
-            (0x06uy, [ "GRP3"; "arg0o"; "arg0o" ]) ]
+          [ (0x00uy, { OcName = "XX0"; OcArgs = [||]})
+            (0x02uy, { OcName = "XX2"; OcArgs = [| "arg0"; "arg1" |]})
+            (0x03uy, { OcName = "GRP0"; OcArgs = [||]})
+            (0x04uy, { OcName = "GRP1"; OcArgs = [||]})
+            (0x05uy, { OcName = "GRP2"; OcArgs = [| "arg0o"; "arg0o" |]})
+            (0x06uy, { OcName = "GRP3"; OcArgs = [| "arg0o"; "arg0o" |]}) ]
           |> Map.ofList
       OpCodeGroups = 
           [ ({ OcgName = "GRP0"
-               OcgIndex = 5uy }, [ "EXX00" ])
+               OcgIndex = 5uy }, { OcName = "EXX00"; OcArgs = [||]})
             ({ OcgName = "GRP0"
-               OcgIndex = 1uy }, [ "EXX01" ])
+               OcgIndex = 1uy }, { OcName = "EXX01"; OcArgs = [||]})
             ({ OcgName = "GRP1"
-               OcgIndex = 0uy }, [ "EXX1"; "arg00"; "arg01" ])
+               OcgIndex = 0uy }, { OcName = "EXX1"; OcArgs = [|"arg00"; "arg01"|]})
             ({ OcgName = "GRP2"
-               OcgIndex = 3uy }, [ "EXX2" ])
+               OcgIndex = 3uy }, { OcName = "EXX2"; OcArgs = [||]})
             ({ OcgName = "GRP2"
-               OcgIndex = 4uy }, [ "EXX2"; "arg0x"; "arg0x" ])
+               OcgIndex = 4uy }, { OcName = "EXX2"; OcArgs = [|"arg0x"; "arg0x"|]})
             ({ OcgName = "GRP3"
-               OcgIndex = 7uy }, [ "--" ]) ]
+               OcgIndex = 7uy }, { OcName = "--"; OcArgs = [||]}) ]
           |> Map.ofList }
 
 let ``popCode tests data`` : obj array seq = 
     seq { 
-        yield ([| (*0 arg*) 0x00uy |], "XX0", [], false)
-        yield ([| (*2 arg*) 0x02uy |], "XX2", [ "arg0"; "arg1" ], false)
-        yield ([| (*ex 0 arg*) 0x03uy; 0b00101000uy |], "EXX00", [], true)
-        yield ([| (*ex 0 arg - different reg*) 0x03uy; 0b00001000uy |], "EXX01", [], true)
-        yield ([| (*ex 2 arg*) 0x04uy; 0b00000000uy |], "EXX1", [ "arg00"; "arg01" ], true)
-        yield ([| (*ex 0 2 arg from op*) 0x05uy; 0b00011000uy |], "EXX2", [ "arg0o"; "arg0o" ], true)
-        yield ([| (*ex 2 overide arg*) 0x05uy; 0b00100000uy |], "EXX2", [ "arg0x"; "arg0x" ], true)
-        yield ([| (*ex illegal*) 0x06uy; 0b00111000uy |], "???", [], true)
+        yield ([| (*0 arg*) 0x00uy |], "XX0", [||], false)
+        yield ([| (*2 arg*) 0x02uy |], "XX2", [| "arg0"; "arg1" |], false)
+        yield ([| (*ex 0 arg*) 0x03uy; 0b00101000uy |], "EXX00", [||], true)
+        yield ([| (*ex 0 arg - different reg*) 0x03uy; 0b00001000uy |], "EXX01", [||], true)
+        yield ([| (*ex 2 arg*) 0x04uy; 0b00000000uy |], "EXX1", [| "arg00"; "arg01" |], true)
+        yield ([| (*ex 0 2 arg from op*) 0x05uy; 0b00011000uy |], "EXX2", [| "arg0o"; "arg0o" |], true)
+        yield ([| (*ex 2 overide arg*) 0x05uy; 0b00100000uy |], "EXX2", [| "arg0x"; "arg0x" |], true)
+        yield ([| (*ex illegal*) 0x06uy; 0b00111000uy |], "???", [||], true)
     }
     |> Seq.map (fun (a, b, c, d) -> 
            [| box a
@@ -229,8 +229,8 @@ let ``popCode tests data`` : obj array seq =
 [<MemberData("popCode tests data")>]
 let ``popCode tests`` (bs, oc, args, hasMrm) : unit = 
     match runOnInput (popCode instrSet) (bs |> fromBytes ()) with
-    | Success((o, a, m), is) -> 
-        (o, a) |> should equal (oc, args)
+    | Success((ocd, m), is) -> 
+        (ocd.OcName, ocd.OcArgs) |> should equal (oc, args)
         if hasMrm then m |> should not' (equal None)
         else m |> should equal None
         is.Position.Offset |> should equal bs.Length

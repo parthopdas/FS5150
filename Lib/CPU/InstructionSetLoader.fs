@@ -12,9 +12,12 @@ module InstructionSetLoader =
         |> Array.toList
     
     let loadInstructionSet (text : string) = 
+        let ocdFromList xs =
+            { OcName = xs |> Seq.head; OcArgs = xs |> Seq.skip 1 |> Seq.toArray }
+
         let createOpce = 
             function 
-            | x :: xs -> Byte.Parse(x, NumberStyles.HexNumber), xs
+            | x :: xs -> Byte.Parse(x, NumberStyles.HexNumber), ocdFromList xs
             | _ -> failwith "OpCode not in expected format"
         
         let newOce (s : string) = 
@@ -27,7 +30,7 @@ module InstructionSetLoader =
         let createOpcxe = 
             function 
             | [] -> failwith "OpCode Group not in expected format"
-            | x :: xs -> (newOce x, xs)
+            | x :: xs -> (newOce x, ocdFromList xs)
         
         let (opcxLines, opcLines) = 
             text

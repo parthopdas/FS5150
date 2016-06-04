@@ -285,28 +285,23 @@ module Disassembler =
              |> parseNonRegArgs)
         <@> "Argument"
     
-    /// popCode :: InstructionSet -> Parser<string * string[]>
     let popCode is = 
-        let getOc w8 = 
-            let oc = is.OpCodes.[w8]
-            List.head oc, List.tail oc
+        let getOc w8 = is.OpCodes.[w8]
         
-        let getOcg o a mrm = 
-            match is.OpCodeGroups.[{ OcgName = o
-                                     OcgIndex = modRegOcgIndex.[mrm.ModReg] }] with
-            | [] -> failwith "OpCodeGroups has invalid entry"
-            | ox :: ax -> 
-                if ox = "--" then ("???", [], Some mrm)
-                else 
-                    (ox, 
-                     (if [] = ax then a
-                      else ax), Some mrm)
+        let getOcg d mrm = 
+            let ocgDesc = is.OpCodeGroups.[{ OcgName = d.OcName
+                                             OcgIndex = modRegOcgIndex.[mrm.ModReg] }]
+            if ocgDesc.OcName = "--" then ({ ocgDesc with OcName = "???" }, Some mrm)
+            else 
+                ({ ocgDesc with OcArgs = 
+                                    if Array.isEmpty ocgDesc.OcArgs then d.OcArgs
+                                    else ocgDesc.OcArgs }, Some mrm)
         
         let parseOc = getOc <!> pword8
         
-        let parseOcg (o, a) = 
-            if (Strings.startsWith "GRP" o) then pmodRegRm |>> getOcg o a
-            else (o, a, None) |> returnM
+        let parseOcg d = 
+            if (Strings.startsWith "GRP" d.OcName) then pmodRegRm |>> getOcg d
+            else (d, None) |> returnM
         parseOc
         >>= parseOcg
         <@> "OpCode"
@@ -316,22 +311,22 @@ module Disassembler =
         let parseAddress = returnM csip
         
         let parseMneumonicAndArgs = 
-            let parseMAndAs (oc, ocas : string list, mrm) = 
+            let parseMAndAs (ocd, mrm) = 
                 let parseMneumonic oc = 
                     (oc, Map.tryFind oc prefixOps <> None)
                     |> returnM
                 
                 let parseArgs = 
-                    match ocas with
-                    | [] -> ([], mrm) |> returnM
-                    | [ ocas0 ] -> pargument ocas0 ([], mrm)
-                    | [ ocas0; ocas1 ] -> 
+                    match ocd.OcArgs with
+                    | [||] -> ([], mrm) |> returnM
+                    | [| ocas0 |] -> pargument ocas0 ([], mrm)
+                    | [| ocas0; ocas1 |] -> 
                         pargument ocas0 ([], mrm)
                         >>= (fun am -> pargument ocas1 am)
                         >>= (fun (a, m) -> (List.rev a, m) |> returnM)
                     | _ -> Prelude.undefined
 
-                Prelude.tuple2 <!> (parseMneumonic oc) <*> parseArgs
+                Prelude.tuple2 <!> (parseMneumonic ocd.OcName) <*> parseArgs
             is
             |> popCode
             >>= parseMAndAs

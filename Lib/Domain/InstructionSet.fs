@@ -9,13 +9,17 @@ module InstructionSet =
     
     type Word32 = uint32
     
-    type OpCodeMap = Map<Word8, string list>
+    type OpCodeDesc =
+        { OcName : string
+          OcArgs : string[] }
+
+    type OpCodeMap = Map<Word8, OpCodeDesc>
     
     type OpCodeGroup = 
         { OcgName : string
           OcgIndex : Word8 }
     
-    type OpCodeExtensioMap = Map<OpCodeGroup, string list>
+    type OpCodeExtensioMap = Map<OpCodeGroup, OpCodeDesc>
     
     type InstructionSet = 
         { OpCodes : OpCodeMap
