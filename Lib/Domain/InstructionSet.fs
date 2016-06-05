@@ -151,13 +151,12 @@ module InstructionSet =
             | None -> sprintf "[%O]" x.DrefType
     
     type RmArgs = 
-        | RmaReg of ModRegType
+        | RmaReg of Word8
         | RmaDeref of Dereference
     
     type ModRegRM = 
-        { ModReg : ModRegType
-          ModRM : RmArgs
-          MRReg : int
+        { ModRM : RmArgs
+          MRReg : Word8
           MRUseSS : bool }
     
     type RegisterSeg = 

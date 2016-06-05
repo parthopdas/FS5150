@@ -6,61 +6,21 @@ module Disassembler =
     open Lib.Domain.InstructionSet
     open Lib.Parser.Combinators
     open Lib.Parser.Core
-    
-    let private modRegIndexMap = 
-        [ (0b000uy, MregT0)
-          (0b001uy, MregT1)
-          (0b010uy, MregT2)
-          (0b011uy, MregT3)
-          (0b100uy, MregT4)
-          (0b101uy, MregT5)
-          (0b110uy, MregT6)
-          (0b111uy, MregT7) ]
-        |> Map.ofList
-    
-    let private getModRegType r = modRegIndexMap.[r]
-    
+        
     let private modRmIndexMap = 
-        [ ((0b000uy, 0b00uy), MrmTBXSI)
-          ((0b000uy, 0b01uy), MrmTBXSI)
-          ((0b000uy, 0b10uy), MrmTBXSI)
-          ((0b001uy, 0b00uy), MrmTBXDI)
-          ((0b001uy, 0b01uy), MrmTBXDI)
-          ((0b001uy, 0b10uy), MrmTBXDI)
-          ((0b010uy, 0b00uy), MrmTBPSI)
-          ((0b010uy, 0b01uy), MrmTBPSI)
-          ((0b010uy, 0b10uy), MrmTBPSI)
-          ((0b011uy, 0b00uy), MrmTBPDI)
-          ((0b011uy, 0b01uy), MrmTBPDI)
-          ((0b011uy, 0b10uy), MrmTBPDI)
-          ((0b100uy, 0b00uy), MrmTSI)
-          ((0b100uy, 0b01uy), MrmTSI)
-          ((0b100uy, 0b10uy), MrmTSI)
-          ((0b101uy, 0b00uy), MrmTDI)
-          ((0b101uy, 0b01uy), MrmTDI)
-          ((0b101uy, 0b10uy), MrmTDI)
-          ((0b110uy, 0b00uy), MrmTDisp)
-          ((0b110uy, 0b01uy), MrmTBP)
-          ((0b110uy, 0b10uy), MrmTBP)
-          ((0b111uy, 0b00uy), MrmTBX)
-          ((0b111uy, 0b01uy), MrmTBX)
-          ((0b111uy, 0b10uy), MrmTBX) ]
-        |> Map.ofList
+        [| [| MrmTBXSI; MrmTBXSI; MrmTBXSI |]
+           [| MrmTBXDI; MrmTBXDI; MrmTBXDI |]
+           [| MrmTBPSI; MrmTBPSI; MrmTBPSI |]
+           [| MrmTBPDI; MrmTBPDI; MrmTBPDI |]
+           [| MrmTSI; MrmTSI; MrmTSI |]
+           [| MrmTDI; MrmTDI; MrmTDI |]
+           [| MrmTDisp; MrmTBP; MrmTBP |]
+           [| MrmTBX; MrmTBX; MrmTBX |] |]
+        |> array2D
     
-    let private getModRmType mo rm = modRmIndexMap.[(rm, mo)]
+    let inline private getModRmType mo rm = modRmIndexMap.[(int) rm, (int) mo]
     
-    let private modRegOcgIndex = 
-        [ (MregT0, 0uy)
-          (MregT1, 1uy)
-          (MregT2, 2uy)
-          (MregT3, 3uy)
-          (MregT4, 4uy)
-          (MregT5, 5uy)
-          (MregT6, 6uy)
-          (MregT7, 7uy) ]
-        |> Map.ofList
-    
-    let private aocRegMap2 = 
+    let private aocRegMap = 
         [| [| ArgRegister8 AL
               ArgRegister16 AX
               ArgRegister16 AX |]
@@ -88,11 +48,10 @@ module Disassembler =
         |> array2D
     
     let private modRegMap = 
-        [ (MregT0, ES)
-          (MregT1, CS)
-          (MregT2, SS)
-          (MregT3, DS) ]
-        |> Map.ofList
+        [| ES
+           CS
+           SS
+           DS |]
     
     /// puint8 :: Parser<Word8>
     let pword8<'a> : Parser<Word8, 'a> = satisfy (fun _ -> true) "word8" <@> "word8"
@@ -109,7 +68,7 @@ module Disassembler =
     let pmodRegRm<'a> : Parser<ModRegRM, 'a> = 
         let parseReg w8 = 
             let reg = ((w8 >>> 3) &&& 0b111uy)
-            (reg |> getModRegType, (int) reg) |> returnM
+            reg |> returnM
         
         let parseRmArgs w8 = 
             let parseMrm w8 = (w8 >>> 6, w8 &&& 0b111uy)
@@ -129,7 +88,7 @@ module Disassembler =
                                         DrefDisp = None })
                 | (0b01uy, _) -> pword8 |>> createRmaDeref W8
                 | (0b10uy, _) -> pword16 |>> createRmaDeref W16
-                | (0b11uy, _) -> returnM (RmaReg(getModRegType rm))
+                | (0b11uy, _) -> returnM (RmaReg(rm))
                 | _ -> failwithf "MOD value = %A is unexpected." mo
             w8
             |> parseMrm
@@ -143,9 +102,8 @@ module Disassembler =
             | _ -> false
             |> returnM
         
-        let createpModRegRm ((r, reg), rm, usess) = 
-            returnM { ModReg = r
-                      ModRM = rm
+        let createpModRegRm (reg, rm, usess) = 
+            returnM { ModRM = rm
                       MRReg = reg
                       MRUseSS = usess }
         
@@ -158,7 +116,7 @@ module Disassembler =
         let getRegister aoc r = 
             let x = (int) r
             let y = ((int) aoc >>> 4) - 1
-            aocRegMap2.[x, y]
+            aocRegMap.[x, y]
         
         let withMrm a = a, mrm
         let appendArg a = a :: args
@@ -167,7 +125,7 @@ module Disassembler =
         let parseDrefOrReg oc = 
             cpmodRegRm |>> (fun mrm -> 
             match mrm.ModRM with
-            | RmaReg r -> getRegister oc (modRegOcgIndex.[r]) |> appendArg, Some mrm
+            | RmaReg r -> getRegister oc r |> appendArg, Some mrm
             | RmaDeref d -> ArgDereference d |> appendArg, Some mrm)
         
         let parseImmediate8 = W8
@@ -202,7 +160,7 @@ module Disassembler =
                                      |> Some }) |>> appendArg |>> withMrm
             | nac when nac = (NormalArgCode.S ||| NormalArgCode.W) -> 
                 cpmodRegRm |>> (fun mrm -> 
-                modRegMap.[mrm.ModReg]
+                modRegMap.[(int)mrm.MRReg]
                 |> ArgRegisterSeg
                 |> appendArg, Some mrm)
             | nac when nac = (NormalArgCode.A ||| NormalArgCode.P) -> 
@@ -253,7 +211,7 @@ module Disassembler =
         let parseOc = pword8 |>> (fun w8 -> g.OpcRules.[(int) w8])
         
         let getOcg gr mrm = 
-            let gr' = g.OpcgRules.[mrm.MRReg, gr.OcId]
+            let gr' = g.OpcgRules.[(int)mrm.MRReg, gr.OcId]
             { gr' with OcArgs = 
                            if Array.isEmpty gr'.OcArgs then gr.OcArgs
                            else gr'.OcArgs }, Some mrm

@@ -47,50 +47,48 @@ let ``pword32 can parse word32``() =
 
 let ``pmodRegRm tests data`` : obj array seq = 
     seq { 
-        yield ([| 0b11000001uy |], 0, MregT0, RmaReg MregT1, false)
-        yield ([| 0b11011010uy |], 3, MregT3, RmaReg MregT2, false)
-        yield ([| 0b00100000uy |], 4, MregT4, 
+        yield ([| 0b11000001uy |], 0, RmaReg 1uy, false)
+        yield ([| 0b11011010uy |], 3, RmaReg 2uy, false)
+        yield ([| 0b00100000uy |], 4,  
                RmaDeref { DrefType = MrmTBXSI
                           DrefDisp = None }, false)
-        yield ([| 0b01101001uy; 0xdeuy |], 5, MregT5, 
+        yield ([| 0b01101001uy; 0xdeuy |], 5,  
                RmaDeref { DrefType = MrmTBXDI
                           DrefDisp = Some(W8 0xdeuy) }, false)
-        yield ([| 0b10110010uy; 0xaduy; 0xbauy |], 6, MregT6, 
+        yield ([| 0b10110010uy; 0xaduy; 0xbauy |], 6, 
                RmaDeref { DrefType = MrmTBPSI
                           DrefDisp = Some(W16 0xbaadus) }, true)
-        yield ([| 0b10111011uy; 0x0duy; 0xf0uy |], 7, MregT7, 
+        yield ([| 0b10111011uy; 0x0duy; 0xf0uy |], 7, 
                RmaDeref { DrefType = MrmTBPDI
                           DrefDisp = Some(W16 0xf00dus) }, true)
-        yield ([| 0b01110100uy; 0xbeuy |], 6, MregT6, 
+        yield ([| 0b01110100uy; 0xbeuy |], 6,
                RmaDeref { DrefType = MrmTSI
                           DrefDisp = Some(W8 0xbeuy) }, false)
-        yield ([| 0b00101101uy |], 5, MregT5, 
+        yield ([| 0b00101101uy |], 5, 
                RmaDeref { DrefType = MrmTDI
                           DrefDisp = None }, false)
-        yield ([| 0b00100110uy; 0x0duy; 0xf0uy |], 4, MregT4, 
+        yield ([| 0b00100110uy; 0x0duy; 0xf0uy |], 4, 
                RmaDeref { DrefType = MrmTDisp
                           DrefDisp = Some(W16 0xf00dus) }, false)
-        yield ([| 0b01011111uy; 0xebuy |], 3, MregT3, 
+        yield ([| 0b01011111uy; 0xebuy |], 3, 
                RmaDeref { DrefType = MrmTBX
                           DrefDisp = Some(W8 0xebuy) }, false)
-        yield ([| 0b10010110uy; 0xefuy; 0xbeuy |], 2, MregT2, 
+        yield ([| 0b10010110uy; 0xefuy; 0xbeuy |], 2, 
                RmaDeref { DrefType = MrmTBP
                           DrefDisp = Some(W16 0xbeefus) }, true)
     }
-    |> Seq.map (fun (a, b, c, d, e) -> 
+    |> Seq.map (fun (a, b, c, d) -> 
            [| box a
               box b
               box c
-              box d
-              box e |])
+              box d |])
 
 [<Theory>]
 [<MemberData("pmodRegRm tests data")>]
-let ``pmodRegRm tests`` (bs, reg, r, rm, usess) : unit = 
+let ``pmodRegRm tests`` (bs, reg, rm, usess) : unit = 
     match runOnInput pmodRegRm (bs |> fromBytes ()) with
     | Success(mrm, is) -> 
-        mrm |> should equal { ModReg = r
-                              ModRM = rm
+        mrm |> should equal { ModRM = rm
                               MRReg = reg
                               MRUseSS = usess }
         is.Position.Offset |> should equal bs.Length
