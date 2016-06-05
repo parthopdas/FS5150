@@ -1,7 +1,9 @@
 ﻿namespace Lib.CPU
 
 module InstructionSetLoader = 
+    open FSharpx.Functional
     open FSharpx.Text
+    open Lib.Common
     open Lib.Domain.InstructionSet
     open System
     open System.Globalization
@@ -12,9 +14,13 @@ module InstructionSetLoader =
         |> Array.toList
     
     let loadInstructionSet (text : string) = 
-        let ocdFromList xs =
-            { OcName = xs |> Seq.head; OcArgs = xs |> Seq.skip 1 |> Seq.toArray }
-
+        let ocdFromList xs = 
+            { OcName = xs |> Seq.head
+              OcArgs = 
+                  xs
+                  |> Seq.skip 1
+                  |> Seq.toArray }
+        
         let createOpce = 
             function 
             | x :: xs -> Byte.Parse(x, NumberStyles.HexNumber), ocdFromList xs
@@ -52,5 +58,59 @@ module InstructionSetLoader =
         
         { OpCodes = opc
           OpCodeGroups = opcx }
+    
+    let getOpcodeId oc = ocIndices |> Array.findIndex ((=) oc)
+    let getOpcodeGroupId ocg = ocgIndices |> Array.findIndex ((=) ocg)
+    
+    let toOcArg a = 
+        let xform = 
+            function 
+            | "1" -> "One"
+            | "3" -> "Three"
+            | "M" -> "Mem"
+            | s when Strings.startsWith "e" s -> s.[1..]
+            | s -> s.Replace("0", "Z").Replace("v", "w").ToUpper()
+        match Strings.toUnionCase (a |> xform) with
+        | Some uc -> uc |> OcaSpecial
+        | None -> 
+            match Enum.TryParse<NormalArgCode>(a
+                                               |> xform
+                                               |> Strings.toCharArray
+                                               |> Array.map toStr
+                                               |> String.concat ", ") with
+            | true, ac -> OcaNormal(ac)
+            | false, _ -> Prelude.undefined
+    
+    let loadGrammer (is : InstructionSet) = 
+        let toRule d = 
+            let oct = 
+                if Strings.startsWith "GRP" d.OcName then OctExtension
+                else OctNormal
+            { OcType = oct
+              OcId = 
+                  match oct with
+                  | OctNormal -> getOpcodeId d.OcName
+                  | OctExtension -> getOpcodeGroupId d.OcName
+              OcArgs = d.OcArgs |> Array.map toOcArg }
+        
+        let opc = 
+            is.OpCodes
+            |> Map.toList
+            |> List.map fst
+            |> List.sort
+            |> List.fold (fun acc e -> is.OpCodes.[e] :: acc) []
+            |> List.rev
+            |> List.map toRule
+            |> List.toArray
+        
+        let opcg = 
+            is.OpCodeGroups
+            |> Map.toList
+            |> List.map (fun (ocg, d) -> (ocg.OcgIndex, getOpcodeGroupId ocg.OcgName), d)
+            |> Map.ofList
+        
+        let initOpcg i j = opcg.[(uint8) i, j] |> toRule
+        { OpcRules = opc
+          OpcgRules = Array2D.init 8 6 initOpcg }
     
     let instrLen instr : Word16 = uint16 instr.Bytes.Length

@@ -14,3 +14,13 @@ module Common =
             (uint16)w8 ||| 0xFF00us
 
     let toStr x = x.ToString()
+
+namespace global
+
+module Strings =
+    open Microsoft.FSharp.Reflection
+
+    let toUnionCase<'a> s =
+        match FSharpType.GetUnionCases typeof<'a> |> Array.filter (fun case -> case.Name = s) with
+        |[|case|] -> Some(FSharpValue.MakeUnion(case,[||]) :?> 'a)
+        |_ -> None

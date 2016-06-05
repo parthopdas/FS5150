@@ -7,9 +7,9 @@ open Lib.Domain.InstructionSet
 open Lib.Parser.Core
 open Lib.Parser.TextInput
 open System
-open System.IO
-open System.Reflection
 open Lib.CPU.Disassembler
+open Lib.Common
+open Lib.CPU.InstructionSetLoader
 
 [<Fact>]
 let ``pword8 can parse word8``() = 
@@ -47,49 +47,51 @@ let ``pword32 can parse word32``() =
 
 let ``pmodRegRm tests data`` : obj array seq = 
     seq { 
-        yield ([| 0b11000001uy |], MregT0, RmaReg MregT1, false)
-        yield ([| 0b11011010uy |], MregT3, RmaReg MregT2, false)
-        yield ([| 0b00100000uy |], MregT4, 
+        yield ([| 0b11000001uy |], 0, MregT0, RmaReg MregT1, false)
+        yield ([| 0b11011010uy |], 3, MregT3, RmaReg MregT2, false)
+        yield ([| 0b00100000uy |], 4, MregT4, 
                RmaDeref { DrefType = MrmTBXSI
                           DrefDisp = None }, false)
-        yield ([| 0b01101001uy; 0xdeuy |], MregT5, 
+        yield ([| 0b01101001uy; 0xdeuy |], 5, MregT5, 
                RmaDeref { DrefType = MrmTBXDI
                           DrefDisp = Some(W8 0xdeuy) }, false)
-        yield ([| 0b10110010uy; 0xaduy; 0xbauy |], MregT6, 
+        yield ([| 0b10110010uy; 0xaduy; 0xbauy |], 6, MregT6, 
                RmaDeref { DrefType = MrmTBPSI
                           DrefDisp = Some(W16 0xbaadus) }, true)
-        yield ([| 0b10111011uy; 0x0duy; 0xf0uy |], MregT7, 
+        yield ([| 0b10111011uy; 0x0duy; 0xf0uy |], 7, MregT7, 
                RmaDeref { DrefType = MrmTBPDI
                           DrefDisp = Some(W16 0xf00dus) }, true)
-        yield ([| 0b01110100uy; 0xbeuy |], MregT6, 
+        yield ([| 0b01110100uy; 0xbeuy |], 6, MregT6, 
                RmaDeref { DrefType = MrmTSI
                           DrefDisp = Some(W8 0xbeuy) }, false)
-        yield ([| 0b00101101uy |], MregT5, 
+        yield ([| 0b00101101uy |], 5, MregT5, 
                RmaDeref { DrefType = MrmTDI
                           DrefDisp = None }, false)
-        yield ([| 0b00100110uy; 0x0duy; 0xf0uy |], MregT4, 
+        yield ([| 0b00100110uy; 0x0duy; 0xf0uy |], 4, MregT4, 
                RmaDeref { DrefType = MrmTDisp
                           DrefDisp = Some(W16 0xf00dus) }, false)
-        yield ([| 0b01011111uy; 0xebuy |], MregT3, 
+        yield ([| 0b01011111uy; 0xebuy |], 3, MregT3, 
                RmaDeref { DrefType = MrmTBX
                           DrefDisp = Some(W8 0xebuy) }, false)
-        yield ([| 0b10010110uy; 0xefuy; 0xbeuy |], MregT2, 
+        yield ([| 0b10010110uy; 0xefuy; 0xbeuy |], 2, MregT2, 
                RmaDeref { DrefType = MrmTBP
                           DrefDisp = Some(W16 0xbeefus) }, true)
     }
-    |> Seq.map (fun (a, b, c, d) -> 
+    |> Seq.map (fun (a, b, c, d, e) -> 
            [| box a
               box b
               box c
-              box d |])
+              box d
+              box e |])
 
 [<Theory>]
 [<MemberData("pmodRegRm tests data")>]
-let ``pmodRegRm tests`` (bs, reg, rm, usess) : unit = 
+let ``pmodRegRm tests`` (bs, reg, r, rm, usess) : unit = 
     match runOnInput pmodRegRm (bs |> fromBytes ()) with
     | Success(mrm, is) -> 
-        mrm |> should equal { ModReg = reg
+        mrm |> should equal { ModReg = r
                               ModRM = rm
+                              MRReg = reg
                               MRUseSS = usess }
         is.Position.Offset |> should equal bs.Length
     | _ -> failwithf "Test failed: %A %A %A" bs reg rm
@@ -176,7 +178,7 @@ let ``pargument tests data`` : obj array seq =
 [<Theory>]
 [<MemberData("pargument tests data")>]
 let ``pargument tests`` (desc, bs, res, hasMrm) : unit = 
-    match runOnInput (pargument desc ([], None)) (bs |> fromBytes ()) with
+    match runOnInput (pargument (toOcArg desc) ([], None)) (bs |> fromBytes ()) with
     | Success((arg, mrm), is) -> 
         arg = [ res ] |> should equal true
         is.Position.Offset |> should equal bs.Length
@@ -210,14 +212,12 @@ let instrSet =
 
 let ``popCode tests data`` : obj array seq = 
     seq { 
-        yield ([| (*0 arg*) 0x00uy |], "XX0", [||], false)
-        yield ([| (*2 arg*) 0x02uy |], "XX2", [| "arg0"; "arg1" |], false)
-        yield ([| (*ex 0 arg*) 0x03uy; 0b00101000uy |], "EXX00", [||], true)
-        yield ([| (*ex 0 arg - different reg*) 0x03uy; 0b00001000uy |], "EXX01", [||], true)
-        yield ([| (*ex 2 arg*) 0x04uy; 0b00000000uy |], "EXX1", [| "arg00"; "arg01" |], true)
-        yield ([| (*ex 0 2 arg from op*) 0x05uy; 0b00011000uy |], "EXX2", [| "arg0o"; "arg0o" |], true)
-        yield ([| (*ex 2 overide arg*) 0x05uy; 0b00100000uy |], "EXX2", [| "arg0x"; "arg0x" |], true)
-        yield ([| (*ex illegal*) 0x06uy; 0b00111000uy |], "???", [||], true)
+        yield ([| (*0 arg*) 0x27uy |], "DAA", [||], false)
+        yield ([| (*2 arg*) 0x20uy |], "AND", [| OcaNormal(NormalArgCode.E ||| NormalArgCode.B); OcaNormal(NormalArgCode.G ||| NormalArgCode.B) |], false)
+        yield ([| (*ex 2 override arg*) 0xF7uy; 0b00000000uy |], "TEST", [| OcaNormal(NormalArgCode.E ||| NormalArgCode.W); OcaNormal(NormalArgCode.I ||| NormalArgCode.W) |], true)
+        yield ([| (*ex 0 2 arg from op*) 0xD3uy; 0b00000000uy |], "ROL", [| OcaNormal(NormalArgCode.E ||| NormalArgCode.W); OcaSpecial(SpecialArgCode.CL) |], true)
+        yield ([| (*ex 1 arg*) 0xFEuy; 0b00000000uy |], "INC", [| OcaNormal(NormalArgCode.E ||| NormalArgCode.B) |], true)
+        yield ([| (*ex illegal*) 0xFFuy; 0b00111000uy |], "--", [| OcaNormal(NormalArgCode.E ||| NormalArgCode.W) |], true)
     }
     |> Seq.map (fun (a, b, c, d) -> 
            [| box a
@@ -228,9 +228,9 @@ let ``popCode tests data`` : obj array seq =
 [<Theory>]
 [<MemberData("popCode tests data")>]
 let ``popCode tests`` (bs, oc, args, hasMrm) : unit = 
-    match runOnInput (popCode instrSet) (bs |> fromBytes ()) with
+    match runOnInput (popCode grammer) (bs |> fromBytes ()) with
     | Success((ocd, m), is) -> 
-        (ocd.OcName, ocd.OcArgs) |> should equal (oc, args)
+        (ocIndices.[ocd.OcId], ocd.OcArgs) |> should equal (oc, args)
         if hasMrm then m |> should not' (equal None)
         else m |> should equal None
         is.Position.Offset |> should equal bs.Length
@@ -252,19 +252,11 @@ let ``pinstruction tests data`` : obj array seq =
               box b
               box c |])
 
-let is = 
-    (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
-    |> Path.GetFullPath
-    |> Path.GetDirectoryName
-    |> fun p -> Path.Combine(p, "8086_table.txt")
-    |> File.ReadAllText
-    |> Lib.CPU.InstructionSetLoader.loadInstructionSet
-
 [<Theory>]
 [<MemberData("pinstruction tests data")>]
 let ``pinstruction tests`` (bs, instr, usess) : unit = 
     let csip = { Segment = 0us; Offset = 0us }
-    match runOnInput (pinstruction csip is) (bs |> fromBytes { Offset = 0 }) with
+    match runOnInput (pinstruction csip grammer) (bs |> fromBytes { Offset = 0 }) with
     | Success(i, is) -> 
         i.ToString() |> should equal instr
         i.UseSS |> should equal usess
@@ -277,7 +269,7 @@ let ``pinstruction parse-compile round trip``() =
     // It can be done now that we are tracking the bytes as well.
     // As soon as we have figured out how to get a generator for multiple args, implement it.
     let law csip = 
-        match runOnInput (pinstruction csip is) ([| 0x37uy |] |> fromBytes { Offset = 0 }) with
+        match runOnInput (pinstruction csip grammer) ([| 0x37uy |] |> fromBytes { Offset = 0 }) with
         | Success(i, is) -> i.ToString() = (sprintf "%O 37           AAA\t" csip) && is.Position.Offset = 1
         | Failure _ -> false
     Check.QuickThrowOnFailure law

@@ -13,6 +13,12 @@ open Lib.Parser.Core
  - Interrupts cannot arrive between pairs of instruction like pop CS, etc.
  *)
 
+(*
+ - Move away from strings in op code parsing
+ - Move away from maps in op code parsing
+ - Unnecessary data is conditional inpinstruction
+ *)
+
 [<EntryPoint>]
 let main _ = 
     printf "IBM 5150 Emulator. (c) 2016, Partho P. Das"

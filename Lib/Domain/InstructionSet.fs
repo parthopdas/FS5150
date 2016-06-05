@@ -9,10 +9,10 @@ module InstructionSet =
     
     type Word32 = uint32
     
-    type OpCodeDesc =
+    type OpCodeDesc = 
         { OcName : string
-          OcArgs : string[] }
-
+          OcArgs : string [] }
+    
     type OpCodeMap = Map<Word8, OpCodeDesc>
     
     type OpCodeGroup = 
@@ -24,6 +24,68 @@ module InstructionSet =
     type InstructionSet = 
         { OpCodes : OpCodeMap
           OpCodeGroups : OpCodeExtensioMap }
+    
+    [<FlagsAttribute>]
+    type NormalArgCode = 
+        | None = 0x00
+        // Argument Addressing Codes
+        | A = 0x01
+        | E = 0x02
+        | G = 0x03
+        | I = 0x04
+        | J = 0x05
+        | M = 0x06
+        | O = 0x07
+        | S = 0x08
+        | ACMask = 0x0F
+        // Argument Operand Codes
+        | B = 0x10
+        | W = 0x20
+        | P = 0x30
+        | Z = 0x40
+        | OCMask = 0xF0
+    
+    type SpecialArgCode = 
+        | AX
+        | BX
+        | CX
+        | DX
+        | SP
+        | BP
+        | SI
+        | DI
+        | CS
+        | DS
+        | ES
+        | SS
+        | AL
+        | BL
+        | CL
+        | DL
+        | AH
+        | BH
+        | CH
+        | DH
+        | One
+        | Three
+        | Mem
+    
+    type OcArgs = 
+        | OcaNormal of NormalArgCode
+        | OcaSpecial of SpecialArgCode
+    
+    type OpCodeType = 
+        | OctNormal
+        | OctExtension
+    
+    type GrammerRule = 
+        { OcType : OpCodeType
+          OcId : int
+          OcArgs : OcArgs [] }
+    
+    type Grammer = 
+        { OpcRules : GrammerRule []
+          OpcgRules : GrammerRule [,] }
     
     type Address = 
         { Segment : Word16
@@ -95,6 +157,7 @@ module InstructionSet =
     type ModRegRM = 
         { ModReg : ModRegType
           ModRM : RmArgs
+          MRReg : int
           MRUseSS : bool }
     
     type RegisterSeg = 
@@ -143,10 +206,122 @@ module InstructionSet =
             | ArgImmediate i -> sprintf "%O" i
             | ArgDereference d -> sprintf "%O" d
     
-    type Instruction = 
+    let ocIndices = 
+        [| ("--", 0x00)
+           ("AAA", 0x01)
+           ("AAD", 0x02)
+           ("AAM", 0x03)
+           ("AAS", 0x04)
+           ("ADC", 0x05)
+           ("ADD", 0x06)
+           ("AND", 0x07)
+           ("CALL", 0x08)
+           ("CBW", 0x09)
+           ("CLC", 0x0A)
+           ("CLD", 0x0B)
+           ("CLI", 0x0C)
+           ("CMC", 0x0D)
+           ("CMP", 0x0E)
+           ("CMPSB", 0x0F)
+           ("CMPSW", 0x10)
+           ("CS:", 0x11)
+           ("CWD", 0x12)
+           ("DAA", 0x13)
+           ("DAS", 0x14)
+           ("DEC", 0x15)
+           ("DIV", 0x16)
+           ("DS:", 0x17)
+           ("ES:", 0x18)
+           ("HLT", 0x19)
+           ("IDIV", 0x1A)
+           ("IMUL", 0x1B)
+           ("IN", 0x1C)
+           ("INC", 0x1D)
+           ("INT", 0x1E)
+           ("INTO", 0x1F)
+           ("IRET", 0x20)
+           ("JA", 0x21)
+           ("JB", 0x22)
+           ("JBE", 0x23)
+           ("JCXZ", 0x24)
+           ("JG", 0x25)
+           ("JGE", 0x26)
+           ("JL", 0x27)
+           ("JLE", 0x28)
+           ("JMP", 0x29)
+           ("JNB", 0x2A)
+           ("JNO", 0x2B)
+           ("JNS", 0x2C)
+           ("JNZ", 0x2D)
+           ("JO", 0x2E)
+           ("JPE", 0x2F)
+           ("JPO", 0x30)
+           ("JS", 0x31)
+           ("JZ", 0x32)
+           ("LAHF", 0x33)
+           ("LDS", 0x34)
+           ("LEA", 0x35)
+           ("LES", 0x36)
+           ("LOCK", 0x37)
+           ("LODSB", 0x38)
+           ("LODSW", 0x39)
+           ("LOOP", 0x3A)
+           ("LOOPNZ", 0x3B)
+           ("LOOPZ", 0x3C)
+           ("MOV", 0x3D)
+           ("MOVSB", 0x3E)
+           ("MOVSW", 0x3F)
+           ("MUL", 0x40)
+           ("NEG", 0x41)
+           ("NOP", 0x42)
+           ("NOT", 0x43)
+           ("OR", 0x44)
+           ("OUT", 0x45)
+           ("POP", 0x46)
+           ("POPF", 0x47)
+           ("PUSH", 0x48)
+           ("PUSHF", 0x49)
+           ("RCL", 0x4A)
+           ("RCR", 0x4B)
+           ("REPNZ", 0x4C)
+           ("REPZ", 0x4D)
+           ("RET", 0x4E)
+           ("RETF", 0x4F)
+           ("ROL", 0x50)
+           ("ROR", 0x51)
+           ("SAHF", 0x52)
+           ("SAR", 0x53)
+           ("SBB", 0x54)
+           ("SCASB", 0x55)
+           ("SCASW", 0x56)
+           ("SHL", 0x57)
+           ("SHR", 0x58)
+           ("SS:", 0x59)
+           ("STC", 0x5A)
+           ("STD", 0x5B)
+           ("STI", 0x5C)
+           ("STOSB", 0x5D)
+           ("STOSW", 0x5E)
+           ("SUB", 0x5F)
+           ("TEST", 0x60)
+           ("WAIT", 0x61)
+           ("XCHG", 0x62)
+           ("XLAT", 0x63)
+           ("XOR", 0x64) |]
+        |> Array.map fst
+    
+    let ocgIndices = 
+        [| ("GRP1", 0x0)
+           ("GRP2", 0x1)
+           ("GRP3a", 0x2)
+           ("GRP3b", 0x3)
+           ("GRP4", 0x4)
+           ("GRP5", 0x5) |]
+        |> Array.map fst
+    
+    type Instruction2 = 
         { Address : Address
-          Mneumonic : Mneumonic
-          IsPrefix : bool
+          OpCode : int
           UseSS : bool
           Args : Argument list
           Bytes : Word8 [] }
@@ -161,10 +336,14 @@ module InstructionSet =
                              x.Args
                              |> List.map (fun e -> e.ToString())
                              |> Array.ofList))
-            sprintf "%O %s %O%s\t%O" x.Address fmtBytes x.Mneumonic (if x.IsPrefix then "*" else "") fmtArgs
+            sprintf "%O %s %s%s\t%O" x.Address fmtBytes ocIndices.[x.OpCode] (if x.IsPrefix then "*"
+                                                                              else "") fmtArgs
         
         member x.Length : Word16 = uint16 x.Bytes.Length
-
-    type RepetitionType =
+        member x.IsPrefix = 
+            x.OpCode = 0x11 || x.OpCode = 0x17 || x.OpCode = 0x18 || x.OpCode = 0x59 || x.OpCode = 0x4C 
+            || x.OpCode = 0x4D
+    
+    type RepetitionType = 
         | TillZero
         | TillNotZero

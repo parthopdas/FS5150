@@ -30,10 +30,5 @@ module Data =
             (getReg16 pno >>= (fun pno -> getReg8 v >>= portWrite pno)) *> ns
         | _ -> nyi instr
     
-    let execXS instr = 
-        match instr.Mneumonic with
-        | "CS:" -> setSegOverride CS *> setPending *> ns
-        | "DS:" -> setSegOverride DS *> setPending *> ns
-        | "ES:" -> setSegOverride ES *> setPending *> ns
-        | "SS:" -> setSegOverride SS *> setPending *> ns
-        | _ -> nyi instr
+    let execXS sreg instr = 
+        setSegOverride sreg *> setPending *> ns

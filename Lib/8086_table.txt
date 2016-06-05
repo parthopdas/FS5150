@@ -5,6 +5,7 @@
 * Arguments are not given for a large number of opcodes (e.g. A4 through A7, 9C, 9D) which correspond to instructions which take no arguments when written as assembly code (e.g. MOVSB, MOVSW, CMPSB, CMPSW, PUSHF, POPF). I want to use this map to build a disassembler, not a simulated processor, and the extra arguments would only be burdensome.
 *
 * gc .\8086_table.txt | ? { -not $_.StartsWith("*") } | % { $_.Split(@(' ', [char]"`t"))[1]} | group | Sort-Object -Property Name
+* $i = -1; gc .\8086_table.txt | ? { -not $_.StartsWith("*") } | % { $_.Split(@(' ', [char]"`t"))[1]} | group | Sort-Object -Property Name | % { $i++; "(*.[{0:D3}] = *)`"{1}`";" -f $i,$_.Name }
 *
 
 00	ADD		Eb	Gb

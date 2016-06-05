@@ -8,6 +8,14 @@
           <Enabled>True</Enabled>
           <Lines>20</Lines>
         </MaxLinesInLambdaFunction>
+        <MaxLinesInMember>
+          <Enabled>True</Enabled>
+          <Lines>120</Lines>
+        </MaxLinesInMember>
+        <MaxLinesInValue>
+          <Enabled>True</Enabled>
+          <Lines>120</Lines>
+        </MaxLinesInValue>
       </Rules>
     </SourceLength>
   </Analysers>
