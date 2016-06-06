@@ -54,10 +54,11 @@ module PC =
           mutable DS : Word16
           mutable SS : Word16
           mutable ES : Word16
+          // TODO: PERF: Use BitArrya class here for perf reasons
           Flags : Dictionary<Flags, bool>
-          mutable Pending : bool
-          mutable SegOverride : RegisterSeg option
-          mutable RepType : RepetitionType option
+          mutable LogicalInstrStart : Address
+          mutable SegmentOverride : RegisterSeg option
+          mutable RepetitionType : RepetitionType option
           mutable ITicks : int64
           mutable ICount : int64 }
     

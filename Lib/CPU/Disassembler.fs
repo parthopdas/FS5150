@@ -67,8 +67,8 @@ module Disassembler =
     /// pmodRegRm :: Parser<ModRegRM>
     let pmodRegRm<'a> : Parser<ModRegRM, 'a> = 
         let parseReg w8 = 
-            let reg = ((w8 >>> 3) &&& 0b111uy)
-            reg |> returnM
+            ((w8 >>> 3) &&& 0b111uy)
+            |> returnM
         
         let parseRmArgs w8 = 
             let parseMrm w8 = (w8 >>> 6, w8 &&& 0b111uy)

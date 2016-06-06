@@ -70,3 +70,9 @@ module Control =
         match instr.Args with
         | [ ArgOffset(w16) ] -> getFlag PF >>= (not >> getAndIncrIPIf (instr.Length + w16))
         | _ -> nyi instr
+    
+    let execXS sreg _ = 
+        setSegOverride sreg *> ns
+    
+    let execREPX rt _ = 
+        setRepetitionType rt *> ns

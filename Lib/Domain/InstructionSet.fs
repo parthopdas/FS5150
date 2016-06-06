@@ -318,7 +318,7 @@ module InstructionSet =
            ("GRP5", 0x5) |]
         |> Array.map fst
     
-    type Instruction2 = 
+    type Instruction = 
         { Address : Address
           OpCode : int
           UseSS : bool
@@ -339,6 +339,7 @@ module InstructionSet =
                                                                               else "") fmtArgs
         
         member x.Length : Word16 = uint16 x.Bytes.Length
+        // TODO: PERF: Consider indexing into an array of OpCode descriptor bits
         member x.IsPrefix = 
             x.OpCode = 0x11 || x.OpCode = 0x17 || x.OpCode = 0x18 || x.OpCode = 0x59 || x.OpCode = 0x4C 
             || x.OpCode = 0x4D

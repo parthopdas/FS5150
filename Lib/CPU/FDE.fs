@@ -131,7 +131,7 @@ module FDE =
           (* "RCL", 0x4A *) nyi;
           (* "RCR", 0x4B *) nyi;
           (* "REPNZ", 0x4C *) nyi;
-          (* "REPZ", 0x4D *) nyi;
+          (* "REPZ", 0x4D *) execREPX TillZero;
           (* "RET", 0x4E *) nyi;
           (* "RETF", 0x4F *) nyi;
           (* "ROL", 0x50 *) nyi;
@@ -148,7 +148,7 @@ module FDE =
           (* "STD", 0x5B *) nyi;
           (* "STI", 0x5C *) nyi;
           (* "STOSB", 0x5D *) nyi;
-          (* "STOSW", 0x5E *) nyi;
+          (* "STOSW", 0x5E *) execSTOSW;
           (* "SUB", 0x5F *) execSUB;
           (* "TEST", 0x60 *) nyi;
           (* "WAIT", 0x61 *) nyi;

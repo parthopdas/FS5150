@@ -35,9 +35,9 @@ module Common =
               |> List.fold (fun acc e -> 
                      acc.Add(fst e, snd e)
                      acc) (Dictionary<Flags, bool>())
-          Pending = false
-          SegOverride = None
-          RepType = None
+          LogicalInstrStart = { Offset = 0us; Segment = 0us }
+          SegmentOverride = None
+          RepetitionType = None
           ITicks = 0L
           ICount = 0L }
     
@@ -137,6 +137,7 @@ module Common =
             (), mb
         innerFn : State<unit, Motherboard>
     
+    // TODO: PERF: Change to array indexed by AX, BX, etc.
     let getReg16 reg = 
         let innerFn mb = 
             let data = 
@@ -217,6 +218,7 @@ module Common =
     
     let writeWord16 (value : Word16) addr = 
         (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (1us |++ addr))
+
     (* Device IO *)
     let portReadCallbacks : Map<Word16, Word16 -> Word8> = Map.empty
     
@@ -290,7 +292,7 @@ module Common =
     let private getSegOverrideForEA (usess : bool) : State<RegisterSeg, Motherboard> = 
         let innerFn mb = 
             let sr = 
-                mb.CPU.SegOverride
+                mb.CPU.SegmentOverride
                 |> Option.orElse (if usess then Some SS
                                   else None)
                 |> Option.getOrElse DS
@@ -302,43 +304,35 @@ module Common =
     
     let setSegOverride sr = 
         let innerFn mb = 
-            mb.CPU.SegOverride <- Some sr
-            (), mb
-        innerFn : State<unit, Motherboard>
-    
-    let resetSegOverride = 
-        let innerFn mb = 
-            mb.CPU.SegOverride <- None
+            mb.CPU.SegmentOverride <- Some sr
             (), mb
         innerFn : State<unit, Motherboard>
     
     (*  CPU State management *)
-    let beforeLogicalInstruction = 
+    let getLogicalInstrStart =
         let innerFn mb = 
-            mb.CPU.SegOverride <- None
-            mb.CPU.RepType <- None
-            mb.CPU.Pending <- false
+            mb.CPU.LogicalInstrStart, mb
+        innerFn : State<Address, Motherboard>
+     
+    let beforeLogicalInstr = 
+        let innerFn mb = 
+            mb.CPU.LogicalInstrStart <- createAddr mb.CPU.CS mb.CPU.IP
+            mb.CPU.SegmentOverride <- None
+            mb.CPU.RepetitionType <- None
             (), mb
         innerFn : State<unit, Motherboard>
     
-    let beforePhysicalInstruction = 
+    let beforePhysicalInstr = 
         let innerFn mb = 
             mb.SW.Restart()
-            mb.CPU.Pending <- false
             (), mb
         innerFn : State<unit, Motherboard>
     
-    let afterPhysicalInstruction = 
+    let afterPhysicalInstr = 
         let innerFn mb = 
             mb.CPU.ICount <- mb.CPU.ICount + 1L
             mb.SW.Stop()
             mb.CPU.ITicks <- mb.CPU.ITicks + mb.SW.ElapsedTicks
-            (), mb
-        innerFn : State<unit, Motherboard>
-    
-    let setPending = 
-        let innerFn mb = 
-            mb.CPU.Pending <- true
             (), mb
         innerFn : State<unit, Motherboard>
     
@@ -350,6 +344,17 @@ module Common =
             mb.CPU <- init
             (), mb
         innerFn : State<unit, Motherboard>
+    
+    let setRepetitionType rt = 
+        let innerFn mb = 
+            mb.CPU.RepetitionType <- Some rt
+            (), mb
+        innerFn : State<unit, Motherboard>
+    
+    let getRepetitionType = 
+        let innerFn mb = 
+            mb.CPU.RepetitionType, mb
+        innerFn : State<RepetitionType option, Motherboard>
     
     (* Miscellenous helpers *)
     let inline nyi instr = failwithf "%O - Not implemented" (instr.ToString())

@@ -17,10 +17,12 @@ module I8088 =
     open System.IO
     open System.Reflection
     
+    // TODO: PERF: State monad might be causing some bottlenecks. Consider a home grown implementation.
+
     let initMotherBoard() : Motherboard = 
         { SW = new Stopwatch()
           CPU = initialCPU()
-          RAM = Array.zeroCreate 0x100000
+          RAM = Array.create 0x100000 0xfeuy
           ReadOnly = Array.zeroCreate 0x100000
           PortRAM = Array.zeroCreate 0x10000 }
     
@@ -44,24 +46,28 @@ module I8088 =
         |> Result.returnM
     
     let resetCPUState = State.exec resetCPU >> Result.returnM
-    
-    /// logicalStepCPU :: Motherboard -> Result<Motherboard> 
-    let inline logicalStepCPU mb = 
-        let rec physicalStepCPU mb = 
+
+    let execLogicalInstr mb = 
+        let execPhysicalInstr mb = 
             mb
-            |> State.eval (State.( *> ) beforePhysicalInstruction createInputAtCSIP)
+            |> State.eval (State.( *> ) beforePhysicalInstr createInputAtCSIP)
             |> Prelude.uncurry decodeInstr
-            |> Result.map fst
-            |> Result.bind (fun i -> 
-                            let s = State.( <* ) (i |> executeInstr) afterPhysicalInstruction
-                            let mb' = s |> Prelude.flip State.exec mb
-                            if mb'.CPU.Pending then (physicalStepCPU mb') else (Result.returnM mb'))
-        
-        let reset = 
+            |> Result.bind (fun is -> 
+                            let i = is |> fst
+                            let s = State.( <* ) (i |> executeInstr) afterPhysicalInstr
+                            (State.exec s mb, i.IsPrefix) |> Result.returnM)
+    
+        let rec loopExecPrefixInstrs mb =
             mb
-            |> State.eval beforeLogicalInstruction
-            |> Result.returnM
-        Result.( *> ) reset (physicalStepCPU mb)
+            |> execPhysicalInstr
+            |> Result.bind (fun (mb',isPrefix) -> 
+                            if isPrefix then 
+                                loopExecPrefixInstrs mb' 
+                            else (Result.returnM mb'))
+
+        mb
+        |> State.exec beforeLogicalInstr
+        |> loopExecPrefixInstrs
     
     /// dumpRegisters :: Motherboard -> Result<string>
     let dumpRegisters mb = 
@@ -181,7 +187,7 @@ module I8088 =
                             >> Common.tee (Result.bind getStats >> rc.Reply)
                             >> continueWithBr
                         | Some(Trace(rc)) -> 
-                            logicalStepCPU
+                            execLogicalInstr
                             >> Common.tee (Result.bind dumpRegisters >> rc.Reply)
                             >> continueWithBr
                         | Some(Register(rc)) -> 
@@ -197,13 +203,15 @@ module I8088 =
                             >> Result.returnM
                             >> continueWithBr
                         | None -> 
-                            logicalStepCPU >> Result.bind (fun mb -> 
+                            execLogicalInstr >> Result.bind (fun mb -> 
+                                                  let icount = 2L * 8192L + 110L
                                                   let x = 
-                                                      if mb.CPU.ICount % 105L = 0L then resetCPUState
+                                                      if mb.CPU.ICount % icount = 0L then resetCPUState
                                                       else Result.returnM
+                                                    //Result.returnM
                                                   mb
                                                   |> x
-                                                  |> Result.bind (fun mb -> (mb, false) |> Result.returnM))
+                                                  |> Result.bind (fun mb -> (mb, false && mb.CPU.ICount = icount) |> Result.returnM))
                     return! mb
                             |> f
                             |> loop
