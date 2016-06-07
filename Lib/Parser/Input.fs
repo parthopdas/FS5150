@@ -10,7 +10,9 @@ module TextInput =
         override x.ToString() = sprintf "%O %s" x.Position (new String(x.Bytes |> Array.map char))
 
     let getInputChunk is s e =
-        Array.sub is.Bytes s (e - s)
+        let bs : byte[] = Array.zeroCreate (e - s) 
+        Array.blit is.Bytes s bs 0 bs.Length
+        bs
     
     /// fromStr :: string -> InputState
     let fromStr us s = 

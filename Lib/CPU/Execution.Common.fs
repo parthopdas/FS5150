@@ -198,12 +198,9 @@ module Common =
     let read6Bytes addr = 
         let innerFn mb = 
             let a0 = flatten (addr)
-            [| mb.RAM.[int32 (incrFlatAddr 0u a0)]
-               mb.RAM.[int32 (incrFlatAddr 1u a0)]
-               mb.RAM.[int32 (incrFlatAddr 2u a0)]
-               mb.RAM.[int32 (incrFlatAddr 3u a0)]
-               mb.RAM.[int32 (incrFlatAddr 4u a0)]
-               mb.RAM.[int32 (incrFlatAddr 5u a0)] |], mb
+            let bs : Word8[] = Array.zeroCreate 6 
+            Array.blit mb.RAM ((int)a0) bs 0 6
+            bs, mb
         innerFn : State<Word8[], Motherboard>
         
     let readWord16 addr = 
