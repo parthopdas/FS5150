@@ -32,7 +32,7 @@ module FDE =
     let createInputAt a0 = 
         a0
         |> read6Bytes
-        |> State.bind (fun bs -> (a0, (fromBytes { Offset = 0 } bs)) |> State.returnM)
+        |> State.bind (fun bs -> (a0, (fromBytes 0 bs)) |> State.returnM)
         : State<(Address * InputState<_>),Motherboard> 
 
     /// fetchInstr : State<(Address * InputState<_>),Motherboard> 

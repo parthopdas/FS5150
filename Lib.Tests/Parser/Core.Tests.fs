@@ -93,7 +93,7 @@ let ``getPosition test``() =
     let res = "ABC" |> run parseAWithPos ()
     res
     |> printResult
-    |> should equal "(({Offset = 0;}, 'A'), {Offset = 1;}) [State: 1 ABC]"
+    |> should equal "((0, 'A'), 1) [State: 1 ABC]"
 
 [<Fact>]
 let ``reset and set UserState test``() = 
@@ -114,7 +114,7 @@ let ``get UserState test``() =
 [<Fact>]
 let ``get input stream chunk test``() = 
     let parser = 
-        pchar 'a' >>. getInputChunk { Offset = 1 } { Offset = 4 } 
+        pchar 'a' >>. getInputChunk 1 4 
         |>> (Array.map char >> (fun cs -> new string(cs)))
     let res = "a1bc" |> run parser ()
     res

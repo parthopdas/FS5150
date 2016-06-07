@@ -17,7 +17,7 @@ let ``pword8 can parse word8``() =
         let x = runOnInput pword8 (fromBytes () [| b |])
         x = Success(b, 
                     { Bytes = [| b |]
-                      Position = { Offset = 1 }
+                      Position = 1
                       UserState = () })
     Check.QuickThrowOnFailure law
 
@@ -29,7 +29,7 @@ let ``pword16 can parse word16``() =
         let res = runOnInput pword16 (bytes |> fromBytes ())
         res = Success(num, 
                       { Bytes = bytes
-                        Position = { Offset = 2 }
+                        Position = 2
                         UserState = () })
     Check.QuickThrowOnFailure law
 
@@ -41,7 +41,7 @@ let ``pword32 can parse word32``() =
         let res = runOnInput pword32 (bytes |> fromBytes ())
         res = Success(num, 
                       { Bytes = bytes
-                        Position = { Offset = 4 } 
+                        Position = 4
                         UserState = () })
     Check.QuickThrowOnFailure law
 
@@ -91,7 +91,7 @@ let ``pmodRegRm tests`` (bs, reg, rm, usess) : unit =
         mrm |> should equal { ModRM = rm
                               MRReg = reg
                               MRUseSS = usess }
-        is.Position.Offset |> should equal bs.Length
+        is.Position |> should equal bs.Length
     | _ -> failwithf "Test failed: %A %A %A" bs reg rm
 
 let ``pargument tests data`` : obj array seq = 
@@ -179,7 +179,7 @@ let ``pargument tests`` (desc, bs, res, hasMrm) : unit =
     match runOnInput (pargument (toOcArg desc) ([], None)) (bs |> fromBytes ()) with
     | Success((arg, mrm), is) -> 
         arg = [ res ] |> should equal true
-        is.Position.Offset |> should equal bs.Length
+        is.Position |> should equal bs.Length
         if hasMrm then mrm |> should not' (equal None)
         else mrm |> should equal None
     | _ -> failwithf "Test failed: %A %A %A" desc bs res
@@ -231,7 +231,7 @@ let ``popCode tests`` (bs, oc, args, hasMrm) : unit =
         (ocIndices.[ocd.OcId], ocd.OcArgs) |> should equal (oc, args)
         if hasMrm then m |> should not' (equal None)
         else m |> should equal None
-        is.Position.Offset |> should equal bs.Length
+        is.Position |> should equal bs.Length
     | Failure(pl, pe, pp) -> failwithf "Test failed: %A %A %A %A: %A %A %A" bs oc args hasMrm pl pe pp
 
 let ``pinstruction tests data`` : obj array seq = 
@@ -254,11 +254,11 @@ let ``pinstruction tests data`` : obj array seq =
 [<MemberData("pinstruction tests data")>]
 let ``pinstruction tests`` (bs, instr, usess) : unit = 
     let csip = { Segment = 0us; Offset = 0us }
-    match runOnInput (pinstruction csip grammer) (bs |> fromBytes { Offset = 0 }) with
+    match runOnInput (pinstruction csip grammer) (bs |> fromBytes 0) with
     | Success(i, is) -> 
         i.ToString() |> should equal instr
         i.UseSS |> should equal usess
-        is.Position.Offset |> should equal bs.Length
+        is.Position |> should equal bs.Length
     | Failure(pl, pe, pp) -> failwithf "Test failed: %A %A: %A %A %A" bs instr pl pe pp
 
 [<Fact>]
@@ -267,7 +267,7 @@ let ``pinstruction parse-compile round trip``() =
     // It can be done now that we are tracking the bytes as well.
     // As soon as we have figured out how to get a generator for multiple args, implement it.
     let law csip = 
-        match runOnInput (pinstruction csip grammer) ([| 0x37uy |] |> fromBytes { Offset = 0 }) with
-        | Success(i, is) -> i.ToString() = (sprintf "%O 37           AAA\t" csip) && is.Position.Offset = 1
+        match runOnInput (pinstruction csip grammer) ([| 0x37uy |] |> fromBytes 0) with
+        | Success(i, is) -> i.ToString() = (sprintf "%O 37           AAA\t" csip) && is.Position = 1
         | Failure _ -> false
     Check.QuickThrowOnFailure law

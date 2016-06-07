@@ -2,22 +2,15 @@
 
 module TextInput = 
     open System
-    
-    type Position = 
-        { Offset : int }
-        override x.ToString() = sprintf "%i" x.Offset
-    
-    let initialPos = { Offset = 0 }
-    let incrLine pos = { Offset = pos.Offset + 1 }
-    
+        
     type InputState<'a> = 
         { Bytes : byte []
-          Position : Position
+          Position : int
           UserState : 'a }
         override x.ToString() = sprintf "%O %s" x.Position (new String(x.Bytes |> Array.map char))
 
     let getInputChunk is s e =
-        Array.sub is.Bytes s.Offset (e.Offset - s.Offset)
+        Array.sub is.Bytes s (e - s)
     
     /// fromStr :: string -> InputState
     let fromStr us s = 
@@ -29,21 +22,21 @@ module TextInput =
                 |> Seq.map byte
                 |> Seq.toArray
         { Bytes = lines
-          Position = initialPos
+          Position = 0
           UserState = us }
     
     /// fromBytes :: byte[] -> InputState
     let fromBytes us bytes = 
         { Bytes = bytes
-          Position = initialPos
+          Position = 0
           UserState = us }
     
     /// nextByte :: InputState -> InputState * byte option
     let nextByte input = 
-        if input.Position.Offset >= input.Bytes.Length then input, None
+        if input.Position >= input.Bytes.Length then input, None
         else 
-            let c = input.Bytes.[input.Position.Offset]
-            { input with Position = incrLine input.Position }, Some c
+            let c = input.Bytes.[input.Position]
+            { input with Position = input.Position + 1 }, Some c
     
     type ParserPosition = 
         { CurrentBytes : byte []
@@ -52,4 +45,4 @@ module TextInput =
     
     let parserPositionFromInputState input = 
         { CurrentBytes = input.Bytes
-          CurrentOffset = input.Position.Offset }
+          CurrentOffset = input.Position }
