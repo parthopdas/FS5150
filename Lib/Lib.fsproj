@@ -107,7 +107,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="FSharpx.Collections">
-      <HintPath>..\packages\FSharpx.Collections.1.15.1\lib\net40\FSharpx.Collections.dll</HintPath>
+      <HintPath>..\packages\FSharpx.Collections.1.10.1\lib\net40\FSharpx.Collections.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FSharpx.Extras">
