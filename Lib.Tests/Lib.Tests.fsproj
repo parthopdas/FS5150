@@ -69,7 +69,12 @@
     <Compile Include="CPU\InstructionSetLoader.Tests.fs" />
     <Compile Include="CPU\Disassembler.Tests.fs" />
     <Compile Include="CPU\Execution.Common.Tests.fs" />
+    <Compile Include="CPU\Execution.Data.Tests.fs" />
     <Compile Include="CPU\Execution.Arithmetic.Tests.fs" />
+    <Compile Include="CPU\Execution.Logic.Tests.fs" />
+    <Compile Include="CPU\Execution.String.Tests.fs" />
+    <Compile Include="CPU\Execution.Control.Tests.fs" />
+    <Compile Include="CPU\Execution.Processor.Tests.fs" />
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
