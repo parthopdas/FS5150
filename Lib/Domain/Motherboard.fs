@@ -2,10 +2,7 @@
 
 module PC = 
     open InstructionSet
-    open System
     open System.Collections.Generic
-    open System.IO
-    open System.Reflection
     open System.Diagnostics
     
     type Flags = 

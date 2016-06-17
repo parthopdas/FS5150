@@ -44,15 +44,16 @@ module Common =
     (* Byte/Word/Address manipulation *)
     let inline (!<>) (w8 : Word8) : Word16 = (uint16) w8
     let inline (!><) (w16 : Word16) : Word8 = (uint8) w16
-    let inline getHiByte w16 : Word8 = w16 >>> 8 |> uint8
-    let inline getLoByte w16 : Word8 = w16 &&& 0x00FFus |> uint8
-    let inline setHiByte w16 (value : Word8) : Word16 = ((uint16) value <<< 8) + (uint16) (getLoByte w16)
-    let inline setLoByte w16 (value : Word8) : Word16 = (uint16) (getHiByte w16) + ((uint16) value)
-    let inline makeWord16 (hi : Word8, lo : Word8) : Word16 = !<>hi <<< 8 ||| !<>lo
+    let inline (+|+) (hi : Word8) (lo : Word8) : Word16 = !<>hi <<< 8 ||| !<>lo
+    let getHiByte : Word16 -> Word8 = Prelude.flip (>>>) 8 >> (!><)
+    let getLoByte : Word16 -> Word8 = Prelude.flip (&&&) 0x00FFus >> (!><)
+    let inline setHiByte w16 (value : Word8) : Word16 = value +|+ getLoByte w16
+    let inline setLoByte w16 (value : Word8) : Word16 = getHiByte w16 +|+ value
+    let makeWord16  = Prelude.uncurry (+|+)
     
     let inline flatten addr = 
         ((uint32) addr.Segment <<< 4) + (uint32) addr.Offset
-        |> (&&&) 0xFFFFFu
+        |> Prelude.flip (&&&) 0xFFFFFu
         |> uint32
 
     let inline incrFlatAddr n addr = (addr + n) &&& 0xFFFFFu
@@ -184,9 +185,20 @@ module Common =
            true; true; false; false; true; true; false; true; false; false; true; true; false; false; true; false; true; 
            true; false; true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; 
            true |]
-    let flagSZP16 w16 = 
-        (setFlag SF (w16 &&& 0x8000us = 0x8000us)) *> (setFlag ZF (w16 = 0us)) 
-        *> (setFlag PF (parity.[(int) (w16 &&& 255us)]))
+    
+    let inline flagSZP<'T 
+            when 'T : equality 
+             and 'T : (static member ( &&& ) :  ^T *  ^T ->  ^T)> 
+            (v: 'T) (zero: 'T) (mid: 'T) (loByte : ^T -> uint8) = 
+        (setFlag SF (v &&& mid = mid)) 
+        *> (setFlag ZF (v = zero)) 
+        *> (setFlag PF (parity.[v |> loByte |> int]))
+    
+    let inline flagSZP8 (w8 : Word8) = 
+        flagSZP w8 0uy 0x80uy id
+
+    let inline flagSZP16 (w16 : Word16) = 
+        flagSZP w16 0us 0x8000us getLoByte
     
     (* Memory IO *)
     let readWord8 addr = 

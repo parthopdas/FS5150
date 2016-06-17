@@ -149,7 +149,7 @@ module FDE =
           (* "STI", 0x5C *) nyi;
           (* "STOSB", 0x5D *) nyi;
           (* "STOSW", 0x5E *) execSTOSW;
-          (* "SUB", 0x5F *) execSUB;
+          (* "SUB", 0x5F *) (fun i -> execSUB i.Args);
           (* "TEST", 0x60 *) nyi;
           (* "WAIT", 0x61 *) nyi;
           (* "XCHG", 0x62 *) nyi;
