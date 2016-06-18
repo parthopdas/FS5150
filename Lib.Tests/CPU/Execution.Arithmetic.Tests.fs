@@ -11,7 +11,7 @@ open Lib.Domain.InstructionSet
 open Lib.Domain.PC
 open System
 
-module Sub = 
+module SUB = 
     let fSubRes8 = (fun a1 a2 -> a1 + (~~~a2 + 1uy))
     let fMSBit8 = (Prelude.flip (>>>) 7 >> int)
     let fOnBits8 = (Common.onBits >> int)

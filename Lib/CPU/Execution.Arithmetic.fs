@@ -94,8 +94,8 @@ module Arithmetic =
         |> State.returnM
         <* setSub8Flags a1a2
     
-    let execSUB = 
-        function 
+    let execSUB instr = 
+        match instr.Args with
         | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
             let args = Prelude.tuple2 <!> getReg16 r <*> (c |> State.returnM)
             (args

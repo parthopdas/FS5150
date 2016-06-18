@@ -126,7 +126,7 @@ module FDE =
           (* "OUT", 0x45 *) execOUT;
           (* "POP", 0x46 *) nyi;
           (* "POPF", 0x47 *) nyi;
-          (* "PUSH", 0x48 *) nyi;
+          (* "PUSH", 0x48 *) execPUSH;
           (* "PUSHF", 0x49 *) nyi;
           (* "RCL", 0x4A *) nyi;
           (* "RCR", 0x4B *) nyi;
@@ -149,7 +149,7 @@ module FDE =
           (* "STI", 0x5C *) nyi;
           (* "STOSB", 0x5D *) nyi;
           (* "STOSW", 0x5E *) execSTOSW;
-          (* "SUB", 0x5F *) (fun i -> execSUB i.Args);
+          (* "SUB", 0x5F *) execSUB;
           (* "TEST", 0x60 *) nyi;
           (* "WAIT", 0x61 *) nyi;
           (* "XCHG", 0x62 *) nyi;
@@ -162,6 +162,6 @@ module FDE =
         execCLD i
 #else
         executors.[i.OpCode] i
-        >>= Option.fold (fun _ e -> e |> State.returnM) ((|++) i.Length <!> getCSIP)
+        >>= Option.fold (fun _ e -> e |> State.returnM) (Prelude.flip (|++) i.Length <!> getCSIP)
         >>= setCSIP
 #endif

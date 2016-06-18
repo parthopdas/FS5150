@@ -6,10 +6,11 @@ module Control =
     open Lib.CPU.Execution.Common
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
+    open FSharpx.Functional
     
     let getAndIncrIPIf n flg = 
         if flg then 
-            getCSIP >>= ((|++) n
+            getCSIP >>= (Prelude.flip (|++) n
                          >> Some
                          >> State.returnM)
         else None |> State.returnM
@@ -21,7 +22,7 @@ module Control =
             |> Some
             |> State.returnM
         | [ ArgOffset(w16) ] -> 
-            getCSIP >>= ((|++) (instr.Length + w16)
+            getCSIP >>= (Prelude.flip (|++) (instr.Length + w16)
                          >> Some
                          >> State.returnM)
         | _ -> nyi instr

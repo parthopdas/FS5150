@@ -92,7 +92,7 @@ module I8088 =
         
         let sbs = 
             [ for i in 0us..(bytesToPrint - 1us) do
-                  yield i |++ addr ]
+                  yield addr |++ i ]
             |> List.map readWord8
             |> State.sequence
         
@@ -111,7 +111,7 @@ module I8088 =
         
         let lines = 
             Map.foldBack (fun eK eT acc -> 
-                let a = ((uint16) (eK * bytesPerLine)) |++ addr
+                let a = addr |++ ((uint16) (eK * bytesPerLine))
                 
                 let bstr = 
                     eT
@@ -136,7 +136,7 @@ module I8088 =
     let unassemble mb = 
         let rec getInstrAt ith is n = 
             getCSIP
-            |> State.bind (fun a -> n |++ a |> createInputAt)
+            |> State.bind (Prelude.flip (|++) n >> createInputAt)
             |> State.bind (Prelude.uncurry decodeInstr >> State.returnM)
             |> Prelude.flip State.eval mb
             |> Result.map fst
