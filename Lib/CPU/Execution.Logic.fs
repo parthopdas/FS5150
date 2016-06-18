@@ -8,7 +8,13 @@ module Logic =
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     
+    let flagLog8 (w8 : Word8) = flagSZP8 w8 *> (setFlag CF false) *> (setFlag OF false)
+    
     let flagLog16 (w16 : Word16) = flagSZP16 w16 *> (setFlag CF false) *> (setFlag OF false)
+    
+    let opXor8 v1v2 = 
+        let res = v1v2 ||> (^^^)
+        flagLog8 res *> (res |> State.returnM)
     
     let opXor16 v1v2 = 
         let res = v1v2 ||> (^^^)
@@ -36,6 +42,11 @@ module Logic =
             (Prelude.tuple2 <!> getReg16 r1 <*> getReg16 r2
              >>= opXor16
              >>= setReg16 r1)
+            *> ns
+        | [ ArgRegister8 r1; ArgRegister8 r2 ] -> 
+            (Prelude.tuple2 <!> getReg8 r1 <*> getReg8 r2
+             >>= opXor8
+             >>= setReg8 r1)
             *> ns
         | [ ArgRegister16 r1; ArgImmediate(W16 w16) ] -> 
             (Prelude.tuple2 <!> getReg16 r1 <*> (w16 |> State.returnM)

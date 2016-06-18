@@ -3,7 +3,6 @@
 open FSharpx.Functional
 open FsUnit.Xunit
 open Lib.CPU.Execution.Common
-open Lib.Domain.InstructionSet
 open FSharpx.State
 
 let mb = Lib.Common.mb
@@ -40,32 +39,29 @@ let ``set low byte tests`` () =
 [<Xunit.InlineData(0x0000us, 0x000Fus, 0x0000Ful)>]
 [<Xunit.InlineData(0xFFFFus, 0xFFFFus, 0x0FFEFul)>]
 let ``flatten tests`` (s, o, fa : uint32) =
-    createAddr s o |> flatten |> should equal fa
+    s @|@ o |> flatten |> should equal fa
 
 [<Xunit.Theory>]
 [<Xunit.InlineData(0x0000us, 0x000Fus, 1us, 0x0000us, 0x0010us)>]
 [<Xunit.InlineData(0xDEADus, 0xFFFFus, 0xFFFFus, 0xDEADus, 0xFFFEus)>]
 let ``|++ tests`` (s1, o1, n, s2, o2) =
-    createAddr s1 o1 
+    s1 @|@ o1 
     |> Prelude.flip (|++) n 
-    |> should equal (createAddr s2 o2)
+    |> should equal (s2 @|@ o2)
 
 [<Xunit.Theory>]
 [<Xunit.InlineData(0x0000us, 0x000Fus, 1us, 0x0000us, 0x000Eus)>]
 [<Xunit.InlineData(0xDEADus, 0x0000us, 0xFFFFus, 0xDEADus, 0x0001us)>]
 let ``|-- tests`` (s1, o1, n, s2, o2) =
-    createAddr s1 o1 
+    s1 @|@ o1 
     |> Prelude.flip (|--) n 
-    |> should equal (createAddr s2 o2)
+    |> should equal (s2 @|@ o2)
 
 [<Xunit.Fact>]
 let ``set CSIP tests`` () =
-    let tos = 
-        { Segment = 0x10us
-          Offset = 0x02us }
-
+    let tos = 0x10us @|@ 0x02us
     eval (setCSIP tos) mb
-    createAddr mb.CPU.CS mb.CPU.IP |> should equal tos
+    mb.CPU.CS @|@ mb.CPU.IP |> should equal tos
 
 [<Xunit.Fact>]
 let ``get CSIP tests`` () =
@@ -73,16 +69,13 @@ let ``get CSIP tests`` () =
     mb.CPU.IP <- 0xF00Dus
 
     let a = eval getCSIP mb
-    a |> should equal (createAddr 0xBAADus 0xF00Dus)
+    a |> should equal (0xBAADus @|@ 0xF00Dus)
 
 [<Xunit.Fact>]
 let ``set SSSP tests`` () =
-    let tos = 
-        { Segment = 0x10us
-          Offset = 0x02us }
-
+    let tos = 0x10us @|@ 0x02us
     eval (setSSSP tos) mb
-    createAddr mb.CPU.SS mb.CPU.SP |> should equal tos
+    mb.CPU.SS @|@ mb.CPU.SP |> should equal tos
 
 [<Xunit.Fact>]
 let ``get SSSP tests`` () =
@@ -90,4 +83,17 @@ let ``get SSSP tests`` () =
     mb.CPU.SP <- 0xF00Dus
 
     let a = eval getSSSP mb
-    a |> should equal (createAddr 0xBAADus 0xF00Dus)
+    a |> should equal (0xBAADus @|@ 0xF00Dus)
+
+[<Xunit.Fact>]
+let ``Read/Write mem test``() = 
+    let a = 0x10us @|@ 0x02us
+    let wf = (writeWord16 0xbaadus a) *> readWord16 a
+    eval wf mb |> should equal 0xbaadus
+
+[<Xunit.Fact>]
+let ``Core PUSH tests``() = 
+    let tos = 0x10us @|@ 0x02us
+    let wf = (setSSSP tos) *> (push 0xdeadus) *> getSSSP >>= readWord16
+    let w16 = eval wf mb
+    w16 |> should equal 0xdeadus

@@ -62,7 +62,7 @@ module FDE =
           (* "ADC", 0x5 *) nyi;
           (* "ADD", 0x6 *) execADD;
           (* "AND", 0x7 *) nyi;
-          (* "CALL", 0x8 *) nyi;
+          (* "CALL", 0x8 *) execCALL;
           (* "CBW", 0x9 *) nyi;
           (* "CLC", 0xA *) nyi;
           (* "CLD", 0xB *) execCLD;

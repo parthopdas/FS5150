@@ -31,18 +31,15 @@ module Data =
         | [ ArgRegister16 pno; ArgRegister8 v ] -> 
             (getReg16 pno >>= (fun pno -> getReg8 v >>= portWrite pno)) *> ns
         | _ -> nyi instr
-    
-    let corePUSH w16 = 
-        getSSSP >>= (Prelude.flip (|--) 2us >> State.returnM) >>= writeWord16 w16
 
     let execPUSH instr = 
         match instr.Args with
-        | [ ArgRegister16 r ] -> (getReg16 r >>= corePUSH) *> ns
+        | [ ArgRegister16 r ] -> (getReg16 r >>= push) *> ns
         | _ -> nyi instr
 
     let execSTOSW _ = 
         let ifCXNot0 = 
-            let writeToESDI v = createAddr <!> getRegSeg ES <*> getReg16 DI >>= writeWord16 v
+            let writeToESDI v = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= writeWord16 v
             
             let updateDI = 
                 getFlag DF >>= (fun df -> 

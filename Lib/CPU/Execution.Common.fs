@@ -49,7 +49,6 @@ module Common =
     let getLoByte : Word16 -> Word8 = Prelude.flip (&&&) 0x00FFus >> (!><)
     let inline setHiByte w16 (value : Word8) : Word16 = value +|+ getLoByte w16
     let inline setLoByte w16 (value : Word8) : Word16 = getHiByte w16 +|+ value
-    let makeWord16  = Prelude.uncurry (+|+)
     
     let inline flatten addr = 
         ((uint32) addr.Segment <<< 4) + (uint32) addr.Offset
@@ -59,9 +58,9 @@ module Common =
     let inline (|++) addr n = { addr with Address.Offset = ((addr.Offset + n) &&& 0xFFFFus) }
     let inline (|--) addr n = { addr with Address.Offset = ((addr.Offset - n) &&& 0xFFFFus) }
     
-    let inline createAddr segment offset = 
-        { Segment = segment
-          Offset = offset }
+    let inline (@|@) s o =
+        { Segment = s
+          Offset = o }
     
     (* Register IO *)
     let getFlag flag = 
@@ -83,7 +82,7 @@ module Common =
     
     let getCSIP = 
         let innerFn mb = 
-            createAddr mb.CPU.CS mb.CPU.IP, mb
+            mb.CPU.CS @|@ mb.CPU.IP, mb
         innerFn : State<Address, Motherboard>
     
     let setSSSP addr = 
@@ -95,7 +94,7 @@ module Common =
     
     let getSSSP = 
         let innerFn mb = 
-            createAddr mb.CPU.SS mb.CPU.SP, mb
+            mb.CPU.SS @|@ mb.CPU.SP, mb
         innerFn : State<Address, Motherboard>
     
     let getRegSeg segReg = 
@@ -226,7 +225,7 @@ module Common =
         innerFn : State<Word8[], Motherboard>
         
     let readWord16 addr = 
-        Prelude.tuple2 <!> readWord8 (addr |++ 1us) <*> readWord8 addr >>= (makeWord16 >> State.returnM)
+        (+|+) <!> readWord8 (addr |++ 1us) <*> readWord8 addr
     
     let writeWord8 value addr = 
         let innerFn mb = 
@@ -237,6 +236,11 @@ module Common =
     
     let writeWord16 (value : Word16) addr = 
         (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (addr |++ 1us))
+    
+    let inline push w16 = 
+        getSSSP >>= (fun sssp -> 
+                     let sssp' = sssp |-- 2us
+                     setSSSP sssp' *> writeWord16 w16 sssp')
 
     (* Device IO *)
     let portReadCallbacks : Map<Word16, Word16 -> Word8> = Map.empty
@@ -257,7 +261,7 @@ module Common =
     let portRead16Callbacks : Map<Word16, Word16 -> Word16> = Map.empty
     
     let portRead16 (pno : Word16) = 
-        let ifNoCallback = Prelude.tuple2 <!> portRead (pno + 1us) <*> portRead pno >>= (makeWord16 >> State.returnM)
+        let ifNoCallback = (+|+) <!> portRead (pno + 1us) <*> portRead pno
         portRead16Callbacks
         |> Map.tryFind pno
         |> Option.fold (fun _ e -> e pno |> State.returnM) ifNoCallback : State<Word16, Motherboard>
@@ -319,7 +323,7 @@ module Common =
         innerFn : State<RegisterSeg, Motherboard>
     
     let addressFromDref instr dref = 
-        createAddr <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref
+        (@|@) <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref
     
     let setSegOverride sr = 
         let innerFn mb = 
@@ -335,7 +339,7 @@ module Common =
      
     let beforeLogicalInstr = 
         let innerFn mb = 
-            mb.CPU.LogicalInstrStart <- createAddr mb.CPU.CS mb.CPU.IP
+            mb.CPU.LogicalInstrStart <- mb.CPU.CS @|@ mb.CPU.IP
             mb.CPU.SegmentOverride <- None
             mb.CPU.RepetitionType <- None
             (), mb

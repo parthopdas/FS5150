@@ -77,3 +77,12 @@ module Control =
     
     let execREPX rt _ = 
         setRepetitionType rt *> ns
+    
+    let inline coreCALL ilen w16 = 
+        getCSIP >>= (fun csip -> 
+                     push csip.Offset *> (csip |++ ilen |++ w16 |> State.returnM))
+
+    let execCALL instr = 
+        match instr.Args with
+        | [ ArgOffset(w16) ] -> coreCALL instr.Length w16 >>= (Some >> State.returnM)
+        | _ -> nyi instr

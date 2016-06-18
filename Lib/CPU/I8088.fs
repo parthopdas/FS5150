@@ -206,12 +206,12 @@ module I8088 =
                             execLogicalInstr >> Result.bind (fun mb -> 
                                                   let icount = 2L * 8192L + 110L
                                                   let x = 
-                                                      if mb.CPU.ICount % icount = 0L then resetCPUState
-                                                      else Result.returnM
-                                                    //Result.returnM
+                                                      //if mb.CPU.ICount % icount = 0L then resetCPUState
+                                                      //else Result.returnM
+                                                      Result.returnM
                                                   mb
                                                   |> x
-                                                  |> Result.bind (fun mb -> (mb, false && mb.CPU.ICount = icount) |> Result.returnM))
+                                                  |> Result.bind (fun mb -> (mb, mb.CPU.ICount > 655990L) |> Result.returnM))
                     return! mb
                             |> f
                             |> loop
