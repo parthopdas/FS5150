@@ -37,23 +37,27 @@ module Data =
         | [ ArgRegister16 r ] -> (getReg16 r >>= push) *> ns
         | _ -> nyi instr
 
-    let coreSTOSW = 
-        let writeToESDI v = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= writeWord16 v
+    let coreSTOSX getAcc write n = 
+        let writeToESDI v = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= write v
             
         let updateDI = 
             getFlag DF >>= (fun df -> 
             let update = 
                 if df then (-)
                 else (+)
-            getReg16 DI >>= (Prelude.flip update 2us >> setReg16 DI))
+            getReg16 DI >>= (Prelude.flip update n >> setReg16 DI))
             
         let goBack = getLogicalInstrStart >>= (Some >> State.returnM)
         
         Prelude.tuple2 <!> getRepetitionType <*> getReg16 CX 
         >>= (function 
             | Some _, 0us -> ns
-            | None, 0us -> (getReg16 AX >>= writeToESDI) *> updateDI *> ns
-            | None, _ -> (getReg16 AX >>= writeToESDI) *> updateDI *> ns
-            | Some _, cx -> (getReg16 AX >>= writeToESDI) *> updateDI *> (setReg16 CX (cx - 1us)) *> goBack)
+            | None, 0us -> (getAcc >>= writeToESDI) *> updateDI *> ns
+            | None, _ -> (getAcc >>= writeToESDI) *> updateDI *> ns
+            | Some _, cx -> (getAcc >>= writeToESDI) *> updateDI *> (setReg16 CX (cx - 1us)) *> goBack)
 
-    let execSTOSW _ = coreSTOSW
+    let execSTOSB _ = coreSTOSX (getReg8 AL) writeWord8 1us 
+    
+    let execSTOSW _ = coreSTOSX (getReg16 AX) writeWord16 2us
+
+

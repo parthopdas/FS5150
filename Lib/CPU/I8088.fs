@@ -211,7 +211,7 @@ module I8088 =
                                                       Result.returnM
                                                   mb
                                                   |> x
-                                                  |> Result.bind (fun mb -> (mb, mb.CPU.ICount > 655990L) |> Result.returnM))
+                                                  |> Result.bind (fun mb -> (mb, mb.CPU.ICount > 655999L + 2046L) |> Result.returnM))
                     return! mb
                             |> f
                             |> loop

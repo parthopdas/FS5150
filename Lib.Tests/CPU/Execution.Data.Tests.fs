@@ -33,7 +33,7 @@ let ``Core STOSW tests`` ((reptype : RepetitionType option, cx : Word16, df : bo
     mb.CPU.AX <- 0xdeadus
     mb.CPU.LogicalInstrStart <- csip.Segment @|@ 0x10us
     let init = (setCSIP csip) *> (writeWord16 0xbaadus esdi)
-    let wf = init *> coreSTOSW
+    let wf = init *> coreSTOSX (getReg16 AX) writeWord16 2us 
     eval wf mb
     |> Option.fold (fun _ -> id) csip
     |> should equal csip'

@@ -22,6 +22,7 @@ module Logic =
     
     let execNOT instr = 
         match instr.Args with
+        | [ ArgRegister8 r ] -> ((~~~) <!> getReg8 r >>= setReg8 r) *> ns
         | [ ArgRegister16 r ] -> ((~~~) <!> getReg16 r >>= setReg16 r) *> ns
         | _ -> nyi instr
     

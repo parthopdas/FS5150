@@ -147,7 +147,7 @@ module FDE =
           (* "STC", 0x5A *) nyi;
           (* "STD", 0x5B *) nyi;
           (* "STI", 0x5C *) nyi;
-          (* "STOSB", 0x5D *) nyi;
+          (* "STOSB", 0x5D *) execSTOSB;
           (* "STOSW", 0x5E *) execSTOSW;
           (* "SUB", 0x5F *) execSUB;
           (* "TEST", 0x60 *) nyi;

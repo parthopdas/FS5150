@@ -344,6 +344,7 @@ module InstructionSet =
             x.OpCode = 0x11 || x.OpCode = 0x17 || x.OpCode = 0x18 || x.OpCode = 0x59 || x.OpCode = 0x4C 
             || x.OpCode = 0x4D
     
+    // TODO: PERF: Combine this with option, i.e. have a NoRepetation case
     type RepetitionType = 
         | TillZero
         | TillNotZero
