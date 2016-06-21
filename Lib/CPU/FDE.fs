@@ -90,7 +90,7 @@ module FDE =
           (* "JA", 0x21 *) nyi;
           (* "JB", 0x22 *) execJB;
           (* "JBE", 0x23 *) nyi;
-          (* "JCXZ", 0x24 *) nyi;
+          (* "JCXZ", 0x24 *) execJCXZ;
           (* "JG", 0x25 *) nyi;
           (* "JGE", 0x26 *) nyi;
           (* "JL", 0x27 *) nyi;
@@ -131,7 +131,7 @@ module FDE =
           (* "RCL", 0x4A *) nyi;
           (* "RCR", 0x4B *) nyi;
           (* "REPNZ", 0x4C *) nyi;
-          (* "REPZ", 0x4D *) execREPX TillZero;
+          (* "REPZ", 0x4D *) execREPX WhileZero;
           (* "RET", 0x4E *) nyi;
           (* "RETF", 0x4F *) nyi;
           (* "ROL", 0x50 *) nyi;
@@ -139,8 +139,8 @@ module FDE =
           (* "SAHF", 0x52 *) nyi;
           (* "SAR", 0x53 *) nyi;
           (* "SBB", 0x54 *) nyi;
-          (* "SCASB", 0x55 *) nyi;
-          (* "SCASW", 0x56 *) nyi;
+          (* "SCASB", 0x55 *) execSCASB;
+          (* "SCASW", 0x56 *) execSCASW;
           (* "SHL", 0x57 *) execSHL;
           (* "SHR", 0x58 *) nyi;
           (* "SS:", 0x59 *) execXS SS;

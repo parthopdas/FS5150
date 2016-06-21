@@ -72,6 +72,11 @@ module Control =
         | [ ArgOffset(w16) ] -> getFlag PF >>= (not >> getAndIncrIPIf (instr.Length + w16))
         | _ -> nyi instr
     
+    let execJCXZ instr = 
+        match instr.Args with
+        | [ ArgOffset(w16) ] -> getReg16 CX >>= ((=) 0us >> getAndIncrIPIf (instr.Length + w16))
+        | _ -> nyi instr
+    
     let execXS sreg _ = 
         setSegOverride sreg *> ns
     

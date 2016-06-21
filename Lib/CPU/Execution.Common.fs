@@ -379,6 +379,29 @@ module Common =
             mb.CPU.RepetitionType, mb
         innerFn : State<RepetitionType option, Motherboard>
     
+    (* Common arithmetic *)
+    let private sub8ValParams = (0xFF00us, 0us, 0x80us, 0x10us)
+    let private sub8FunParams = ((-), uint8, uint16)
+    let private sub16ValParams = (0xFFFF0000ul, 0ul, 0x8000ul, 0x10ul)
+    let private sub16FunParams = ((-), uint16, uint32)
+
+    let inline private setSubFlags<'T, 'TUp
+                        when 'TUp : equality
+                         and 'TUp : (static member ( ^^^ ) :  ^TUp *  ^TUp ->  ^TUp)
+                         and 'TUp : (static member ( &&& ) :  ^TUp *  ^TUp ->  ^TUp)>
+            (op : 'TUp -> 'TUp -> 'TUp, fdn : 'TUp -> 'T, fup : 'T -> 'TUp) setSZPFlags (vff00, v0, mid, v10) (a1 : 'T, a2 : 'T) = 
+        let dst = op (fup(a1)) (fup(a2))
+        (setSZPFlags (fdn(dst))) 
+        *> (setFlag CF (dst &&& vff00 <> v0)) 
+        *> (setFlag OF (((dst ^^^ fup(a1)) &&& (fup(a1) ^^^ fup(a2)) &&& mid) <> v0)) 
+        *> (setFlag AF (((fup(a1) ^^^ fup(a2) ^^^ dst) &&& v10) <> v0))
+
+    let setSub8Flags = 
+        setSubFlags sub8FunParams flagSZP8 sub8ValParams
+
+    let setSub16Flags = 
+        setSubFlags sub16FunParams flagSZP16 sub16ValParams
+    
     (* Miscellenous helpers *)
     let inline nyi instr = failwithf "%O - Not implemented" (instr.ToString())
     let inline ns<'T> : State<'T option, Motherboard> = None |> State.returnM

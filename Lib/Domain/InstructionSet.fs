@@ -346,5 +346,5 @@ module InstructionSet =
     
     // TODO: PERF: Combine this with option, i.e. have a NoRepetation case
     type RepetitionType = 
-        | TillZero
-        | TillNotZero
+        | WhileZero
+        | WhileNotZero
