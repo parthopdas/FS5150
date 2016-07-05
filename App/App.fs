@@ -1,4 +1,4 @@
-﻿// return an integer exit code
+// return an integer exit code
 module Program
 
 open System

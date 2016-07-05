@@ -1,0 +1,9 @@
+source https://www.nuget.org/api/v2
+nuget FAKE
+nuget FsCheck.Xunit
+nuget FSharpLint
+nuget FSharpx.Extras
+nuget FsUnit.Xunit
+nuget xunit
+nuget xunit.runner.console
+nuget xunit.runner.visualstudio
