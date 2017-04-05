@@ -31,6 +31,8 @@ module Arithmetic =
         let res = v1v2 ||> (+)
         flagAdd8 v1v2 *> (res |> State.returnM)
     
+    // TODO: PERF: Prelude.Tuple is unnecessary
+
     let execADD instr = 
         match instr.Args with
         | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
@@ -47,6 +49,56 @@ module Arithmetic =
             (Prelude.tuple2 <!> getReg8 r <*> (c |> State.returnM)
              >>= opAdd8
              >>= setReg8 r)
+            *> ns
+        | [ ArgRegister8 r1; ArgRegister8 r2 ] -> 
+            (Prelude.tuple2 <!> getReg8 r1 <*> getReg8 r2
+             >>= opAdd8
+             >>= setReg8 r1)
+            *> ns
+        | [ ArgRegister16 r1; ArgRegister16 r2 ] -> 
+            (Prelude.tuple2 <!> getReg16 r1 <*> getReg16 r2
+             >>= opAdd16
+             >>= setReg16 r1)
+            *> ns
+        | [ ArgDereference dref; ArgRegister8 r ] -> 
+            let w8 = addressFromDref instr dref >>= readWord8
+            let setMem = fun v -> (addressFromDref instr dref >>= writeWord8 v)
+            (Prelude.tuple2 <!> w8 <*> getReg8 r
+             >>= opAdd8
+             >>= setMem)
+            *> ns
+        | [ ArgRegister8 r; ArgDereference dref ] -> 
+            let w8 = addressFromDref instr dref >>= readWord8
+            (Prelude.tuple2 <!> getReg8 r <*> w8
+             >>= opAdd8
+             >>= setReg8 r)
+            *> ns
+        | [ ArgDereference dref; ArgRegister16 r ] -> 
+            let w16 = addressFromDref instr dref >>= readWord16
+            let setMem = fun v -> (addressFromDref instr dref >>= writeWord16 v)
+            (Prelude.tuple2 <!> w16 <*> getReg16 r
+             >>= opAdd16
+             >>= setMem)
+            *> ns
+        | [ ArgRegister16 r; ArgDereference dref ] -> 
+            let w16 = addressFromDref instr dref >>= readWord16
+            (Prelude.tuple2 <!> getReg16 r <*> w16
+             >>= opAdd16
+             >>= setReg16 r)
+            *> ns
+        | [ ArgDereference dref; ArgImmediate(W8 c) ] -> 
+            let w8 = addressFromDref instr dref >>= readWord8
+            let setMem = fun v -> (addressFromDref instr dref >>= writeWord8 v)
+            (Prelude.tuple2 <!> w8 <*> (c |> State.returnM)
+             >>= opAdd8
+             >>= setMem)
+            *> ns
+        | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
+            let w16 = addressFromDref instr dref >>= readWord16
+            let setMem = fun v -> (addressFromDref instr dref >>= writeWord16 v)
+            (Prelude.tuple2 <!> w16 <*> (c |> State.returnM)
+             >>= opAdd16
+             >>= setMem)
             *> ns
         | _ -> nyi instr
     
@@ -110,4 +162,10 @@ module Arithmetic =
         | [ ArgRegister16 r; ArgDereference dref ] -> 
             let w16 = addressFromDref instr dref >>= readWord16
             (Prelude.tuple2 <!> getReg16 r <*> w16 >>= setSub16Flags) *> ns
+        | [ ArgDereference dref; ArgImmediate(W8 c) ] -> 
+            let w8 = addressFromDref instr dref >>= readWord8
+            (Prelude.tuple2 <!> w8 <*> (c |> State.returnM) >>= setSub8Flags) *> ns
+        | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
+            let w16 = addressFromDref instr dref >>= readWord16
+            (Prelude.tuple2 <!> w16 <*> (c |> State.returnM) >>= setSub16Flags) *> ns
         | _ -> nyi instr
