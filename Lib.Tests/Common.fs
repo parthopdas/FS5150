@@ -19,7 +19,7 @@ module Common =
         is 
         |> Lib.CPU.InstructionSetLoader.loadGrammer
 
-    let mb = initMotherBoard()
+    let mb = InitParams.Default |> initMotherBoard
 
     let onBits (v : Word8) =
         let v = v - ((v >>> 1) &&& 0x55uy);

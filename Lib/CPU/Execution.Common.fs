@@ -18,7 +18,7 @@ module Common =
           SI = 0us
           DI = 0us
           IP = 0us
-          CS = 0xFFFFus
+          CS = 0us
           DS = 0us
           SS = 0us
           ES = 0us
@@ -38,6 +38,7 @@ module Common =
           LogicalInstrStart = { Offset = 0us; Segment = 0us }
           SegmentOverride = None
           RepetitionType = None
+          Halted = false
           ITicks = 0L
           ICount = 0L }
     
@@ -361,11 +362,10 @@ module Common =
     
     let resetCPU = 
         let innerFn mb = 
-            let init = initialCPU()
-            init.ICount <- mb.CPU.ICount
-            init.ITicks <- mb.CPU.ITicks
-            mb.CPU <- init
-            (), mb
+            let cpu = initialCPU()
+            cpu.ICount <- mb.CPU.ICount
+            cpu.ITicks <- mb.CPU.ITicks
+            (), { mb with CPU = cpu }
         innerFn : State<unit, Motherboard>
     
     let setRepetitionType rt = 
@@ -378,6 +378,12 @@ module Common =
         let innerFn mb = 
             mb.CPU.RepetitionType, mb
         innerFn : State<RepetitionType option, Motherboard>
+    
+    let setHalted = 
+        let innerFn mb = 
+            mb.CPU.Halted <- true
+            (), mb
+        innerFn : State<unit, Motherboard>
     
     (* Common arithmetic *)
     let private sub8ValParams = (0xFF00us, 0us, 0x80us, 0x10us)

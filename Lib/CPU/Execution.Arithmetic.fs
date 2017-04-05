@@ -7,6 +7,7 @@ module Arithmetic =
     open Lib.CPU.Execution.Common
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
+    open Lib
     
     let flagAdd16 (v1 : Word16, v2 : Word16) = 
         let dst = (uint32) v1 + (uint32) v2
@@ -37,6 +38,11 @@ module Arithmetic =
              >>= opAdd16
              >>= setReg16 r)
             *> ns
+        | [ ArgRegister16 r; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> getReg16 r <*> (c |> Common.signExtend |> State.returnM)
+             >>= opAdd16
+             >>= setReg16 r)
+            *> ns
         | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> 
             (Prelude.tuple2 <!> getReg8 r <*> (c |> State.returnM)
              >>= opAdd8
@@ -45,12 +51,13 @@ module Arithmetic =
         | _ -> nyi instr
     
     let execINC instr = 
+        let inc16 get set = 
+            Prelude.tuple2 <!> get <*> (1us |> State.returnM)
+            >>= opAdd16
+            >>= set
         match instr.Args with
         | [ ArgRegister16 AX ] -> 
-            let add1 = 
-                Prelude.tuple2 <!> getReg16 AX <*> (1us |> State.returnM)
-                >>= opAdd16
-                >>= setReg16 AX
+            let add1 = inc16 (getReg16 AX) (setReg16 AX)
             (getFlag CF <* add1 >>= setFlag CF) *> ns
         | [ ArgRegister8 AL ] -> 
             let add1 = 
@@ -58,6 +65,10 @@ module Arithmetic =
                 >>= opAdd8
                 >>= setReg8 AL
             (getFlag CF <* add1 >>= setFlag CF) *> ns
+        | [ ArgDereference dref ] -> 
+            let w16 = addressFromDref instr dref >>= readWord16
+            let setMem = fun v -> (addressFromDref instr dref >>= writeWord16 v)
+            (getFlag CF <* (inc16 w16 setMem) >>= setFlag CF) *> ns
         | _ -> nyi instr
     
     let inline coreSUB16 a1a2 = 
@@ -92,6 +103,8 @@ module Arithmetic =
         match instr.Args with
         | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
             (Prelude.tuple2 <!> getReg16 r <*> (c |> State.returnM) >>= setSub16Flags) *> ns
+        | [ ArgRegister16 r; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> getReg16 r <*> (c |> Common.signExtend |> State.returnM) >>= setSub16Flags) *> ns
         | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> 
             (Prelude.tuple2 <!> getReg8 r <*> (c |> State.returnM) >>= setSub8Flags) *> ns
         | [ ArgRegister16 r; ArgDereference dref ] -> 

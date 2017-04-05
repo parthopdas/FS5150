@@ -8,10 +8,12 @@ module Core =
     type ParserError = 
         | MoreInputNeeded
         | ParserError of string
+        | EndOfInput
         override x.ToString() =
             match x with
-            | MoreInputNeeded -> "No more input"
+            | MoreInputNeeded -> "Need more input"
             | ParserError msg -> msg
+            | EndOfInput -> "End of input"
     
     type Result<'a> = 
         | Success of 'a

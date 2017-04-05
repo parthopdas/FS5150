@@ -6,4 +6,5 @@ References:
 - [In Java, chips demarcated](https://github.com/NeatMonster/Intel8086/tree/master/src/fr/neatmonster/ibmpc)
 - [Another OpCode reference](http://datasheets.chipdb.org/Intel/x86/808x/datashts/8088/231456-006.pdf)
 - [OpCode reference](http://www.mathemainzel.info/files/x86asmref.html)
-- [Haskell Summary](http://dev.stephendiehl.com/hask)
+- [Fake86 8086 PC Emulator](https://github.com/rubbermallet/fake86)
+- 

@@ -51,11 +51,12 @@ module PC =
           mutable DS : Word16
           mutable SS : Word16
           mutable ES : Word16
-          // TODO: PERF: Use BitArrya class here for perf reasons
+          // TODO: PERF: Use BitArray class here for perf reasons
           Flags : Dictionary<Flags, bool>
           mutable LogicalInstrStart : Address
           mutable SegmentOverride : RegisterSeg option
           mutable RepetitionType : RepetitionType option
+          mutable Halted : bool 
           mutable ITicks : int64
           mutable ICount : int64 }
     
@@ -63,7 +64,7 @@ module PC =
     
     type Motherboard = 
         { SW : Stopwatch
-          mutable CPU : CPU
+          CPU : CPU
           RAM : MemoryBlock<Word8>
           ReadOnly : MemoryBlock<bool>
           PortRAM : MemoryBlock<Word8> }

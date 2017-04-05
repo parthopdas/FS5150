@@ -91,3 +91,6 @@ module Control =
         match instr.Args with
         | [ ArgOffset(w16) ] -> coreCALL instr.Length w16 >>= (Some >> State.returnM)
         | _ -> nyi instr
+
+    let execHLT _ =
+        setHalted *> ns

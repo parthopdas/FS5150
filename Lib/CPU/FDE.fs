@@ -79,7 +79,7 @@ module FDE =
           (* "DIV", 0x16 *) nyi;
           (* "DS:", 0x17 *) execXS DS;
           (* "ES:", 0x18 *) execXS ES;
-          (* "HLT", 0x19 *) nyi;
+          (* "HLT", 0x19 *) execHLT;
           (* "IDIV", 0x1A *) nyi;
           (* "IMUL", 0x1B *) nyi;
           (* "IN", 0x1C *) nyi;

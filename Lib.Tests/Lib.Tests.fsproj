@@ -58,6 +58,10 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="TestData\ADD.tests.asm" />
+    <None Include="TestData\ADD.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Common.fs" />
     <Compile Include="Common.Tests.fs" />

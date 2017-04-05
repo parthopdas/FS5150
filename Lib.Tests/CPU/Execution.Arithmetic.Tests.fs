@@ -7,9 +7,42 @@ open Lib
 open Lib.CPU.Execution.Arithmetic
 open Lib.CPU.Execution.Common
 open Lib.CPU.I8088
+open Lib.Parser.Core
 open Lib.Domain.InstructionSet
 open Lib.Domain.PC
 open System
+open global.Xunit
+open System.IO
+open System.Reflection
+open FsUnit.Xunit
+
+// YoLo
+let (/) a b = Path.Combine(a, b)
+
+// YoLo
+let getLocalPath() = 
+    Assembly.GetExecutingAssembly().CodeBase
+    |> fun cb -> (new Uri(cb)).LocalPath
+    |> Path.GetFullPath
+    |> Path.GetDirectoryName
+
+[<Fact>]
+let ``ADD Tests``() = 
+    let mb =
+        { RamSize = 0x1000; PortRamSize = 0; CS = 0us; IP = 0x100us }
+        |> initMotherBoard
+        |> loadBinary ("TestData" / "ADD.tests.com") 0x100 false
+
+    let rec nextCmd mb = 
+        mb |> execLogicalInstr |> loop
+    and loop = Result.fold nextCmd ignore
+
+    mb |> Result.returnM |> loop
+
+    mb.CPU.ICount |> should equal 13L
+    mb.CPU.CS |> should equal 0x0us
+    mb.CPU.IP |> should equal 0x106us
+    0x0us @|@ 0x102us |> readWord16 |> Prelude.flip State.eval mb |> should equal 2us
 
 module SUB = 
     let fSubRes8 = (fun a1 a2 -> a1 + (~~~a2 + 1uy))

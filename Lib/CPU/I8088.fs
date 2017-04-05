@@ -19,12 +19,23 @@ module I8088 =
     
     // TODO: PERF: State monad might be causing some bottlenecks. Consider a home grown implementation.
 
-    let initMotherBoard() : Motherboard = 
-        { SW = new Stopwatch()
-          CPU = initialCPU()
-          RAM = Array.create 0x100000 0xfeuy
-          ReadOnly = Array.zeroCreate 0x100000
-          PortRAM = Array.zeroCreate 0x10000 }
+    type InitParams =
+        { RamSize : int
+          PortRamSize : int
+          CS : Word16
+          IP : Word16 }
+        static member Default = 
+            { RamSize = 0x100000
+              PortRamSize = 0x10000
+              CS = 0xFFFFus
+              IP = 0us }
+
+    let initMotherBoard init : Motherboard = 
+        { SW = Stopwatch()
+          CPU = { initialCPU() with CS = init.CS; IP = init.IP } 
+          RAM = Array.create init.RamSize 0xfeuy
+          ReadOnly = Array.zeroCreate init.RamSize
+          PortRAM = Array.zeroCreate init.PortRamSize }
     
     let loadBinary fname addr ro mb = 
         (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
@@ -64,10 +75,12 @@ module I8088 =
                             if isPrefix then 
                                 loopExecPrefixInstrs mb' 
                             else (Result.returnM mb'))
-
-        mb
-        |> State.exec beforeLogicalInstr
-        |> loopExecPrefixInstrs
+        if mb.CPU.Halted then
+            Failure("CPU Halted", EndOfInput, { CurrentBytes = Array.empty; CurrentOffset = mb.CPU.CS @|@ mb.CPU.IP |> flatten |> int })
+        else
+            mb
+            |> State.exec beforeLogicalInstr
+            |> loopExecPrefixInstrs
     
     /// dumpRegisters :: Motherboard -> Result<string>
     let dumpRegisters mb = 
@@ -156,7 +169,6 @@ module I8088 =
         | Trace of AsyncReplyChannel<Result<string>>
         | Unassemble of AsyncReplyChannel<Result<string>>
     
-    
     let (|BreakCmdFormat|_|) = Regex.tryMatch "^b$"
     let (|DumpCmdFormat|_|) input = 
         match Regex.tryMatch "^d ([0-9a-f]{1,4}):([0-9a-f]{1,4})$" input with
@@ -218,7 +230,8 @@ module I8088 =
                 }
             
             and loop = Result.fold nextCmd (fun _ -> async { return () })
-            ()
+
+            InitParams.Default
             |> initMotherBoard
             |> loadBinary "PCXTBIOS.BIN" 0xFE000 true
             |> loadBinary "VIDEOROM.BIN" 0xC0000 true
