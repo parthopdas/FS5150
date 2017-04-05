@@ -9,7 +9,7 @@ module Processor =
     
     let execCLI instr = 
         match instr.Args with
-        | [] -> setFlag IF false *> ns
+        | [] -> setFlag Flags.IF false *> ns
         | _ -> nyi instr
     
     let inline execCLD instr = 
@@ -17,6 +17,6 @@ module Processor =
         ns
 #else
         match instr.Args with
-        | [] -> setFlag DF false *> ns
+        | [] -> setFlag Flags.DF false *> ns
         | _ -> nyi instr
 #endif

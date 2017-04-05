@@ -8,9 +8,9 @@ module Logic =
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     
-    let flagLog8 (w8 : Word8) = flagSZP8 w8 *> (setFlag CF false) *> (setFlag OF false)
+    let flagLog8 (w8 : Word8) = flagSZP8 w8 *> (setFlag Flags.CF false) *> (setFlag Flags.OF false)
     
-    let flagLog16 (w16 : Word16) = flagSZP16 w16 *> (setFlag CF false) *> (setFlag OF false)
+    let flagLog16 (w16 : Word16) = flagSZP16 w16 *> (setFlag Flags.CF false) *> (setFlag Flags.OF false)
     
     let opXor8 v1v2 = 
         let res = v1v2 ||> (^^^)
@@ -31,10 +31,10 @@ module Logic =
         | [ ArgRegister16 AX; ArgConstant w8 ] -> 
             let folder acc _ = 
                 acc 
-                >>= (fun v -> setFlag CF (v &&& 0x8000us <> 0us) *> setReg16 AX ((v <<< 1) &&& 0xFFFFus) *> getReg16 AX)
+                >>= (fun v -> setFlag Flags.CF (v &&& 0x8000us <> 0us) *> setReg16 AX ((v <<< 1) &&& 0xFFFFus) *> getReg16 AX)
             let doShl = [ 1..(int) w8 ] |> List.fold folder (getReg16 AX)
-            ((Prelude.tuple2 <!> doShl <*> getFlag CF) 
-             >>= (fun (s, cf) -> (setFlag OF ((w8 = 1uy) && (cf = ((s >>> 15) = 1us)))) *> flagSZP16 s)) *> ns
+            ((Prelude.tuple2 <!> doShl <*> getFlag Flags.CF) 
+             >>= (fun (s, cf) -> (setFlag Flags.OF ((w8 = 1uy) && (cf = ((s >>> 15) = 1us)))) *> flagSZP16 s)) *> ns
         | _ -> nyi instr
     
     let execXOR instr = 

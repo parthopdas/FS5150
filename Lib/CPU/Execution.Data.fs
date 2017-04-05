@@ -42,7 +42,7 @@ module Data =
         let writeToESDI v = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= write v
         
         let updateDI = 
-            getFlag DF >>= (fun df -> 
+            getFlag Flags.DF >>= (fun df -> 
             let update = 
                 if df then (-)
                 else (+)
@@ -65,7 +65,7 @@ module Data =
         let subAccESDI = Prelude.tuple2 <!> getAcc <*> readFromESDI >>= sub
         
         let updateDI = 
-            getFlag DF >>= (fun df -> 
+            getFlag Flags.DF >>= (fun df -> 
             let update = 
                 if df then (-)
                 else (+)
@@ -74,7 +74,7 @@ module Data =
         let goBack = getLogicalInstrStart >>= (Some >> State.returnM)
         
         let whileDf f = 
-            getFlag ZF >>= fun zf -> 
+            getFlag Flags.ZF >>= fun zf -> 
                 if f zf then goBack
                 else ns
         Prelude.tuple2 <!> getRepetitionType <*> getReg16 CX >>= (function 

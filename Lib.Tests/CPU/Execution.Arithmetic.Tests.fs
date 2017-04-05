@@ -60,9 +60,9 @@ module SUB =
     let lawCore f fRes (fMsb, fOnBits, fInURange, fInSRange, fLSNibble) a1 a2 = 
         let mb = Common.mb
         let res = State.eval (f (a1, a2)) mb
-        res = fRes a1 a2 && mb.CPU.Flags.[ZF] = (a1 = a2) && mb.CPU.Flags.[SF] = (fMsb res = 1) 
-        && mb.CPU.Flags.[PF] = (fOnBits res % 2 = 0) && mb.CPU.Flags.[CF] = (fInURange a1 a2) 
-        && mb.CPU.Flags.[OF] = fInSRange a1 a2 && mb.CPU.Flags.[AF] = (fLSNibble a1 a2 > 0xF)
+        res = fRes a1 a2 && mb.CPU.Flags.[int(Flags.ZF)] = (a1 = a2) && mb.CPU.Flags.[int(Flags.SF)] = (fMsb res = 1) 
+        && mb.CPU.Flags.[int(Flags.PF)] = (fOnBits res % 2 = 0) && mb.CPU.Flags.[int(Flags.CF)] = (fInURange a1 a2) 
+        && mb.CPU.Flags.[int(Flags.OF)] = fInSRange a1 a2 && mb.CPU.Flags.[int(Flags.AF)] = (fLSNibble a1 a2 > 0xF)
     
     [<Xunit.Fact>]
     let ``Core SUB 8``() = 

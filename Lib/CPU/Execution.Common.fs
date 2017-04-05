@@ -6,7 +6,7 @@ module Common =
     open FSharpx.State
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
-    open System.Collections.Generic
+    open System.Collections
     
     let initialCPU() = 
         { AX = 0us
@@ -22,19 +22,7 @@ module Common =
           DS = 0us
           SS = 0us
           ES = 0us
-          Flags = 
-              [ (OF, false)
-                (DF, false)
-                (IF, false)
-                (TF, false)
-                (SF, false)
-                (ZF, false)
-                (AF, false)
-                (PF, false)
-                (CF, false) ]
-              |> List.fold (fun acc e -> 
-                     acc.Add(fst e, snd e)
-                     acc) (Dictionary<Flags, bool>())
+          Flags = BitArray(16, false)
           LogicalInstrStart = { Offset = 0us; Segment = 0us }
           SegmentOverride = None
           RepetitionType = None
@@ -64,13 +52,13 @@ module Common =
           Offset = o }
     
     (* Register IO *)
-    let getFlag flag = 
-        let innerFn mb = mb.CPU.Flags.[flag], mb
+    let getFlag (flag : Flags) = 
+        let innerFn mb = mb.CPU.Flags.[int(flag)], mb
         innerFn : State<bool, Motherboard>
     
-    let setFlag flag value = 
+    let setFlag (flag : Flags) value = 
         let innerFn mb = 
-            mb.CPU.Flags.[flag] <- value
+            mb.CPU.Flags.[int(flag)] <- value
             (), mb
         innerFn : State<unit, Motherboard>
     
@@ -200,9 +188,9 @@ module Common =
             when 'T : equality 
              and 'T : (static member ( &&& ) :  ^T *  ^T ->  ^T)> 
             (v: 'T) (zero: 'T) (mid: 'T) (loByte : ^T -> uint8) = 
-        (setFlag SF (v &&& mid = mid)) 
-        *> (setFlag ZF (v = zero)) 
-        *> (setFlag PF (parity.[v |> loByte |> int]))
+        (setFlag Flags.SF (v &&& mid = mid)) 
+        *> (setFlag Flags.ZF (v = zero)) 
+        *> (setFlag Flags.PF (parity.[v |> loByte |> int]))
     
     let inline flagSZP8 (w8 : Word8) = 
         flagSZP w8 0uy 0x80uy id
@@ -398,9 +386,9 @@ module Common =
             (op : 'TUp -> 'TUp -> 'TUp, fdn : 'TUp -> 'T, fup : 'T -> 'TUp) setSZPFlags (vff00, v0, mid, v10) (a1 : 'T, a2 : 'T) = 
         let dst = op (fup(a1)) (fup(a2))
         (setSZPFlags (fdn(dst))) 
-        *> (setFlag CF (dst &&& vff00 <> v0)) 
-        *> (setFlag OF (((dst ^^^ fup(a1)) &&& (fup(a1) ^^^ fup(a2)) &&& mid) <> v0)) 
-        *> (setFlag AF (((fup(a1) ^^^ fup(a2) ^^^ dst) &&& v10) <> v0))
+        *> (setFlag Flags.CF (dst &&& vff00 <> v0)) 
+        *> (setFlag Flags.OF (((dst ^^^ fup(a1)) &&& (fup(a1) ^^^ fup(a2)) &&& mid) <> v0)) 
+        *> (setFlag Flags.AF (((fup(a1) ^^^ fup(a2) ^^^ dst) &&& v10) <> v0))
 
     let setSub8Flags = 
         setSubFlags sub8FunParams flagSZP8 sub8ValParams

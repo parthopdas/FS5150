@@ -2,39 +2,40 @@
 
 module PC = 
     open InstructionSet
-    open System.Collections.Generic
     open System.Diagnostics
+    open System.Collections
+    open System
     
     type Flags = 
         /// Overflow - Signed number exceeds capacity of result
-        | OF
+        | OF = 11
         /// Direction - Set by user to indication direction of string instructions
-        | DF
+        | DF = 10
         /// Interrupt - Enable or disable hardware interrupts
-        | IF
+        | IF = 9
         /// Trap - Single step
-        | TF
+        | TF = 8
         /// Sign - Results sign bit from compare/substract ops
-        | SF
+        | SF = 7
         /// Zero - Result is zero from compare/substract ops
-        | ZF
+        | ZF = 6
         /// Adjust - ?
-        | AF
+        | AF = 4
         /// Parity - ?
-        | PF
+        | PF = 2
         /// Carry - Unsigned number exceeds capacity of result
-        | CF
+        | CF = 0
     
     let flagNames = 
-        [ (OF, ("OV", "NV"))
-          (DF, ("DN", "UP"))
-          (IF, ("EI", "DI"))
-          (TF, ("", ""))
-          (SF, ("NG", "PL"))
-          (ZF, ("ZR", "NZ"))
-          (AF, ("AC", "NA"))
-          (PF, ("PE", "PO"))
-          (CF, ("CY", "NC")) ]
+        [ (Flags.OF, ("OV", "NV"))
+          (Flags.DF, ("DN", "UP"))
+          (Flags.IF, ("EI", "DI"))
+          (Flags.TF, ("", ""))
+          (Flags.SF, ("NG", "PL"))
+          (Flags.ZF, ("ZR", "NZ"))
+          (Flags.AF, ("AC", "NA"))
+          (Flags.PF, ("PE", "PO"))
+          (Flags.CF, ("CY", "NC")) ]
         |> Map.ofList
     
     type CPU = 
@@ -51,8 +52,7 @@ module PC =
           mutable DS : Word16
           mutable SS : Word16
           mutable ES : Word16
-          // TODO: PERF: Use BitArray class here for perf reasons
-          Flags : Dictionary<Flags, bool>
+          Flags : BitArray
           mutable LogicalInstrStart : Address
           mutable SegmentOverride : RegisterSeg option
           mutable RepetitionType : RepetitionType option
@@ -75,11 +75,12 @@ module PC =
             let l2 = sprintf "DS=%04X  ES=%04X  SS=%04X  CS=%04X  IP=%04X" x.CPU.DS x.CPU.ES x.CPU.SS x.CPU.CS x.CPU.IP
             
             let fs = 
-                x.CPU.Flags.Keys
+                Enum.GetValues(typeof<Flags>)
+                |> Seq.cast<Flags>
                 |> Seq.map (fun k -> 
                        flagNames
                        |> Map.find k
-                       |> (if x.CPU.Flags.[k] then fst
+                       |> (if x.CPU.Flags.[int(k)] then fst
                            else snd))
                 |> String.concat " "
             sprintf "%s\n%s   %s" l1 l2 fs

@@ -28,7 +28,7 @@ module STOSX =
                               (csip' : Address, esdi' : Address, v : Word16, cx' : Word16)) : unit = 
         mb.CPU.RepetitionType <- reptype
         mb.CPU.CX <- cx
-        mb.CPU.Flags.[DF] <- df
+        mb.CPU.Flags.[int(Flags.DF)] <- df
         mb.CPU.ES <- esdi.Segment
         mb.CPU.DI <- esdi.Offset
         mb.CPU.AX <- 0xdeadus
@@ -62,8 +62,8 @@ module SCASX =
                               (csip' : Address, esdi' : Address, cx' : Word16, zf : bool)) : unit = 
         mb.CPU.RepetitionType <- reptype
         mb.CPU.CX <- cx
-        mb.CPU.Flags.[ZF] <- false
-        mb.CPU.Flags.[DF] <- df
+        mb.CPU.Flags.[int(Flags.ZF)] <- false
+        mb.CPU.Flags.[int(Flags.DF)] <- df
         mb.CPU.ES <- esdi.Segment
         mb.CPU.DI <- esdi.Offset
         mb.CPU.AX <- 0xdeadus
@@ -74,5 +74,5 @@ module SCASX =
         |> Option.fold (fun _ -> id) csip
         |> should equal csip'
         mb.CPU.ES @|@ mb.CPU.DI |> should equal esdi'
-        mb.CPU.Flags.[ZF] |> should equal zf
+        mb.CPU.Flags.[int(Flags.ZF)] |> should equal zf
         mb.CPU.CX |> should equal cx'
