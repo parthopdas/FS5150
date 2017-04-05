@@ -2,6 +2,7 @@
 
 module Core = 
     open TextInput
+    open YaFunTK
     
     type ParserLabel = string
     
@@ -100,8 +101,6 @@ module Core =
         | Failure(l, m, p) -> sprintf "%s: Error parsing %s. %O" (p.ToString()) l m
 
     module Result = 
-        open FSharpx.Functional
-
         /// unit :: 'a -> Result<'a>
         let returnM x = 
             Success x

@@ -1,7 +1,7 @@
-﻿namespace Lib.CPU
+namespace Lib.CPU
 
 module Disassembler = 
-    open FSharpx.Functional
+    open YaFunTK
     open Lib
     open Lib.Domain.InstructionSet
     open Lib.Parser.Combinators

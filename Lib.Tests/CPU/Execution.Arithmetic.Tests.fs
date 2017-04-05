@@ -1,7 +1,7 @@
 ﻿module Lib.Excution.Arithmetic.Tests
 
+open YaFunTK
 open FSharpx
-open FSharpx.Functional
 open FsCheck
 open Lib
 open Lib.CPU.Execution.Arithmetic
@@ -12,26 +12,14 @@ open Lib.Domain.InstructionSet
 open Lib.Domain.PC
 open System
 open global.Xunit
-open System.IO
-open System.Reflection
 open FsUnit.Xunit
-
-// YoLo
-let (/) a b = Path.Combine(a, b)
-
-// YoLo
-let getLocalPath() = 
-    Assembly.GetExecutingAssembly().CodeBase
-    |> fun cb -> (new Uri(cb)).LocalPath
-    |> Path.GetFullPath
-    |> Path.GetDirectoryName
 
 [<Fact>]
 let ``ADD Tests``() = 
     let mb =
         { RamSize = 0x1000; PortRamSize = 0; CS = 0us; IP = 0x100us }
         |> initMotherBoard
-        |> loadBinary ("TestData" / "ADD.tests.com") 0x100 false
+        |> loadBinary (Path.combine "TestData" "ADD.tests.com") 0x100 false
 
     let rec nextCmd mb = 
         mb |> execLogicalInstr |> loop

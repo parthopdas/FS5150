@@ -2,6 +2,13 @@
 <FSharpLintSettings xmlns="https://github.com/fsprojects/FSharpLint/blob/master/ConfigurationSchema.xsd">
   <IgnoreFiles Update="Overwrite"><![CDATA[assemblyinfo.*]]></IgnoreFiles>
   <Analysers>
+    <Typography>
+      <Rules>
+        <TrailingNewLineInFile>
+          <Enabled>False</Enabled>
+        </TrailingNewLineInFile>
+      </Rules>
+    </Typography>
     <SourceLength>
       <Rules>
         <MaxLinesInLambdaFunction>

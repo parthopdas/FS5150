@@ -1,12 +1,12 @@
-﻿namespace Lib.CPU.Execution
+namespace Lib.CPU.Execution
 
 module Control = 
+    open YaFunTK
     open FSharpx
     open FSharpx.State
     open Lib.CPU.Execution.Common
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
-    open FSharpx.Functional
     
     let getAndIncrIPIf n flg = 
         if flg then 

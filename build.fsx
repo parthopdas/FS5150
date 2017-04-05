@@ -1,64 +1,66 @@
-// include Fake libs
 #r "./packages/FAKE/tools/FakeLib.dll"
-#r @"packages/FSharpLint/FSharpLint.Application.dll"
-#r @"packages/FSharpLint/FSharpLint.FAKE.dll"
+#r "./packages/FSharpLint/FSharpLint.Application.dll"
+#r "./packages/FSharpLint/FSharpLint.FAKE.dll"
 
 open Fake
 open Fake.Testing
 open FSharpLint.FAKE
+open System
+open System.IO
+
+MSBuildDefaults <- { MSBuildDefaults with Verbosity = Some MSBuildVerbosity.Minimal }
 
 // Directories
-let buildDir  = "./build/"
-let testDir  = "./build/"
-let deployDir = "./deploy/"
-
+let buildDir  = __SOURCE_DIRECTORY__ @@ @"build"
+let testDir  = __SOURCE_DIRECTORY__ @@ @"build"
 
 // Filesets
-let appReferences  =
-    !! "/**/*.csproj"
-      ++ "/**/*.fsproj"
+let solutionFile = "Fs5150.sln"
 
-// version info
-let version = "0.1"  // or retrieve from CI server
+let msbuildProps = [
+    "Configuration", "Debug"
+    "Platform", "Any CPU"
+]
 
 // Targets
 Target "Clean" (fun _ ->
-    CleanDirs [buildDir; deployDir]
+    CleanDirs [buildDir]
+
+    !! solutionFile
+    |> MSBuild buildDir "Clean" msbuildProps
+    |> ignore
 )
+
+Target "Rebuild" DoNothing
 
 Target "Lint" (fun _ ->
     !! "**/*.fsproj"
         |> Seq.iter (FSharpLint (fun p -> { p with FailBuildIfAnyWarnings = true })))
 
 Target "Build" (fun _ ->
-    // compile all projects below src/app/
-    MSBuildDebug buildDir "Build" appReferences
-        |> Log "AppBuild-Output: "
+    !! solutionFile
+    |> MSBuild buildDir "Build" msbuildProps
+    |> ignore
 )
 
-Target "Test" (fun _ ->
-    !! (buildDir + "/*.Tests.dll")
+let runTest pattern =
+    fun _ ->
+        !! (buildDir @@ pattern)
         |> xUnit (fun p ->
-          { p with
-              ToolPath =
-                findToolInSubPath "xunit.console.exe" (currentDirectory @@ "tools" @@ "xUnit")
-              WorkingDir = Some testDir })
-)
+            { p with
+                ToolPath = findToolInSubPath "xunit.console.exe" (currentDirectory @@ "tools" @@ "xUnit")
+                WorkingDir = Some testDir })
 
-Target "Deploy" (fun _ ->
-    !! (buildDir + "/**/*.*")
-        -- "*.zip"
-        |> Zip buildDir (deployDir + "ApplicationName." + version + ".zip")
-)
+Target "Test" DoNothing
+Target "UnitTests" (runTest "*.Tests*.dll")
 
-Target "Rebuild" DoNothing
-
-//"Lint" ==> "Build"
-"Build" ==> "Rebuild"
-"Clean" ==> "Rebuild"
-"Clean" ?=> "Build"
+"Lint" ==> "Build"
 "Clean" ?=> "Lint"
-"Build" ==> "Test"
+"Clean" ?=> "Build"
+"Clean" ==> "Rebuild" 
+"Build" ==> "Rebuild" 
+"Build" ?=> "UnitTests" ==> "Test"
+"Rebuild" ==> "Test"
 
 // start build
-RunTargetOrDefault "Build"
+RunTargetOrDefault "Test"

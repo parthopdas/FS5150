@@ -1,6 +1,7 @@
 ﻿namespace Lib.CPU.Execution
 
-module FDE = 
+module FDE =
+    open YaFunTK 
     open FSharpx
     open FSharpx.State
     open Lib.CPU
@@ -15,16 +16,11 @@ module FDE =
     open Lib.Domain.PC
     open Lib.Parser.Core
     open Lib.Parser.TextInput
-    open System
     open System.IO
-    open System.Reflection
-    open FSharpx.Functional
     
     let grammer = 
-        (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
-        |> Path.GetFullPath
-        |> Path.GetDirectoryName
-        |> fun p -> Path.Combine(p, "8086_table.txt")
+        (Path.getLocalPath(), "8086_table.txt")
+        ||> Path.combine
         |> File.ReadAllText
         |> InstructionSetLoader.loadInstructionSet
         |> InstructionSetLoader.loadGrammer

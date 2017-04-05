@@ -1,9 +1,17 @@
 source https://www.nuget.org/api/v2
+
 nuget FAKE
-nuget FsCheck.Xunit
+nuget FSharp.Core 4.0.0.1 redirects: force
 nuget FSharpLint
-nuget FSharpx.Extras
+nuget FsCheck 2.8
+nuget FsCheck.Xunit 2.5
+nuget FSharp.Control.AsyncSeq 2.0.8
+nuget FSharpx.Async 1.12
+nuget FSharpx.Extras 1.10.3
+nuget FSharpx.Collections 1.10.1
 nuget FsUnit.Xunit
 nuget xunit
 nuget xunit.runner.console
 nuget xunit.runner.visualstudio
+
+gist parthopdas/ccd06b223c0ae88ed9164f34cc1f5f06 YaFunTK.fs

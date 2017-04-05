@@ -1,8 +1,8 @@
 ﻿namespace Lib.CPU
 
 module I8088 = 
+    open YaFunTK
     open FSharpx
-    open FSharpx.Functional
     open FSharpx.Text
     open Lib
     open Lib.CPU.Execution.Common
@@ -89,11 +89,11 @@ module I8088 =
             |> State.eval createInputAtCSIP
             ||> decodeInstr
             |> Result.map fst
-            |> Result.map toStr
+            |> Result.map Prelude.toStr
         
         let rmbstr = 
             mb
-            |> toStr
+            |> Prelude.toStr
             |> Result.returnM
         
         Result.lift2 (sprintf "%s\n%s") rmbstr rinstr
@@ -157,7 +157,7 @@ module I8088 =
                    if ith = 0 then i :: is |> Result.returnM
                    else getInstrAt (ith - 1) (i :: is) (n + i.Length))
         getInstrAt 9 [] 0us |> Result.bind (List.rev
-                                            >> List.map toStr
+                                            >> List.map Prelude.toStr
                                             >> Strings.joinLines
                                             >> Result.returnM)
     
@@ -196,22 +196,22 @@ module I8088 =
                             fun mb -> (mb, true) |> Result.returnM
                         | Some(Stats(rc)) -> 
                             (fun mb -> mb |> Result.returnM)
-                            >> Common.tee (Result.bind getStats >> rc.Reply)
+                            >> Prelude.tee (Result.bind getStats >> rc.Reply)
                             >> continueWithBr
                         | Some(Trace(rc)) -> 
                             execLogicalInstr
-                            >> Common.tee (Result.bind dumpRegisters >> rc.Reply)
+                            >> Prelude.tee (Result.bind dumpRegisters >> rc.Reply)
                             >> continueWithBr
                         | Some(Register(rc)) -> 
-                            Common.tee (dumpRegisters >> rc.Reply)
+                            Prelude.tee (dumpRegisters >> rc.Reply)
                             >> Result.returnM
                             >> continueWithBr
                         | Some(Dump(a, rc)) -> 
-                            Common.tee (dumpMemory a >> rc.Reply)
+                            Prelude.tee (dumpMemory a >> rc.Reply)
                             >> Result.returnM
                             >> continueWithBr
                         | Some(Unassemble(rc)) -> 
-                            Common.tee (unassemble >> rc.Reply)
+                            Prelude.tee (unassemble >> rc.Reply)
                             >> Result.returnM
                             >> continueWithBr
                         | None -> 

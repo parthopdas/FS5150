@@ -1,3 +1,5 @@
+File:YaFunTK.fs
+FSharp.Core
 FsUnit.xUnit
 FsCheck.Xunit
 xunit.runner.console

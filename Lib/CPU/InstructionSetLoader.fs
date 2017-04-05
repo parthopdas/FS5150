@@ -1,7 +1,7 @@
 ﻿namespace Lib.CPU
 
 module InstructionSetLoader = 
-    open FSharpx.Functional
+    open YaFunTK
     open FSharpx.Text
     open Lib.Common
     open Lib.Domain.InstructionSet
@@ -70,13 +70,13 @@ module InstructionSetLoader =
             | "M" -> "Mem"
             | s when Strings.startsWith "e" s -> s.[1..]
             | s -> s.Replace("0", "Z").Replace("v", "w").ToUpper()
-        match Strings.toUnionCase (a |> xform) with
+        match String.toUnionCase (a |> xform) with
         | Some uc -> uc |> OcaSpecial
         | None -> 
             match Enum.TryParse<NormalArgCode>(a
                                                |> xform
                                                |> Strings.toCharArray
-                                               |> Array.map toStr
+                                               |> Array.map Prelude.toStr
                                                |> String.concat ", ") with
             | true, ac -> OcaNormal(ac)
             | false, _ -> Prelude.undefined

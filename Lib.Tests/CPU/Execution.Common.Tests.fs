@@ -1,6 +1,6 @@
 ﻿module Lib.Excution.Common.Tests
 
-open FSharpx.Functional
+open YaFunTK
 open FsUnit.Xunit
 open Lib.CPU.Execution.Common
 open FSharpx.State

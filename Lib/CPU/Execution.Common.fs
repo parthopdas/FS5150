@@ -1,8 +1,8 @@
-﻿namespace Lib.CPU.Execution
+namespace Lib.CPU.Execution
 
 module Common = 
+    open YaFunTK
     open FSharpx
-    open FSharpx.Functional
     open FSharpx.State
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC

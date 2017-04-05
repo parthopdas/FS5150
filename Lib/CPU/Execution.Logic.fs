@@ -1,8 +1,8 @@
-﻿namespace Lib.CPU.Execution
+namespace Lib.CPU.Execution
 
 module Logic = 
+    open YaFunTK
     open FSharpx
-    open FSharpx.Functional
     open FSharpx.State
     open Lib.CPU.Execution.Common
     open Lib.Domain.InstructionSet
