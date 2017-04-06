@@ -27,10 +27,10 @@ let ``ADD Tests``() =
 
     mb |> Result.returnM |> loop
 
-    mb.CPU.ICount |> should equal 0x49L
+    mb.CPU.ICount |> should equal 0x164L
     mb.CPU.CS |> should equal 0x0us
-    mb.CPU.IP |> should equal 0x107us
-    0x0us @|@ 0x103us |> readWord16 |> Prelude.flip State.eval mb |> should equal 14us
+    mb.CPU.IP |> should equal 0x10Eus
+    0x0us @|@ 0x10aus |> readWord16 |> Prelude.flip State.eval mb |> should equal 42us
 
 module SUB = 
     let fSubRes8 = (fun a1 a2 -> a1 + (~~~a2 + 1uy))

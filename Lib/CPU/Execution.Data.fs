@@ -38,6 +38,17 @@ module Data =
         | [ ArgRegister16 r ] -> (getReg16 r >>= push) *> ns
         | _ -> nyi instr
     
+    let execPOP instr = 
+        match instr.Args with
+        | [ ArgRegister16 r ] -> (pop >>= setReg16 r) *> ns
+        | _ -> nyi instr
+    
+    let execPUSHF _ = 
+        (getRegIP >>= push) *> ns
+    
+    let execPOPF _ = 
+        (pop >>= setRegIP) *> ns
+    
     let coreSTOSX getAcc write n = 
         let writeToESDI v = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= write v
         

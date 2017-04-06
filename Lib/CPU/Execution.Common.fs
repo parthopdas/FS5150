@@ -107,6 +107,18 @@ module Common =
             (), mb
         innerFn : State<unit, Motherboard>
     
+    let getRegIP = 
+        let innerFn mb =
+            let data = uint16 mb.CPU.Flags.Data 
+            data, mb
+        innerFn : State<Word16, Motherboard>
+    
+    let setRegIP (value : Word16) = 
+        let innerFn mb = 
+            mb.CPU.Flags <- value |> int |> BitVector32
+            (), mb
+        innerFn : State<unit, Motherboard>
+    
     let getReg8 reg = 
         let innerFn mb = 
             let data = 
@@ -230,6 +242,11 @@ module Common =
         getSSSP >>= (fun sssp -> 
                      let sssp' = sssp |-- 2us
                      setSSSP sssp' *> writeWord16 w16 sssp')
+    
+    let pop = 
+        getSSSP >>= (fun sssp -> 
+                     let sssp' = sssp |++ 2us
+                     readWord16 sssp <* setSSSP sssp')
 
     (* Device IO *)
     let portReadCallbacks : Map<Word16, Word16 -> Word8> = Map.empty

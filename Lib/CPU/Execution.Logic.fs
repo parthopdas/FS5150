@@ -12,14 +12,6 @@ module Logic =
     
     let flagLog16 (w16 : Word16) = flagSZP16 w16 *> (setFlag Flags.CF false) *> (setFlag Flags.OF false)
     
-    let opXor8 v1v2 = 
-        let res = v1v2 ||> (^^^)
-        flagLog8 res *> (res |> State.returnM)
-    
-    let opXor16 v1v2 = 
-        let res = v1v2 ||> (^^^)
-        flagLog16 res *> (res |> State.returnM)
-    
     let execNOT instr = 
         match instr.Args with
         | [ ArgRegister8 r ] -> ((~~~) <!> getReg8 r >>= setReg8 r) *> ns
@@ -38,6 +30,14 @@ module Logic =
         | _ -> nyi instr
     
     let execXOR instr = 
+        let opXor8 v1v2 = 
+            let res = v1v2 ||> (^^^)
+            flagLog8 res *> (res |> State.returnM)
+    
+        let opXor16 v1v2 = 
+            let res = v1v2 ||> (^^^)
+            flagLog16 res *> (res |> State.returnM)
+    
         match instr.Args with
         | [ ArgRegister16 r1; ArgRegister16 r2 ] -> 
             (Prelude.tuple2 <!> getReg16 r1 <*> getReg16 r2
@@ -55,3 +55,24 @@ module Logic =
              >>= setReg16 r1)
             *> ns
         | _ -> nyi instr
+
+    let execTEST instr = 
+        let opAnd8 v1v2 = 
+            let res = v1v2 ||> (&&&)
+            flagLog8 res *> (res |> State.returnM)
+    
+        let opAnd16 v1v2 = 
+            let res = v1v2 ||> (&&&)
+            flagLog16 res *> (res |> State.returnM)
+    
+        match instr.Args with
+        | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> getReg8 r <*> (c |> State.returnM)
+             >>= opAnd8)
+            *> ns
+        | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
+            (Prelude.tuple2 <!> getReg16 r <*> (c |> State.returnM)
+             >>= opAnd16)
+            *> ns
+        | _ -> nyi instr
+    

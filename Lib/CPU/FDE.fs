@@ -120,10 +120,10 @@ module FDE =
           (* "NOT", 0x43 *) execNOT;
           (* "OR", 0x44 *) nyi;
           (* "OUT", 0x45 *) execOUT;
-          (* "POP", 0x46 *) nyi;
-          (* "POPF", 0x47 *) nyi;
+          (* "POP", 0x46 *) execPOP;
+          (* "POPF", 0x47 *) execPOPF;
           (* "PUSH", 0x48 *) execPUSH;
-          (* "PUSHF", 0x49 *) nyi;
+          (* "PUSHF", 0x49 *) execPUSHF;
           (* "RCL", 0x4A *) nyi;
           (* "RCR", 0x4B *) nyi;
           (* "REPNZ", 0x4C *) nyi;
@@ -146,7 +146,7 @@ module FDE =
           (* "STOSB", 0x5D *) execSTOSB;
           (* "STOSW", 0x5E *) execSTOSW;
           (* "SUB", 0x5F *) execSUB;
-          (* "TEST", 0x60 *) nyi;
+          (* "TEST", 0x60 *) execTEST;
           (* "WAIT", 0x61 *) nyi;
           (* "XCHG", 0x62 *) nyi;
           (* "XLAT", 0x63 *) nyi;

@@ -78,6 +78,7 @@ module PC =
             let fs = 
                 Enum.GetValues(typeof<Flags>)
                 |> Seq.cast<Flags>
+                |> Seq.rev
                 |> Seq.map (fun k -> 
                        flagNames
                        |> Map.find k
