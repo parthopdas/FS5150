@@ -3,28 +3,29 @@
 module PC = 
     open InstructionSet
     open System.Diagnostics
-    open System.Collections
     open System
+    open System.Collections.Specialized
     
+    [<Flags>]
     type Flags = 
         /// Overflow - Signed number exceeds capacity of result
-        | OF = 11
+        | OF = 0b0000100000000000
         /// Direction - Set by user to indication direction of string instructions
-        | DF = 10
+        | DF = 0b0000010000000000
         /// Interrupt - Enable or disable hardware interrupts
-        | IF = 9
+        | IF = 0b0000001000000000
         /// Trap - Single step
-        | TF = 8
+        | TF = 0b0000000100000000
         /// Sign - Results sign bit from compare/substract ops
-        | SF = 7
+        | SF = 0b0000000010000000
         /// Zero - Result is zero from compare/substract ops
-        | ZF = 6
+        | ZF = 0b0000000001000000
         /// Adjust - ?
-        | AF = 4
+        | AF = 0b0000000000010000
         /// Parity - ?
-        | PF = 2
+        | PF = 0b0000000000000100
         /// Carry - Unsigned number exceeds capacity of result
-        | CF = 0
+        | CF = 0b0000000000000001
     
     let flagNames = 
         [ (Flags.OF, ("OV", "NV"))
@@ -52,7 +53,7 @@ module PC =
           mutable DS : Word16
           mutable SS : Word16
           mutable ES : Word16
-          Flags : BitArray
+          mutable Flags : BitVector32
           mutable LogicalInstrStart : Address
           mutable SegmentOverride : RegisterSeg option
           mutable RepetitionType : RepetitionType option

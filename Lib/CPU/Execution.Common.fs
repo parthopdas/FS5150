@@ -6,7 +6,7 @@ module Common =
     open FSharpx.State
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
-    open System.Collections
+    open System.Collections.Specialized
     
     let initialCPU() = 
         { AX = 0us
@@ -22,7 +22,7 @@ module Common =
           DS = 0us
           SS = 0us
           ES = 0us
-          Flags = BitArray(16, false)
+          Flags = BitVector32()
           LogicalInstrStart = { Offset = 0us; Segment = 0us }
           SegmentOverride = None
           RepetitionType = None
