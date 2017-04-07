@@ -128,8 +128,8 @@ module FDE =
           (* "RCR", 0x4B *) nyi;
           (* "REPNZ", 0x4C *) nyi;
           (* "REPZ", 0x4D *) execREPX WhileZero;
-          (* "RET", 0x4E *) nyi;
-          (* "RETF", 0x4F *) nyi;
+          (* "RET", 0x4E *) execRET;
+          (* "RETF", 0x4F *) execRETF;
           (* "ROL", 0x50 *) nyi;
           (* "ROR", 0x51 *) nyi;
           (* "SAHF", 0x52 *) nyi;

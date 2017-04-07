@@ -82,14 +82,52 @@ module Control =
     
     let execREPX rt _ = 
         setRepetitionType rt *> ns
-    
-    let inline coreCALL ilen w16 = 
+        
+    let inline private coreCALLRelative ilen w16 =
         getCSIP >>= (fun csip -> 
-                     push csip.Offset *> (csip |++ ilen |++ w16 |> State.returnM))
+                     let retAddr = csip |++ ilen
+                     push retAddr.Offset *> ((retAddr |++ w16) |> Some |> State.returnM))
+
+    let inline private coreCALLIP ilen w16 =
+        getCSIP >>= (fun csip -> 
+                     let retAddr = csip |++ ilen
+                     push retAddr.Offset *> ({csip with Offset = w16} |> Some |> State.returnM))
+    
+    let inline private coreCALLCSIP ilen newCSIP =
+        (getCSIP >>= (fun csip -> 
+                      let retAddr = csip |++ ilen
+                      push retAddr.Segment *> push retAddr.Offset)) *> (newCSIP |> Some |> State.returnM)
 
     let execCALL instr = 
         match instr.Args with
-        | [ ArgOffset(w16) ] -> coreCALL instr.Length w16 >>= (Some >> State.returnM)
+        | [ ArgOffset(w16) ] -> 
+            coreCALLRelative instr.Length w16
+        | [ ArgRegister16 r ] -> 
+            getReg16 r >>= (coreCALLIP instr.Length)
+        | [ ArgDereference dref ] ->
+            (addressFromDref instr dref >>= readWord16) >>= (coreCALLIP instr.Length)
+        | [ ArgAddress addr ] ->
+            coreCALLCSIP instr.Length addr
+        | _ -> nyi instr
+
+    let private decSP c = getReg16 SP >>= ((+) c >> State.returnM) >>= setReg16 SP
+
+    let execRET instr = 
+        let updateIP = fun csip ip -> { csip with Offset = ip } |> Some |> State.returnM
+        match instr.Args with
+        | [ ] -> 
+            getCSIP >>= (fun csip -> pop >>= updateIP csip) 
+        | [ ArgImmediate(W16 c) ] ->
+            getCSIP >>= (fun csip -> pop <* (decSP c) >>= updateIP csip) 
+        | _ -> nyi instr
+
+    let execRETF instr = 
+        let popIPCS = Prelude.flip (@|@) <!> pop <*> pop
+        match instr.Args with
+        | [ ] -> 
+            popIPCS >>= (Some >> State.returnM)
+        | [ ArgImmediate(W16 c) ] ->
+            popIPCS <* (decSP c) >>= (Some >> State.returnM)
         | _ -> nyi instr
 
     let execHLT _ =

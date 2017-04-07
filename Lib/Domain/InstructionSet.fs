@@ -5,9 +5,18 @@ module InstructionSet =
     
     type Word8 = uint8
     
-    type Word16 = uint16
+    let inline Word8<'T when 'T : (static member op_Explicit : 'T -> uint8)> (value: 'T)  = 
+        uint8<'T> value
     
+    type Word16 = uint16
+
+    let inline Word16<'T when 'T : (static member op_Explicit : 'T -> uint16)> (value: 'T)  = 
+        uint16<'T> value
+
     type Word32 = uint32
+
+    let inline Word32<'T when 'T : (static member op_Explicit : 'T -> uint32)> (value: 'T)  = 
+        uint32<'T> value
     
     type OpCodeDesc = 
         { OcName : string

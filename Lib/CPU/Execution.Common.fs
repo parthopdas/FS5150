@@ -31,8 +31,8 @@ module Common =
           ICount = 0L }
     
     (* Byte/Word/Address manipulation *)
-    let inline (!<>) (w8 : Word8) : Word16 = (uint16) w8
-    let inline (!><) (w16 : Word16) : Word8 = (uint8) w16
+    let inline (!<>) (w8 : Word8) : Word16 = (Word16) w8
+    let inline (!><) (w16 : Word16) : Word8 = (Word8) w16
     let inline (+|+) (hi : Word8) (lo : Word8) : Word16 = !<>hi <<< 8 ||| !<>lo
     let getHiByte : Word16 -> Word8 = Prelude.flip (>>>) 8 >> (!><)
     let getLoByte : Word16 -> Word8 = Prelude.flip (&&&) 0x00FFus >> (!><)
@@ -69,6 +69,7 @@ module Common =
             (), mb
         innerFn : State<unit, Motherboard>
     
+    // TODO: Perf: Split this out into getcs and getip, same for set
     let getCSIP = 
         let innerFn mb = 
             mb.CPU.CS @|@ mb.CPU.IP, mb
@@ -107,13 +108,13 @@ module Common =
             (), mb
         innerFn : State<unit, Motherboard>
     
-    let getRegIP = 
+    let getRegFlags = 
         let innerFn mb =
             let data = uint16 mb.CPU.Flags.Data 
             data, mb
         innerFn : State<Word16, Motherboard>
     
-    let setRegIP (value : Word16) = 
+    let setRegFlags (value : Word16) = 
         let innerFn mb = 
             mb.CPU.Flags <- value |> int |> BitVector32
             (), mb

@@ -4,10 +4,8 @@ module I8088 =
     open YaFunTK
     open FSharpx
     open FSharpx.Text
-    open Lib
     open Lib.CPU.Execution.Common
     open Lib.CPU.Execution.FDE
-    open Lib.Common
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     open Lib.Parser.Core
@@ -16,6 +14,7 @@ module I8088 =
     open System.Globalization
     open System.IO
     open System.Reflection
+    open System.Collections.Generic
     
     // TODO: PERF: State monad might be causing some bottlenecks. Consider a home grown implementation.
 
@@ -29,6 +28,11 @@ module I8088 =
               PortRamSize = 0x10000
               CS = 0xFFFFus
               IP = 0us }
+
+    type CpuLoopState =
+        | Running
+        | Paused
+        | Halted
 
     let initMotherBoard init : Motherboard = 
         { SW = Stopwatch()
@@ -47,7 +51,7 @@ module I8088 =
         |> (fun len -> Array.fill mb.ReadOnly addr len ro)
         mb
     
-    let getStats mb = 
+    let getStats (mb, _) = 
         sprintf 
             "[Timer: %s] Count = %d, Ticks = %d, Average = %.6fmips" 
             (if Stopwatch.IsHighResolution && not mb.SW.IsRunning then "OK" else "NOT OK") 
@@ -58,7 +62,7 @@ module I8088 =
     
     let resetCPUState = State.exec resetCPU >> Result.returnM
 
-    let execLogicalInstr mb = 
+    let execOneLogicalInstr (mb, (ls, bps : HashSet<_>)) = 
         let execPhysicalInstr mb = 
             mb
             |> State.eval (State.( *> ) beforePhysicalInstr createInputAtCSIP)
@@ -68,22 +72,29 @@ module I8088 =
                             let s = State.( <* ) (i |> executeInstr) afterPhysicalInstr
                             (State.exec s mb, i.IsPrefix) |> Result.returnM)
     
-        let rec loopExecPrefixInstrs mb =
+        let rec loopExecPrefixInstrs (mb, (ls, bps)) =
             mb
             |> execPhysicalInstr
             |> Result.bind (fun (mb',isPrefix) -> 
                             if isPrefix then 
-                                loopExecPrefixInstrs mb' 
-                            else (Result.returnM mb'))
+                                loopExecPrefixInstrs (mb', (ls, bps)) 
+                            else (Result.returnM (mb', (ls, bps))))
         if mb.CPU.Halted then
-            Failure("CPU Halted", EndOfInput, { CurrentBytes = Array.empty; CurrentOffset = mb.CPU.CS @|@ mb.CPU.IP |> flatten |> int })
+            (mb, (Halted, bps)) |> Result.returnM
+        else if ls = Running && mb.CPU.CS @|@ mb.CPU.IP |> bps.Contains then
+            (mb, (Paused, bps)) |> Result.returnM
         else
-            mb
-            |> State.exec beforeLogicalInstr
-            |> loopExecPrefixInstrs
+            (mb |> State.exec beforeLogicalInstr, (ls, bps))
+            |> loopExecPrefixInstrs 
+
+    let rec private execNextLogicalInstr (mb, state) = 
+        if not mb.CPU.Halted then
+            (mb, state)
+            |> execOneLogicalInstr
+            |> execAllLogicalInstrs
+    and execAllLogicalInstrs = Result.fold execNextLogicalInstr ignore
     
-    /// dumpRegisters :: Motherboard -> Result<string>
-    let dumpRegisters mb = 
+    let dumpRegisters (mb, _) = 
         let rinstr = 
             mb
             |> State.eval createInputAtCSIP
@@ -98,8 +109,15 @@ module I8088 =
         
         Result.lift2 (sprintf "%s\n%s") rmbstr rinstr
     
-    /// dumpMemory :: Address -> Motherboard -> Result<string>
-    let dumpMemory addr mb = 
+    let setBreakPoint addr (_, (ls, bps : HashSet<_>)) =
+        bps.Add(addr) |> ignore
+        let str = 
+            bps 
+            |> Seq.map Prelude.toStr
+            |> String.concat Environment.NewLine
+        ((ls, bps), str) |> Result.returnM
+
+    let dumpMemory addr (mb, _) = 
         let bytesToPrint = 128us
         let bytesPerLine = 0x10
         
@@ -124,7 +142,7 @@ module I8088 =
         
         let lines = 
             Map.foldBack (fun eK eT acc -> 
-                let a = addr |++ ((uint16) (eK * bytesPerLine))
+                let a = addr |++ (Word16(eK * bytesPerLine))
                 
                 let bstr = 
                     eT
@@ -145,8 +163,7 @@ module I8088 =
         |> Strings.joinLines
         |> Result.returnM
     
-    /// unassemble :: Motherboard -> Result<string>
-    let unassemble mb = 
+    let unassemble (mb, _) = 
         let rec getInstrAt ith is n = 
             getCSIP
             |> State.bind (Prelude.flip (|++) n >> createInputAt)
@@ -163,6 +180,8 @@ module I8088 =
     
     type I8088Command = 
         | Break of AsyncReplyChannel<Result<string>>
+        | Resume of AsyncReplyChannel<Result<string>>
+        | SetBreakPoint of Address * AsyncReplyChannel<Result<string>>
         | Dump of Address * AsyncReplyChannel<Result<string>>
         | Register of AsyncReplyChannel<Result<string>>
         | Stats of AsyncReplyChannel<Result<string>>
@@ -170,8 +189,15 @@ module I8088 =
         | Unassemble of AsyncReplyChannel<Result<string>>
     
     let (|BreakCmdFormat|_|) = Regex.tryMatch "^b$"
+    let (|ResumeCmdFormat|_|) = Regex.tryMatch "^g$"
+    let (|SetBreakPointCmdFormat|_|) input = 
+        match Regex.tryMatch "^bp ([0-9a-fA-F]{1,4}):([0-9a-fA-F]{1,4})$" input with
+        | Some am -> 
+            Some { Segment = UInt16.Parse(am.Groups.[0].Value, NumberStyles.HexNumber)
+                   Offset = UInt16.Parse(am.Groups.[1].Value, NumberStyles.HexNumber) }
+        | None -> None
     let (|DumpCmdFormat|_|) input = 
-        match Regex.tryMatch "^d ([0-9a-f]{1,4}):([0-9a-f]{1,4})$" input with
+        match Regex.tryMatch "^d ([0-9a-fA-F]{1,4}):([0-9a-fA-F]{1,4})$" input with
         | Some am -> 
             Some { Segment = UInt16.Parse(am.Groups.[0].Value, NumberStyles.HexNumber)
                    Offset = UInt16.Parse(am.Groups.[1].Value, NumberStyles.HexNumber) }
@@ -184,47 +210,40 @@ module I8088 =
     type I8088Agent() = 
         
         let processor (inbox : MailboxProcessor<I8088Command>) = 
-            let rec nextCmd (mb, br) = 
-                let continueWithBr = (Prelude.flip Prelude.tuple2 br) |> Result.map
-                async { 
-                    let! command = inbox.TryReceive(if br then -1
-                                                    else 0)
+            let rec nextCmd (mb, (br, bps)) = 
+                async {
+                    let! command = inbox.TryReceive(match br with | Paused -> -1 | _ -> 0)
                     let f = 
                         match command with
                         | Some(Break(rc)) ->
                             rc.Reply("" |> Result.returnM) 
-                            fun mb -> (mb, true) |> Result.returnM
-                        | Some(Stats(rc)) -> 
-                            (fun mb -> mb |> Result.returnM)
-                            >> Prelude.tee (Result.bind getStats >> rc.Reply)
-                            >> continueWithBr
+                            fun (mb, (_, bps)) -> (mb, (Paused, bps)) |> Result.returnM
+                        | Some(Resume(rc)) ->
+                            rc.Reply("" |> Result.returnM) 
+                            fun (mb, (_, bps)) -> (mb, (Running, bps)) |> Result.returnM
+                        | Some(SetBreakPoint(a, rc)) -> 
+                                setBreakPoint a 
+                                >> Result.bind (
+                                    Prelude.tee (snd >> Result.returnM >> rc.Reply) 
+                                    >> (fst >> Prelude.tuple2 mb >> Result.returnM))
+                        | Some(Stats(rc)) ->
+                            Prelude.tee (getStats >> rc.Reply)
+                            >> Result.returnM 
                         | Some(Trace(rc)) -> 
-                            execLogicalInstr
+                            execOneLogicalInstr
                             >> Prelude.tee (Result.bind dumpRegisters >> rc.Reply)
-                            >> continueWithBr
                         | Some(Register(rc)) -> 
                             Prelude.tee (dumpRegisters >> rc.Reply)
                             >> Result.returnM
-                            >> continueWithBr
                         | Some(Dump(a, rc)) -> 
                             Prelude.tee (dumpMemory a >> rc.Reply)
                             >> Result.returnM
-                            >> continueWithBr
                         | Some(Unassemble(rc)) -> 
                             Prelude.tee (unassemble >> rc.Reply)
                             >> Result.returnM
-                            >> continueWithBr
                         | None -> 
-                            execLogicalInstr >> Result.bind (fun mb -> 
-                                                  let icount = 2L * 8192L + 110L
-                                                  let x = 
-                                                      //if mb.CPU.ICount % icount = 0L then resetCPUState
-                                                      //else Result.returnM
-                                                      Result.returnM
-                                                  mb
-                                                  |> x
-                                                  |> Result.bind (fun mb -> (mb, mb.CPU.ICount > 655999L + 2048L + 2050L) |> Result.returnM))
-                    return! mb
+                            execOneLogicalInstr
+                    return! (mb, (br, bps))
                             |> f
                             |> loop
                 }
@@ -236,13 +255,15 @@ module I8088 =
             |> loadBinary "PCXTBIOS.BIN" 0xFE000 true
             |> loadBinary "VIDEOROM.BIN" 0xC0000 true
             |> loadBinary "ROMBASIC.BIN" 0xF6000 false
-            |> Prelude.tuple2 false
+            |> Prelude.tuple2 (Paused, HashSet<_>())
             |> Prelude.swap
             |> Result.returnM
             |> loop
         
         let mailboxProc = MailboxProcessor.Start processor
         member __.Break() = mailboxProc.PostAndReply Break
+        member __.Resume() = mailboxProc.PostAndReply Resume
+        member __.SetBreakPoint a = mailboxProc.PostAndReply(fun rc -> SetBreakPoint(a, rc))
         member __.Dump a = mailboxProc.PostAndReply(fun rc -> Dump(a, rc))
         member __.Register() = mailboxProc.PostAndReply Register
         member __.Stats() = mailboxProc.PostAndReply Stats

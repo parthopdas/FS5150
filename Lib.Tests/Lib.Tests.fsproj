@@ -32,62 +32,6 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\Lib.Tests.XML</DocumentationFile>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="..\paket-files\parthopdas\ccd06b223c0ae88ed9164f34cc1f5f06\YaFunTK.fs">
-      <Paket>True</Paket>
-      <Link>paket-files/YaFunTK.fs</Link>
-    </Compile>
-    <Reference Include="FSharp.Control.AsyncSeq">
-      <HintPath>..\packages\FSharp.Control.AsyncSeq\lib\net45\FSharp.Control.AsyncSeq.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="FSharpx.Async">
-      <HintPath>..\packages\FSharpx.Async\lib\net40\FSharpx.Async.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="FSharpx.Collections">
-      <HintPath>..\packages\FSharpx.Collections\lib\net40\FSharpx.Collections.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="FSharpx.Extras">
-      <HintPath>..\packages\FSharpx.Extras\lib\40\FSharpx.Extras.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="mscorlib" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="TestData\ADD.tests.asm" />
-    <None Include="TestData\ADD.tests.com">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Common.fs" />
-    <Compile Include="Common.Tests.fs" />
-    <Compile Include="Parser\Input.Tests.fs" />
-    <Compile Include="Parser\Core.Tests.fs" />
-    <Compile Include="Parser\Combinators.Tests.fs" />
-    <Compile Include="Parser\Tokens.Tests.fs" />
-    <Compile Include="CPU\InstructionSetLoader.Tests.fs" />
-    <Compile Include="CPU\Disassembler.Tests.fs" />
-    <Compile Include="CPU\Execution.Common.Tests.fs" />
-    <Compile Include="CPU\Execution.Data.Tests.fs" />
-    <Compile Include="CPU\Execution.Arithmetic.Tests.fs" />
-    <Compile Include="CPU\Execution.Logic.Tests.fs" />
-    <Compile Include="CPU\Execution.String.Tests.fs" />
-    <Compile Include="CPU\Execution.Control.Tests.fs" />
-    <Compile Include="CPU\Execution.Processor.Tests.fs" />
-    <None Include="app.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Lib\Lib.fsproj">
-      <Name>Lib</Name>
-      <Project>{c8c897a3-2011-4f70-a978-77f69193e6ea}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
   </PropertyGroup>
@@ -375,4 +319,62 @@
       </ItemGroup>
     </When>
   </Choose>
+  <ItemGroup>
+    <Compile Include="..\paket-files\parthopdas\ccd06b223c0ae88ed9164f34cc1f5f06\YaFunTK.fs">
+      <Paket>True</Paket>
+      <Link>paket-files/YaFunTK.fs</Link>
+    </Compile>
+    <None Include="TestData\ADD.tests.asm" />
+    <None Include="TestData\ADD.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Common.fs" />
+    <Compile Include="Common.Tests.fs" />
+    <Compile Include="Parser\Input.Tests.fs" />
+    <Compile Include="Parser\Core.Tests.fs" />
+    <Compile Include="Parser\Combinators.Tests.fs" />
+    <Compile Include="Parser\Tokens.Tests.fs" />
+    <Compile Include="CPU\InstructionSetLoader.Tests.fs" />
+    <Compile Include="CPU\Disassembler.Tests.fs" />
+    <Compile Include="CPU\Execution.Common.Tests.fs" />
+    <Compile Include="CPU\Execution.Data.Tests.fs" />
+    <Compile Include="CPU\Execution.Arithmetic.Tests.fs" />
+    <Compile Include="CPU\Execution.Logic.Tests.fs" />
+    <Compile Include="CPU\Execution.String.Tests.fs" />
+    <Compile Include="CPU\Execution.Control.Tests.fs" />
+    <Compile Include="CPU\Execution.Processor.Tests.fs" />
+    <None Include="app.config" />
+    <None Include="TestData\CALL-RET.tests.asm" />
+    <None Include="TestData\CALL-RET.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FSharp.Control.AsyncSeq">
+      <HintPath>..\packages\FSharp.Control.AsyncSeq\lib\net45\FSharp.Control.AsyncSeq.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FSharpx.Async">
+      <HintPath>..\packages\FSharpx.Async\lib\net40\FSharpx.Async.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FSharpx.Collections">
+      <HintPath>..\packages\FSharpx.Collections\lib\net40\FSharpx.Collections.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FSharpx.Extras">
+      <HintPath>..\packages\FSharpx.Extras\lib\40\FSharpx.Extras.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <ProjectReference Include="..\Lib\Lib.fsproj">
+      <Name>Lib</Name>
+      <Project>{c8c897a3-2011-4f70-a978-77f69193e6ea}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

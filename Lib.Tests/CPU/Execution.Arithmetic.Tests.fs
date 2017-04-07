@@ -1,36 +1,24 @@
 ﻿module Lib.Excution.Arithmetic.Tests
 
-open YaFunTK
 open FSharpx
 open FsCheck
 open Lib
 open Lib.CPU.Execution.Arithmetic
 open Lib.CPU.Execution.Common
-open Lib.CPU.I8088
-open Lib.Parser.Core
+open Lib.Common
 open Lib.Domain.InstructionSet
 open Lib.Domain.PC
 open System
+open YaFunTK
 open global.Xunit
-open FsUnit.Xunit
 
 [<Fact>]
 let ``ADD Tests``() = 
-    let mb =
-        { RamSize = 0x1000; PortRamSize = 0; CS = 0us; IP = 0x100us }
-        |> initMotherBoard
-        |> loadBinary (Path.combine "TestData" "ADD.tests.com") 0x100 false
+    let mb = createMB "ADD.tests.com"
 
-    let rec nextCmd mb = 
-        mb |> execLogicalInstr |> loop
-    and loop = Result.fold nextCmd ignore
-
-    mb |> Result.returnM |> loop
-
-    mb.CPU.ICount |> should equal 0x164L
-    mb.CPU.CS |> should equal 0x0us
-    mb.CPU.IP |> should equal 0x10Eus
-    0x0us @|@ 0x10aus |> readWord16 |> Prelude.flip State.eval mb |> should equal 42us
+    runTestFromCOMFile mb
+    
+    verifyAfterTestFromCOMFile mb 0x164L 42us
 
 module SUB = 
     let fSubRes8 = (fun a1 a2 -> a1 + (~~~a2 + 1uy))

@@ -29,6 +29,8 @@ let main _ =
         let execCmd = 
             function 
             | BreakCmdFormat _ -> dbg.Break()
+            | ResumeCmdFormat _ -> dbg.Resume()
+            | SetBreakPointCmdFormat a -> dbg.SetBreakPoint(a)
             | DumpCmdFormat a -> dbg.Dump(a)
             | RegisterCmdFormat _ -> dbg.Register()
             | StatsCmdFormat _ -> dbg.Stats()

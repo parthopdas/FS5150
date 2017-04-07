@@ -8,3 +8,4 @@ References:
 - [OpCode reference](http://www.mathemainzel.info/files/x86asmref.html)
 - [Fake86 8086 PC Emulator](https://github.com/rubbermallet/fake86)
 - [Categories](https://www.tutorialspoint.com/microprocessor/microprocessor_8086_instruction_sets.htm) 
+- [BIOS sources](https://bitbucket.org/sparky4/pcxtbios/raw/7337018bcacff01f1979e07e16f4852082f94dc5/pcxtbio0.asm)
