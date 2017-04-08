@@ -13,7 +13,7 @@ open YaFunTK
 open global.Xunit
 
 [<Fact>]
-let ``ADD Tests``() = 
+let ``COM.Tests``() = 
     let mb = createMB "ADD.tests.com"
 
     runTestFromCOMFile mb

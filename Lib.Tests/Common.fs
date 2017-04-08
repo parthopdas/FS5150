@@ -43,10 +43,11 @@ module Common =
         |> execAllLogicalInstrs
     
     let verifyAfterTestFromCOMFile mb iCount tCount = 
-        mb.CPU.CS |> should equal 0x0us
+        let count = 
+            0x0us @|@ 0x14aus
+            |> readWord16
+            |> Prelude.flip State.eval mb
+        count |> should equal tCount
         mb.CPU.IP |> should equal 0x14Eus
+        mb.CPU.CS |> should equal 0x0us
         mb.CPU.ICount |> should equal iCount
-        0x0us @|@ 0x14aus
-        |> readWord16
-        |> Prelude.flip State.eval mb
-        |> should equal tCount

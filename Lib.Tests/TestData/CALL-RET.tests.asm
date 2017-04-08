@@ -15,12 +15,10 @@ push sp
 %macro VerifySavedStackRegs 0 
 pop ax
 mov bx, sp
-cmp ax, bx
-ASSERT_ZERO
+ASSERT_ZERO_CMP {ax, bx}
 pop ax
 mov bx, ss
-cmp ax, bx
-ASSERT_ZERO
+ASSERT_ZERO_CMP {ax, bx}
 %endmacro
 
 __BEGIN_TEST_SUITE__
@@ -58,8 +56,7 @@ _FACT_
 SaveStackRegs
 mov ax, 0
 call near CallRetNear
-cmp ax, 0deadh
-ASSERT_ZERO
+ASSERT_ZERO_CMP {ax, 0deadh}
 VerifySavedStackRegs
 
 ; call disp16	23	3	call near ptr NearTarget/retn immed16	24	3	retn 10
@@ -68,8 +65,7 @@ SaveStackRegs
 mov ax, 0
 push ax
 call near CallRetNNear
-cmp ax, 0beefh
-ASSERT_ZERO
+ASSERT_ZERO_CMP {ax, 0beefh}
 VerifySavedStackRegs
 
 ; call reg16	20	2	call bx/retn	20	1	ret (in near proc)
@@ -78,8 +74,7 @@ SaveStackRegs
 mov ax, 0
 mov bx, CallRetNear
 call bx
-cmp ax, 0deadh
-ASSERT_ZERO
+ASSERT_ZERO_CMP {ax, 0deadh}
 VerifySavedStackRegs
 
 ; call [mem16]	29EA	2 to 4	call word ptr [Vecssi]/retn	20	1	ret (in near proc)
@@ -88,8 +83,7 @@ SaveStackRegs
 mov ax, 0
 mov word [Vecssi], CallRetNear
 call word [Vecssi]
-cmp ax, 0deadh
-ASSERT_ZERO
+ASSERT_ZERO_CMP {ax, 0deadh}
 VerifySavedStackRegs
 
 ; call segment:offset	36	5	call far ptr FarTarget/retf	34	1	retf
@@ -102,8 +96,7 @@ mov word [CallRetFarCodeIP], CallRetFar
 CallRetFarCode      db  9Ah
 CallRetFarCodeIP    dw  0h
 CallRetFarCodeCS    dw  0h
-cmp ax, 0f00dh
-ASSERT_ZERO
+ASSERT_ZERO_CMP {ax, 0f00dh}
 VerifySavedStackRegs
 
 ; call segment:offset	36	5	call far ptr FarTarget/retf immed16	33	3	ret 512 (in far proc)
@@ -118,8 +111,7 @@ mov word [CallRetNFarCodeIP], CallRetNFar
 CallRetNFarCode      db  9Ah
 CallRetNFarCodeIP    dw  0h
 CallRetNFarCodeCS    dw  0h
-cmp ax, 0baadh
-ASSERT_ZERO
+ASSERT_ZERO_CMP {ax, 0baadh}
 VerifySavedStackRegs
 
 __END_TEST_SUITE__

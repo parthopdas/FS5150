@@ -349,6 +349,14 @@
     <None Include="TestData\CALL-RET.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="TestData\SHL.tests.asm" />
+    <None Include="TestData\SHL.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="TestData\SHR.tests.asm" />
+    <None Include="TestData\SHR.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Control.AsyncSeq">

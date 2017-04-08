@@ -49,7 +49,7 @@ module FDE =
         runOnInput (pinstruction csip grammer) instrBytes
 #endif
 
-    let executors = //<'a> : ((Instruction2 -> State<_, _>) [])= 
+    let executors =
        [| (* "--", 0x0 *) nyi;
           (* "AAA", 0x1 *) nyi;
           (* "AAD", 0x2 *) nyi;
@@ -138,7 +138,7 @@ module FDE =
           (* "SCASB", 0x55 *) execSCASB;
           (* "SCASW", 0x56 *) execSCASW;
           (* "SHL", 0x57 *) execSHL;
-          (* "SHR", 0x58 *) nyi;
+          (* "SHR", 0x58 *) execSHR;
           (* "SS:", 0x59 *) execXS SS;
           (* "STC", 0x5A *) nyi;
           (* "STD", 0x5B *) nyi;

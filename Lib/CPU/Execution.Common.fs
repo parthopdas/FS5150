@@ -337,6 +337,11 @@ module Common =
             mb.CPU.SegmentOverride <- Some sr
             (), mb
         innerFn : State<unit, Motherboard>
+
+    let inline readMem8 instr dref = addressFromDref instr dref >>= readWord8
+    let inline readMem16 instr dref = addressFromDref instr dref >>= readWord16
+    let inline writeMem8 instr dref = fun v -> (addressFromDref instr dref >>= writeWord8 v)
+    let inline writeMem16 instr dref = fun v -> (addressFromDref instr dref >>= writeWord16 v)
     
     (*  CPU State management *)
     let getLogicalInstrStart =

@@ -14,55 +14,40 @@ module Data =
         | [ ArgRegister8 r1; ArgRegister8 r2 ] -> ((getReg8 r2) >>= (setReg8 r1)) *> ns
         // mov [mem8],reg8    9EA    2 to 4    mov [bx10h],dh
         | [ ArgDereference dref; ArgRegister8 r ] -> 
-            let regReg = getReg8 r
-            let setMem = fun v -> (addressFromDref instr dref >>= writeWord8 v)
-            (regReg >>= setMem) *> ns
+            (getReg8 r >>= writeMem8 instr dref) *> ns
         // mov reg8,[mem8]    8EA    2 to 4    mov bl,[si]
         | [ ArgRegister8 r; ArgDereference dref ] -> 
-            (addressFromDref instr dref
-             >>= readWord8
-             >>= setReg8 r)
-            *> ns
+            (readMem8 instr dref >>= setReg8 r) *> ns
         // mov reg16,reg16    2    2    mov ax,dx
         | [ ArgRegister16 r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setReg16 r1)) *> ns
         // mov [mem16],reg16    13EA    2 to 4    mov [WordVar],cx
         | [ ArgDereference dref; ArgRegister16 r ] -> 
-            let regReg = getReg16 r
-            let setMem = fun v -> (addressFromDref instr dref >>= writeWord16 v)
-            (regReg >>= setMem) *> ns
+            (getReg16 r >>= writeMem16 instr dref) *> ns
         // mov reg16,[mem16]    12EA    2 to 4    mov bx,[Tablebx]
         | [ ArgRegister16 r; ArgDereference dref ] -> 
-            (addressFromDref instr dref
-             >>= readWord16
-             >>= setReg16 r)
-            *> ns
+            (readMem16 instr dref >>= setReg16 r) *> ns
         // mov reg8,immed8    4    2    mov dl,1
         | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> (setReg8 r c) *> ns
         // mov [mem8],immed8    10EA    3 to 5    mov [ByteVar],1
-        | [ ArgDereference dref; ArgImmediate(W8 c) ] -> (addressFromDref instr dref >>= writeWord8 c) *> ns
+        | [ ArgDereference dref; ArgImmediate(W8 c) ] -> (writeMem8 instr dref c) *> ns
         // mov reg16,immed16    4    3    mov ax,88h
         | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> (setReg16 r c) *> ns
         // mov [mem16],immed16    14EA    4 to 6    mov [WordVar],1000h
-        | [ ArgDereference dref; ArgImmediate(W16 c) ] -> (addressFromDref instr dref >>= writeWord16 c) *> ns
-        // - mov al,[mem8] (direct)    10    3    mov al,[Flag]
-        // - mov [mem8],al (direct)    10    3    mov [ByteVar],al
-        // - mov ax,[mem16] (direct)    14    3    mov ax,[WordVar]
-        // - mov [mem16],ax (direct)    14    3    mov [Count],ax
+        | [ ArgDereference dref; ArgImmediate(W16 c) ] -> (writeMem16 instr dref c) *> ns
+        // mov al,[mem8] (direct)    10    3    mov al,[Flag]
+        // mov [mem8],al (direct)    10    3    mov [ByteVar],al
+        // mov ax,[mem16] (direct)    14    3    mov ax,[WordVar]
+        // mov [mem16],ax (direct)    14    3    mov [Count],ax
         // mov segreg,reg16    2    2    mov es,ax
         | [ ArgRegisterSeg r1; ArgRegister16 r2 ] -> ((getReg16 r2) >>= (setRegSeg r1)) *> ns
         // mov segreg,[mem16]    12EA    2 to 4    mov ds,[DataPtrsbx]
         | [ ArgRegisterSeg r; ArgDereference dref ] -> 
-            (addressFromDref instr dref
-             >>= readWord16
-             >>= setRegSeg r)
-            *> ns
+            (readMem16 instr dref >>= setRegSeg r) *> ns
         // mov reg16,segreg    2    2    mov dx,ds
         | [ ArgRegister16 r1; ArgRegisterSeg r2 ] -> ((getRegSeg r2) >>= (setReg16 r1)) *> ns
         // mov [mem16],segreg    13EA    2 to 4    mov [StackSeg],ss
         | [ ArgDereference dref; ArgRegisterSeg r ] -> 
-            let regReg = getRegSeg r
-            let setMem = fun v -> (addressFromDref instr dref >>= writeWord16 v)
-            (regReg >>= setMem) *> ns
+            (getRegSeg r >>= writeMem16 instr dref) *> ns
         | _ -> nyi instr
     
     let execOUT instr = 

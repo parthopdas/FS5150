@@ -2,14 +2,29 @@
     inc word [NumberOfTests]
 %endmacro
 
-%macro ASSERT_ZERO 0
+%macro PVT_ASSERT_ZERO 0
     jz $+5
     jmp near _ATestFailed
 %endmacro
 
-%macro ASSERT_NOT_ZERO 0
+%macro PVT_ASSERT_NOT_ZERO 0
     jnz $+5
     jmp near _ATestFailed
+%endmacro
+
+%macro ASSERT_ZERO_TEST 1
+    test %1
+    PVT_ASSERT_ZERO
+%endmacro
+
+%macro ASSERT_ZERO_CMP 1
+    cmp %1
+    PVT_ASSERT_ZERO
+%endmacro
+
+%macro ASSERT_NOT_ZERO_TEST 1
+    test %1
+    PVT_ASSERT_NOT_ZERO
 %endmacro
 
 %macro __BEGIN_TEST_SUITE__ 0

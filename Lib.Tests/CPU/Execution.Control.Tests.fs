@@ -4,7 +4,7 @@ open Lib.Common
 open global.Xunit
 
 [<Fact>]
-let ``CALL-RET Tests``() = 
+let ``COM.Tests``() = 
     let mb = createMB "CALL-RET.tests.com"
     
     runTestFromCOMFile mb
