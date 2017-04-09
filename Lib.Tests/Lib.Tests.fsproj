@@ -349,6 +349,13 @@
     <None Include="TestData\CALL-RET.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="TestData\INC.tests.asm" />
+    <None Include="TestData\INC.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="TestData\PUSHX-POPX.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="TestData\SHL.tests.asm" />
     <None Include="TestData\SHL.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

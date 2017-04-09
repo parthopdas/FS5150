@@ -60,7 +60,7 @@ module FDE =
           (* "AND", 0x7 *) nyi;
           (* "CALL", 0x8 *) execCALL;
           (* "CBW", 0x9 *) nyi;
-          (* "CLC", 0xA *) nyi;
+          (* "CLC", 0xA *) execCLC;
           (* "CLD", 0xB *) execCLD;
           (* "CLI", 0xC *) execCLI;
           (* "CMC", 0xD *) nyi;
@@ -140,9 +140,9 @@ module FDE =
           (* "SHL", 0x57 *) execSHL;
           (* "SHR", 0x58 *) execSHR;
           (* "SS:", 0x59 *) execXS SS;
-          (* "STC", 0x5A *) nyi;
-          (* "STD", 0x5B *) nyi;
-          (* "STI", 0x5C *) nyi;
+          (* "STC", 0x5A *) execSTC;
+          (* "STD", 0x5B *) execSTD;
+          (* "STI", 0x5C *) execSTI;
           (* "STOSB", 0x5D *) execSTOSB;
           (* "STOSW", 0x5E *) execSTOSW;
           (* "SUB", 0x5F *) execSUB;

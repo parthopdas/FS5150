@@ -20,4 +20,5 @@
 %define Mask_AF   0000000000010000b
 %define Mask_ZF   0000000001000000b
 %define Mask_SF   0000000010000000b
+%define Mask_DF   0000010000000000b
 %define Mask_OF   0000100000000000b

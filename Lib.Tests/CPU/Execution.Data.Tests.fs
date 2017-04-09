@@ -7,6 +7,17 @@ open Lib.CPU.Execution.Common
 open Lib.CPU.Execution.Data
 open Lib.Domain.InstructionSet
 open Lib.Domain.PC
+open global.Xunit
+open Lib.Common
+
+[<Theory>]
+[<InlineData("PUSHX-POPX.tests.com", 4, 0x75)>]
+let ``COM.Tests`` testName tCount iCount = 
+    let mb = createMB testName
+    
+    runTestFromCOMFile mb
+
+    verifyAfterTestFromCOMFile mb tCount iCount
 
 let mb = Common.mb
 let esdi = 0x1us @|@ 0us

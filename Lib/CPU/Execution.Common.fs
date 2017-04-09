@@ -313,7 +313,7 @@ module Common =
             deref.DrefDisp
             |> Option.fold (fun acc e -> 
                    acc + match e with
-                         | W8 w8 -> (uint16) w8
+                         | W8 w8 -> Lib.Common.signExtend w8
                          | W16 w16 -> w16) 0us
             |> State.returnM
         
@@ -329,6 +329,8 @@ module Common =
             sr, mb
         innerFn : State<RegisterSeg, Motherboard>
     
+    // TODO
+    // - Unit tests for AddressFromDref - http://www.jagregory.com/abrash-zen-of-asm/#mod-reg-rm-addressing
     let addressFromDref instr dref = 
         (@|@) <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref
     
@@ -406,12 +408,12 @@ module Common =
                         when 'TUp : equality
                          and 'TUp : (static member ( ^^^ ) :  ^TUp *  ^TUp ->  ^TUp)
                          and 'TUp : (static member ( &&& ) :  ^TUp *  ^TUp ->  ^TUp)>
-            (op : 'TUp -> 'TUp -> 'TUp, fdn : 'TUp -> 'T, fup : 'T -> 'TUp) setSZPFlags (vff00, v0, mid, v10) (a1 : 'T, a2 : 'T) = 
-        let dst = op (fup(a1)) (fup(a2))
+            (op : 'TUp -> 'TUp -> 'TUp, fdn : 'TUp -> 'T, fup : 'T -> 'TUp) setSZPFlags (vff00, v0, vMid, v10) (v1 : 'T, v2 : 'T) = 
+        let dst = op (fup(v1)) (fup(v2))
         (setSZPFlags (fdn(dst))) 
         *> (setFlag Flags.CF (dst &&& vff00 <> v0)) 
-        *> (setFlag Flags.OF (((dst ^^^ fup(a1)) &&& (fup(a1) ^^^ fup(a2)) &&& mid) <> v0)) 
-        *> (setFlag Flags.AF (((fup(a1) ^^^ fup(a2) ^^^ dst) &&& v10) <> v0))
+        *> (setFlag Flags.OF (((dst ^^^ fup(v1)) &&& (fup(v1) ^^^ fup(v2)) &&& vMid) <> v0)) 
+        *> (setFlag Flags.AF (((fup(v1) ^^^ fup(v2) ^^^ dst) &&& v10) <> v0))
 
     let setSub8Flags = 
         setSubFlags sub8FunParams flagSZP8 sub8ValParams

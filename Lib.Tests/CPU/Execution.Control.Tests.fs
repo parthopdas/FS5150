@@ -3,10 +3,12 @@
 open Lib.Common
 open global.Xunit
 
-[<Fact>]
-let ``COM.Tests``() = 
-    let mb = createMB "CALL-RET.tests.com"
+
+[<Theory>]
+[<InlineData("CALL-RET.tests.com", 6, 0x75)>]
+let ``COM.Tests`` testName tCount iCount = 
+    let mb = createMB testName
     
     runTestFromCOMFile mb
 
-    verifyAfterTestFromCOMFile mb 0x75L 6us
+    verifyAfterTestFromCOMFile mb tCount iCount

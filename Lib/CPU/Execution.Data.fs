@@ -58,20 +58,27 @@ module Data =
     
     let execPUSH instr = 
         match instr.Args with
+        // push reg16  15  1   push ax
         | [ ArgRegister16 r ] -> (getReg16 r >>= push) *> ns
+        // push mem16  24EA    2 to 4  push word ptr [bx]
+        | [ ArgDereference dref ] -> (readMem16 instr dref >>= push) *> ns
+        // push segreg 14  1   push ds
         | [ ArgRegisterSeg r ] -> (getRegSeg r >>= push) *> ns
         | _ -> nyi instr
     
-    let execPOP instr = 
+    let execPOP instr =
         match instr.Args with
+        // pop reg16   12  1   pop cx
         | [ ArgRegister16 r ] -> (pop >>= setReg16 r) *> ns
+        // pop mem16   25EA    2 to 4  pop word ptr [si1]
+        | [ ArgDereference dref ] -> (pop >>= writeMem16 instr dref) *> ns
+        // pop segreg (not CS) 12  1   pop es
+        | [ ArgRegisterSeg r ] -> (pop >>= setRegSeg r) *> ns
         | _ -> nyi instr
+
+    let execPUSHF _ = (getRegFlags >>= push) *> ns
     
-    let execPUSHF _ = 
-        (getRegFlags >>= push) *> ns
-    
-    let execPOPF _ = 
-        (pop >>= setRegFlags) *> ns
+    let execPOPF _ = (pop >>= setRegFlags) *> ns
     
     let coreSTOSX getAcc write n = 
         let writeToESDI v = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= write v

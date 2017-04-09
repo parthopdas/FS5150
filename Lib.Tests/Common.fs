@@ -42,12 +42,14 @@ module Common =
         |> Result.returnM
         |> execAllLogicalInstrs
     
-    let verifyAfterTestFromCOMFile mb iCount tCount = 
+    let verifyAfterTestFromCOMFile mb (tCount: int) (iCount: int) = 
+        let successExitIp = 0x14dus
+        let counterOff = 0x14aus
         let count = 
-            0x0us @|@ 0x14aus
+            0x0us @|@ counterOff
             |> readWord16
             |> Prelude.flip State.eval mb
-        count |> should equal tCount
-        mb.CPU.IP |> should equal 0x14Eus
+        count |> should equal (Word16(tCount))
+        mb.CPU.IP |> should equal (successExitIp + 1us)
         mb.CPU.CS |> should equal 0x0us
-        mb.CPU.ICount |> should equal iCount
+        mb.CPU.ICount |> should equal (int64(iCount)) // 6 Instructions for a null test file

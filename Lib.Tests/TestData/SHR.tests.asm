@@ -30,7 +30,6 @@ shr ah, 1
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_CF}
 
-
 _FACT_
 SetFlags
 mov bl, 0feh
@@ -38,14 +37,12 @@ shr bl, 1
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_CF}
 
-
 _FACT_
 UnsetFlags
 mov bx, 0ffffh
 shr bx, 1
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_CF}
-
 
 _FACT_
 SetFlags

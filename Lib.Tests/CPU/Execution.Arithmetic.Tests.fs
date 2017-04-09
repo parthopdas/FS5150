@@ -12,13 +12,15 @@ open System
 open YaFunTK
 open global.Xunit
 
-[<Fact>]
-let ``COM.Tests``() = 
-    let mb = createMB "ADD.tests.com"
-
-    runTestFromCOMFile mb
+[<Theory>]
+[<InlineData("ADD.tests.com", 42, 0x164)>]
+[<InlineData("INC.tests.com", 30, 0x11c)>]
+let ``COM.Tests`` testName tCount iCount = 
+    let mb = createMB testName
     
-    verifyAfterTestFromCOMFile mb 0x164L 42us
+    runTestFromCOMFile mb
+
+    verifyAfterTestFromCOMFile mb tCount iCount
 
 module SUB = 
     let fSubRes8 = (fun a1 a2 -> a1 + (~~~a2 + 1uy))
@@ -55,7 +57,7 @@ module SUB =
     [<Xunit.Fact>]
     let ``Core SUB 8``() = 
         let law (a1 : Word8) (a2 : Word8) = 
-            lawCore coreSUB8 fSubRes8 (fMSBit8, fOnBits8, fInURange8, fInSRange8, fLSNibble8) a1 a2
+            lawCore SUB.coreSUB8 fSubRes8 (fMSBit8, fOnBits8, fInURange8, fInSRange8, fLSNibble8) a1 a2
         Check.QuickThrowOnFailure law
     
     [<Xunit.Fact>]
@@ -63,5 +65,5 @@ module SUB =
         let law (v1H : Word8) (v1L : Word8) (v2H : Word8) (v2L : Word8) = 
             let a1 = v1H +|+ v1L
             let a2 = v2H +|+ v2L
-            lawCore coreSUB16 fSubRes16 (fMSBit16, fOnBits16, fInURange16, fInSRange16, fLSNibble16) a1 a2
+            lawCore SUB.coreSUB16 fSubRes16 (fMSBit16, fOnBits16, fInURange16, fInSRange16, fLSNibble16) a1 a2
         Check.QuickThrowOnFailure law
