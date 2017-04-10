@@ -61,33 +61,32 @@ module Logic =
         let coreSHR8<'T> = coreSHR flagSZP8 coreSHX8Params
         let coreSHR16<'T> = coreSHR flagSZP16 coreSHX16Params
 
-    // TODO 
-    // - dreference needs to support differentiating between 8 and 16 bits
-    //   - 8 bit and 16 bit dereferences in ADD and MOV
     let execSHL instr = 
         match instr.Args with
         // shl reg8,1  2   2   shl dl,1
         | [ ArgRegister8 r; ArgConstant c ] -> 
             SHX.coreSHL8 (getReg8 r) (setReg8 r) c *> ns
         // shl [mem8],1    15EA    2   to 4 shl byte ptr [bxsi],1
-        | [ ArgDereference dref; ArgConstant c ] -> 
+        | [ ArgDereference8 dref; ArgConstant c ] -> 
             SHX.coreSHL8 (readMem8 instr dref) (writeMem8 instr dref) c *> ns
         // shl reg16,1 2   2   shl cx,1
         | [ ArgRegister16 r; ArgConstant c ] -> 
             SHX.coreSHL16 (getReg16 r) (setReg16 r) c *> ns 
         // shl [mem16],1   23EA    2 to 4  shl word ptr [di],1
-        // ???
+        | [ ArgDereference16 dref; ArgConstant c ] -> 
+            SHX.coreSHL16 (readMem16 instr dref) (writeMem16 instr dref) c *> ns
         // shl reg8,cl 8(4*CL) 2   shl al,cl
         | [ ArgRegister8 r; ArgRegister8 CL ] -> 
             (getReg8 CL >>= SHX.coreSHL8 (getReg8 r) (setReg8 r)) *> ns
         // shl [mem8],cl   20EA(4*CL)  2 to 4  shl [ByteVar],cl
-        | [ ArgDereference dref; ArgRegister8 CL ] -> 
+        | [ ArgDereference8 dref; ArgRegister8 CL ] -> 
             (getReg8 CL >>= SHX.coreSHL8 (readMem8 instr dref) (writeMem8 instr dref)) *> ns
         // shl reg16,cl    8(4*CL) 2   shl bp,cl
         | [ ArgRegister16 r; ArgRegister8 CL ] -> 
             (getReg8 CL >>= SHX.coreSHL16 (getReg16 r) (setReg16 r)) *> ns
         // shl [mem16],cl  28EA(4*CL)  2 to 4  shl [WordVar1],cl
-        // ???
+        | [ ArgDereference16 dref; ArgRegister8 CL ] -> 
+            (getReg8 CL >>= SHX.coreSHL16 (readMem16 instr dref) (writeMem16 instr dref)) *> ns
         | _ -> nyi instr
     
     let execSHR instr = 
@@ -96,23 +95,25 @@ module Logic =
         | [ ArgRegister8 r; ArgConstant c ] -> 
             SHX.coreSHR8 (getReg8 r) (setReg8 r) c *> ns
         // shr [mem8],1    15EA    2 to 4  shr [ByteVar],1
-        | [ ArgDereference dref; ArgConstant c ] -> 
+        | [ ArgDereference8 dref; ArgConstant c ] -> 
             SHX.coreSHR8 (readMem8 instr dref) (writeMem8 instr dref) c *> ns
         // shr reg16,1 2   2   shr bx,1
         | [ ArgRegister16 r; ArgConstant c ] -> 
             SHX.coreSHR16 (getReg16 r) (setReg16 r) c *> ns 
         // shr [mem16],1   23EA    2 to 4  shr word ptr [si],1
-        // ???
+        | [ ArgDereference16 dref; ArgConstant c ] -> 
+            SHX.coreSHR16 (readMem16 instr dref) (writeMem16 instr dref) c *> ns
         // shr reg8,cl 8(4*CL) 2   shr dl,cl
         | [ ArgRegister8 r; ArgRegister8 CL ] -> 
             (getReg8 CL >>= SHX.coreSHR8 (getReg8 r) (setReg8 r)) *> ns
         // shr [mem8],cl   20EA(4*CL)  2 to 4  shr [ByteVarbx],cl
-        // ???
+        | [ ArgDereference8 dref; ArgRegister8 CL ] -> 
+            (getReg8 CL >>= SHX.coreSHR8 (readMem8 instr dref) (writeMem8 instr dref)) *> ns
         // shr reg16,cl    8(4*CL) 2   shr si,cl
         | [ ArgRegister16 r; ArgRegister8 CL ] -> 
             (getReg8 CL >>= SHX.coreSHR16 (getReg16 r) (setReg16 r)) *> ns
         // shr [mem16],cl  28EA(4*CL)  2 to 4  shr [WordVarsi],cl
-        | [ ArgDereference dref; ArgRegister8 CL ] -> 
+        | [ ArgDereference16 dref; ArgRegister8 CL ] -> 
             (getReg8 CL >>= SHX.coreSHR16 (readMem16 instr dref) (writeMem16 instr dref)) *> ns
         | _ -> nyi instr
     

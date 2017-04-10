@@ -294,8 +294,8 @@ ASSERT_ZERO_CMP {si, 8001h}
 
 ; add [mem16],sextimmed	25EA	3 to 5	add [WordVar],3
 _FACT_
-add word [WordVar], 0ff80h
-ASSERT_ZERO_CMP {word [WordVar], 0ff81h}
+add word [WordVar], -1
+ASSERT_ZERO_CMP {word [WordVar], 0}
 
 ; add [mem16],immed16	25EA	4 to 6	add [WordVar],300h
 _FACT_

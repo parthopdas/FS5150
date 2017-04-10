@@ -50,32 +50,23 @@ let ``pmodRegRm tests data`` : obj array seq =
         yield ([| 0b11000001uy |], 0, RmaReg 1uy, false)
         yield ([| 0b11011010uy |], 3, RmaReg 2uy, false)
         yield ([| 0b00100000uy |], 4,  
-               RmaDeref { DrefType = MrmTBXSI
-                          DrefDisp = None }, false)
+               RmaDeref (MrmTBXSI, None), false)
         yield ([| 0b01101001uy; 0xdeuy |], 5,  
-               RmaDeref { DrefType = MrmTBXDI
-                          DrefDisp = Some(W8 0xdeuy) }, false)
+               RmaDeref (MrmTBXDI, Some(W8 0xdeuy)), false)
         yield ([| 0b10110010uy; 0xaduy; 0xbauy |], 6, 
-               RmaDeref { DrefType = MrmTBPSI
-                          DrefDisp = Some(W16 0xbaadus) }, true)
+               RmaDeref (MrmTBPSI, Some(W16 0xbaadus)), true)
         yield ([| 0b10111011uy; 0x0duy; 0xf0uy |], 7, 
-               RmaDeref { DrefType = MrmTBPDI
-                          DrefDisp = Some(W16 0xf00dus) }, true)
+               RmaDeref (MrmTBPDI, Some(W16 0xf00dus)), true)
         yield ([| 0b01110100uy; 0xbeuy |], 6,
-               RmaDeref { DrefType = MrmTSI
-                          DrefDisp = Some(W8 0xbeuy) }, false)
+               RmaDeref (MrmTSI, Some(W8 0xbeuy)), false)
         yield ([| 0b00101101uy |], 5, 
-               RmaDeref { DrefType = MrmTDI
-                          DrefDisp = None }, false)
+               RmaDeref (MrmTDI, None), false)
         yield ([| 0b00100110uy; 0x0duy; 0xf0uy |], 4, 
-               RmaDeref { DrefType = MrmTDisp
-                          DrefDisp = Some(W16 0xf00dus) }, false)
+               RmaDeref (MrmTDisp, Some(W16 0xf00dus)), false)
         yield ([| 0b01011111uy; 0xebuy |], 3, 
-               RmaDeref { DrefType = MrmTBX
-                          DrefDisp = Some(W8 0xebuy) }, false)
+               RmaDeref (MrmTBX, Some(W8 0xebuy)), false)
         yield ([| 0b10010110uy; 0xefuy; 0xbeuy |], 2, 
-               RmaDeref { DrefType = MrmTBP
-                          DrefDisp = Some(W16 0xbeefus) }, true)
+               RmaDeref (MrmTBP, Some(W16 0xbeefus)), true)
     }
     |> Seq.map (fun (a, b, c, d) -> 
            [| box a
@@ -125,18 +116,18 @@ let ``pargument tests data`` : obj array seq =
         yield ("CH", [||], ArgRegister8 CH, false)
         yield ("DH", [||], ArgRegister8 DH, false)
         yield ("Eb", [| 0x00uy |], 
-               ArgDereference { DrefType = MrmTBXSI
-                                DrefDisp = None }, true)
+               ArgDereference8 { DrefType8 = MrmTBXSI
+                                 DrefDisp8 = None }, true)
         yield ("Eb", [| 0x82uy; 0xDDuy; 0x7Euy |], 
-               ArgDereference { DrefType = MrmTBPSI
-                                DrefDisp = Some(W16 0x7eddus) }, true)
+               ArgDereference8 { DrefType8 = MrmTBPSI
+                                 DrefDisp8 = Some(W16 0x7eddus) }, true)
         yield ("Eb", [| 0xC6uy |], ArgRegister8 DH, true)
         yield ("Ev", [| 0x42uy; 0xDDuy |], 
-               ArgDereference { DrefType = MrmTBPSI
-                                DrefDisp = Some(W8 0xdduy) }, true)
+               ArgDereference16 { DrefType16 = MrmTBPSI
+                                  DrefDisp16 = Some(W8 0xdduy) }, true)
         yield ("Ev", [| 0x06uy; 0xADuy; 0xBAuy |], 
-               ArgDereference { DrefType = MrmTDisp
-                                DrefDisp = Some(W16 0xbaadus) }, true)
+               ArgDereference16 { DrefType16 = MrmTDisp
+                                  DrefDisp16 = Some(W16 0xbaadus) }, true)
         yield ("Ev", [| 0xC4uy |], ArgRegister16 SP, true)
         yield ("Ew", [| 0xC7uy |], ArgRegister16 DI, true)
         yield ("Gb", [| 0x00uy |], ArgRegister8 AL, true)
@@ -148,11 +139,11 @@ let ``pargument tests data`` : obj array seq =
         yield ("Iw", [| 0xADuy; 0xDEuy |], ArgImmediate(W16 0xdeadus), false)
         yield ("I0", [| 0x42uy |], ArgImmediate(W8 0x42uy), false)
         yield ("Ob", [| 0x0Duy; 0xF0uy |], 
-               ArgDereference { DrefType = MrmTDisp
-                                DrefDisp = Some(W16 0xf00dus) }, false)
+               ArgDereference8 { DrefType8 = MrmTDisp
+                                 DrefDisp8 = Some(W16 0xf00dus) }, false)
         yield ("Ob", [| 0xADuy; 0xDEuy |], 
-               ArgDereference { DrefType = MrmTDisp
-                                DrefDisp = Some(W16 0xdeadus) }, false)
+               ArgDereference8 { DrefType8 = MrmTDisp
+                                 DrefDisp8 = Some(W16 0xdeadus) }, false)
         yield ("Sw", [| 0x00uy |], ArgRegisterSeg ES, true)
         yield ("Sw", [| 0x08uy |], ArgRegisterSeg CS, true)
         yield ("Sw", [| 0x10uy |], ArgRegisterSeg SS, true)
@@ -163,8 +154,8 @@ let ``pargument tests data`` : obj array seq =
         yield ("1", [||], ArgConstant 1uy, false)
         yield ("3", [||], ArgConstant 3uy, false)
         yield ("Mp", [| 0x2Euy; 0xF0uy; 0xDDuy |], 
-               ArgDereference { DrefType = MrmTDisp
-                                DrefDisp = Some(W16 0xDDF0us) }, true)
+               ArgDereference16 { DrefType16 = MrmTDisp
+                                  DrefDisp16 = Some(W16 0xDDF0us) }, true)
         yield ("Mp", [| 0xD8uy |], ArgRegister16 AX, true)
     }
     |> Seq.map (fun (a, b, c, d) -> 
@@ -240,10 +231,10 @@ let ``pinstruction tests data`` : obj array seq =
         (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 37           AAA\t", false) 
         (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 04FF         ADD\tAL, FF", false) 
         (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 E80DF0       CALL\tF00D", false) 
-        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD     ADC\t[DDF0], BP", false) 
+        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD     ADC\tword ptr [DDF0], BP", false) 
         (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 EA0DF0ADBA   JMP\tBAAD:F00D", false) 
-        (* 6 Args + GRP *)  yield ([| 0x81uy; 0b10000110uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 818634013200 ADD\t[BP+0134], 0032", true) 
-        (* 6 Args *)        yield ([| 0xC7uy; 0x06uy; 0x72uy; 0x00uy; 0x00uy; 0x00uy |], "0000:0000 C70672000000 MOV\t[0072], 0000", false) 
+        (* 6 Args + GRP *)  yield ([| 0x81uy; 0b10000110uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 818634013200 ADD\tword ptr [BP+0134], 0032", true) 
+        (* 6 Args *)        yield ([| 0xC7uy; 0x06uy; 0x72uy; 0x00uy; 0x00uy; 0x00uy |], "0000:0000 C70672000000 MOV\tword ptr [0072], 0000", false) 
     }
     |> Seq.map (fun (a, b, c) -> 
            [| box a

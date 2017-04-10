@@ -6,6 +6,7 @@
 *
 * gc .\8086_table.txt | ? { -not $_.StartsWith("*") } | % { $_.Split(@(' ', [char]"`t"))[1]} | group | Sort-Object -Property Name
 * $i = -1; gc .\8086_table.txt | ? { -not $_.StartsWith("*") } | % { $_.Split(@(' ', [char]"`t"))[1]} | group | Sort-Object -Property Name | % { $i++; "(*.[{0:D3}] = *)`"{1}`";" -f $i,$_.Name }
+* parseNormalArgs groups: gc .\8086_table.txt | ? { -not $_.StartsWith("*") } | % { $fs = -split $_; $fs[2], $fs[3]} | ? { $_ -cmatch "^[A-Z][a-z]$" } | group
 *
 
 00	ADD		Eb	Gb

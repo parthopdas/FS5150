@@ -10,7 +10,7 @@ __BEGIN_TEST_SUITE__
 ;; Variables used in the tests
 ;;
 ByteVar1    db  0feh
-WordVar1    dw  0fh
+WordVar1    dw  0ffh
 
 ;;
 ;; Start of Tests
@@ -235,7 +235,6 @@ ASSERT_ZERO_CMP {si, 0}
 ; inc [mem16]   23EA    2 to 4  inc [WordVar]
 _FACT_
 inc word [WordVar1]
-; TODO: This is the test for dref16 Change to 0ffh and 100h to repro.
-ASSERT_ZERO_CMP {word [WordVar1], 010h}
+ASSERT_ZERO_CMP {word [WordVar1], 0100h}
 
 __END_TEST_SUITE__

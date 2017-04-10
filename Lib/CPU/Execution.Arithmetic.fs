@@ -40,7 +40,6 @@ module Arithmetic =
     
     // TODO: PERF: Prelude.Tuple is unnecessary
 
-    // TODO: Implement: add [mem16],sextimmed    25EA    3 to 5    add [WordVar],3
     let execADD instr = 
         match instr.Args with
         // add reg8,reg8    3    2    add ah,al
@@ -50,13 +49,13 @@ module Arithmetic =
              >>= setReg8 r1)
             *> ns
         // add [mem8],reg8    16EA    2 to 4    add [bx1],dh
-        | [ ArgDereference dref; ArgRegister8 r ] -> 
+        | [ ArgDereference8 dref; ArgRegister8 r ] -> 
             (Prelude.tuple2 <!> readMem8 instr dref <*> getReg8 r
              >>= ADD.opAdd8
              >>= writeMem8 instr dref)
             *> ns
         // add reg8,[mem8]    9EA    2 to 4    add ch,[bx]
-        | [ ArgRegister8 r; ArgDereference dref ] -> 
+        | [ ArgRegister8 r; ArgDereference8 dref ] -> 
             (Prelude.tuple2 <!> getReg8 r <*> readMem8 instr dref
              >>= ADD.opAdd8
              >>= setReg8 r)
@@ -68,13 +67,13 @@ module Arithmetic =
              >>= setReg16 r1)
             *> ns
         // add [mem16],reg16    24EA    2 to 4    add [bp5],ax
-        | [ ArgDereference dref; ArgRegister16 r ] -> 
+        | [ ArgDereference16 dref; ArgRegister16 r ] -> 
             (Prelude.tuple2 <!> readMem16 instr dref <*> getReg16 r
              >>= ADD.opAdd16
              >>= writeMem16 instr dref)
             *> ns
         // add reg16,[mem16]    13EA    2 to 4    add ax,[Basedi]
-        | [ ArgRegister16 r; ArgDereference dref ] -> 
+        | [ ArgRegister16 r; ArgDereference16 dref ] -> 
             (Prelude.tuple2 <!> getReg16 r <*> readMem16 instr dref
              >>= ADD.opAdd16
              >>= setReg16 r)
@@ -86,7 +85,7 @@ module Arithmetic =
              >>= setReg8 r)
             *> ns
         // add [mem8],immed8    17EA    3 to 5    add byte ptr [si6],0c3h
-        | [ ArgDereference dref; ArgImmediate(W8 c) ] -> 
+        | [ ArgDereference8 dref; ArgImmediate(W8 c) ] -> 
             (Prelude.tuple2 <!> readMem8 instr dref <*> (c |> State.returnM)
              >>= ADD.opAdd8
              >>= writeMem8 instr dref)
@@ -104,9 +103,13 @@ module Arithmetic =
              >>= setReg16 r)
             *> ns
         // add [mem16],sextimmed    25EA    3 to 5    add [WordVar],3
-        // ???
+        | [ ArgDereference16 dref; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> readMem16 instr dref <*> (c |> Common.signExtend |> State.returnM)
+             >>= ADD.opAdd16
+             >>= writeMem16 instr dref)
+            *> ns
         // add [mem16],immed16    25EA    4 to 6    add [WordVar],300h
-        | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
+        | [ ArgDereference16 dref; ArgImmediate(W16 c) ] -> 
             (Prelude.tuple2 <!> readMem16 instr dref <*> (c |> State.returnM)
              >>= ADD.opAdd16
              >>= writeMem16 instr dref)
@@ -123,20 +126,20 @@ module Arithmetic =
         let inc8 = incCore ADD.opAdd8 1uy
         let inc16 = incCore ADD.opAdd16 1us
 
-    // TODO: Fix deref16 vs dref8
     let execINC instr = 
         match instr.Args with
         // inc reg8 3   2   inc ah
         | [ ArgRegister8 r ] -> 
             (INC.inc8 (getReg8 r) (setReg8 r))*> ns
         // inc [mem8]   15EA    2 to 4  inc byte ptr [bx]
-        | [ ArgDereference dref ] -> 
+        | [ ArgDereference8 dref ] -> 
             (INC.inc8 (readMem8 instr dref) (writeMem8 instr dref))*> ns
         // inc reg16    2   1   inc si
         | [ ArgRegister16 r ] -> 
             (INC.inc16 (getReg16 r) (setReg16 r))*> ns
         // inc [mem16]  23EA    2 to 4  inc [WordVar]
-        // ???
+        | [ ArgDereference16 dref ] -> 
+            (INC.inc16 (readMem16 instr dref) (writeMem16 instr dref))*> ns
         | _ -> nyi instr
     
     module SUB =
@@ -178,13 +181,13 @@ module Arithmetic =
             (Prelude.tuple2 <!> getReg16 r1 <*> getReg16 r2 >>= setSub16Flags) *> ns
         // cmp [mem16],reg16    13EA    2 to 4    cmp [bxdiRecPtr],bx
         // cmp reg16,[mem16]    13EA    2 to 4    cmp bp,[bx1]
-        | [ ArgRegister16 r; ArgDereference dref ] -> 
+        | [ ArgRegister16 r; ArgDereference16 dref ] -> 
             (Prelude.tuple2 <!> getReg16 r <*> (readMem16 instr dref) >>= setSub16Flags) *> ns
         // cmp reg8,immed8    4    3    cmp ah,9
         | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> 
             (Prelude.tuple2 <!> getReg8 r <*> (c |> State.returnM) >>= setSub8Flags) *> ns
         // cmp [mem8],immed8    10EA    3 to 5    cmp [ByteVar],39h
-        | [ ArgDereference dref; ArgImmediate(W8 c) ] -> 
+        | [ ArgDereference8 dref; ArgImmediate(W8 c) ] -> 
             (Prelude.tuple2 <!> (readMem8 instr dref) <*> (c |> State.returnM) >>= setSub8Flags) *> ns
         // cmp reg16,sextimmed    4    3    cmp dx,8
         | [ ArgRegister16 r; ArgImmediate(W8 c) ] -> 
@@ -193,8 +196,10 @@ module Arithmetic =
         | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
             (Prelude.tuple2 <!> getReg16 r <*> (c |> State.returnM) >>= setSub16Flags) *> ns
         // cmp [mem16],sextimmed    14EA    3 to 5    cmp [WordVar],12
+        | [ ArgDereference16 dref; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> (readMem16 instr dref) <*> (c |> Common.signExtend |> State.returnM) >>= setSub16Flags) *> ns
         // cmp [mem16],immed16    14EA    4 to 6    cmp [WordVar],92h
-        | [ ArgDereference dref; ArgImmediate(W16 c) ] -> 
+        | [ ArgDereference16 dref; ArgImmediate(W16 c) ] -> 
             (Prelude.tuple2 <!> (readMem16 instr dref) <*> (c |> State.returnM) >>= setSub16Flags) *> ns
         // cmp al,immed8    4    2    cmp al,22
         // cmp ax,immed16    4    3    cmp ax,722

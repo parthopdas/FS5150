@@ -148,20 +148,33 @@ module InstructionSet =
             | MrmTBX -> "BX"
             | MrmTBP -> "BP"
     
-    type Dereference = 
-        { DrefType : ModRmType
-          DrefDisp : WordData option }
+    type DereferencePtr = ModRmType * WordData option
+
+    type Dereference8 =
+        { DrefType8 : ModRmType
+          DrefDisp8 : WordData option }
         override x.ToString() = 
-            match x.DrefDisp with
+            match x.DrefDisp8 with
             | Some dval -> 
-                match x.DrefType with
-                | MrmTDisp -> sprintf "[%O]" dval
-                | _ -> sprintf "[%O+%O]" x.DrefType dval
-            | None -> sprintf "[%O]" x.DrefType
+                match x.DrefType8 with
+                | MrmTDisp -> sprintf "byte ptr [%O]" dval
+                | _ -> sprintf "byte ptr [%O+%O]" x.DrefType8 dval
+            | None -> sprintf "byte ptr [%O]" x.DrefType8
+
+    type Dereference16 =
+        { DrefType16 : ModRmType
+          DrefDisp16 : WordData option }
+        override x.ToString() = 
+            match x.DrefDisp16 with
+            | Some dval -> 
+                match x.DrefType16 with
+                | MrmTDisp -> sprintf "word ptr [%O]" dval
+                | _ -> sprintf "word ptr [%O+%O]" x.DrefType16 dval
+            | None -> sprintf "word ptr [%O]" x.DrefType16
     
     type RmArgs = 
         | RmaReg of Word8
-        | RmaDeref of Dereference
+        | RmaDeref of DereferencePtr
     
     type ModRegRM = 
         { ModRM : RmArgs
@@ -202,7 +215,8 @@ module InstructionSet =
         | ArgRegister16 of Register16
         | ArgRegisterSeg of RegisterSeg
         | ArgImmediate of WordData
-        | ArgDereference of Dereference
+        | ArgDereference8 of Dereference8
+        | ArgDereference16 of Dereference16
         override x.ToString() = 
             match x with
             | ArgAddress a -> sprintf "%O" a
@@ -212,7 +226,8 @@ module InstructionSet =
             | ArgRegister16 r -> sprintf "%A" r
             | ArgRegisterSeg r -> sprintf "%A" r
             | ArgImmediate i -> sprintf "%O" i
-            | ArgDereference d -> sprintf "%O" d
+            | ArgDereference8 d -> sprintf "%O" d
+            | ArgDereference16 d -> sprintf "%O" d
     
     let ocIndices = 
         [| ("--", 0x00)

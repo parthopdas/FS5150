@@ -296,9 +296,9 @@ module Common =
         |> Option.fold (fun _ e -> e pno value |> State.returnM) ifNoCallback : State<unit, Motherboard>
     
     (* Segmented Address calculations *)
-    let private getEA deref = 
+    let private getEA t d = 
         let reg = 
-            match deref.DrefType with
+            match t with
             | MrmTBXSI -> (+) <!> getReg16 BX <*> getReg16 SI
             | MrmTBXDI -> (+) <!> getReg16 BX <*> getReg16 DI
             | MrmTBPSI -> (+) <!> getReg16 BP <*> getReg16 SI
@@ -310,7 +310,7 @@ module Common =
             | MrmTBP -> getReg16 BP
         
         let disp = 
-            deref.DrefDisp
+            d
             |> Option.fold (fun acc e -> 
                    acc + match e with
                          | W8 w8 -> Lib.Common.signExtend w8
@@ -329,10 +329,9 @@ module Common =
             sr, mb
         innerFn : State<RegisterSeg, Motherboard>
     
-    // TODO
-    // - Unit tests for AddressFromDref - http://www.jagregory.com/abrash-zen-of-asm/#mod-reg-rm-addressing
-    let addressFromDref instr dref = 
-        (@|@) <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA dref
+    // TODO: Unit tests for AddressFromDref - http://www.jagregory.com/abrash-zen-of-asm/#mod-reg-rm-addressing
+    let addressFromDref instr t d = 
+        (@|@) <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA t d
     
     let setSegOverride sr = 
         let innerFn mb = 
@@ -340,10 +339,10 @@ module Common =
             (), mb
         innerFn : State<unit, Motherboard>
 
-    let inline readMem8 instr dref = addressFromDref instr dref >>= readWord8
-    let inline readMem16 instr dref = addressFromDref instr dref >>= readWord16
-    let inline writeMem8 instr dref = fun v -> (addressFromDref instr dref >>= writeWord8 v)
-    let inline writeMem16 instr dref = fun v -> (addressFromDref instr dref >>= writeWord16 v)
+    let inline readMem8 instr dref = addressFromDref instr dref.DrefType8 dref.DrefDisp8 >>= readWord8
+    let inline readMem16 instr dref = addressFromDref instr dref.DrefType16 dref.DrefDisp16 >>= readWord16
+    let inline writeMem8 instr dref = fun v -> (addressFromDref instr dref.DrefType8 dref.DrefDisp8 >>= writeWord8 v)
+    let inline writeMem16 instr dref = fun v -> (addressFromDref instr dref.DrefType16 dref.DrefDisp16 >>= writeWord16 v)
     
     (*  CPU State management *)
     let getLogicalInstrStart =

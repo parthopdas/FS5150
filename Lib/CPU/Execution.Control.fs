@@ -100,14 +100,20 @@ module Control =
 
     let execCALL instr = 
         match instr.Args with
+        // call disp16  23  3   call near ptr NearTarget
         | [ ArgOffset(w16) ] -> 
             coreCALLRelative instr.Length w16
+        // call reg16   20  2   call bx
         | [ ArgRegister16 r ] -> 
             getReg16 r >>= (coreCALLIP instr.Length)
-        | [ ArgDereference dref ] ->
-            (addressFromDref instr dref >>= readWord16) >>= (coreCALLIP instr.Length)
+        // call [mem16] 29EA    2 to 4  call word ptr [Vecssi]
+        | [ ArgDereference16 dref ] ->
+            (readMem16 instr dref) >>= (coreCALLIP instr.Length)
+        // call segment:offset  36  5   call far ptr FarTarget
         | [ ArgAddress addr ] ->
             coreCALLCSIP instr.Length addr
+        // call [mem32] 53EA    2 to 4  call dword ptr [FarVec]
+        // ??? - Support parsing this instruction and then add the tests for it
         | _ -> nyi instr
 
     let private decSP c = getReg16 SP >>= ((+) c >> State.returnM) >>= setReg16 SP
@@ -115,8 +121,10 @@ module Control =
     let execRET instr = 
         let updateIP = fun csip ip -> { csip with Offset = ip } |> Some |> State.returnM
         match instr.Args with
+        // retn 20  1   ret (in near proc)
         | [ ] -> 
             getCSIP >>= (fun csip -> pop >>= updateIP csip) 
+        // retn immed16 24  3   retn 10
         | [ ArgImmediate(W16 c) ] ->
             getCSIP >>= (fun csip -> pop <* (decSP c) >>= updateIP csip) 
         | _ -> nyi instr
@@ -124,8 +132,10 @@ module Control =
     let execRETF instr = 
         let popIPCS = Prelude.flip (@|@) <!> pop <*> pop
         match instr.Args with
+        // retf 34  1   retf
         | [ ] -> 
             popIPCS >>= (Some >> State.returnM)
+        // retf immed16 33  3   ret 512 (in far proc)
         | [ ArgImmediate(W16 c) ] ->
             popIPCS <* (decSP c) >>= (Some >> State.returnM)
         | _ -> nyi instr

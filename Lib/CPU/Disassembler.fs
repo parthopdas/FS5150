@@ -75,17 +75,11 @@ module Disassembler =
             
             let parseRmArgs (mo, rm) = 
                 let createRmaDeref f d = 
-                    { DrefType = getModRmType mo rm
-                      DrefDisp = 
-                          d
-                          |> f
-                          |> Some }
-                    |> RmaDeref
+                    (getModRmType mo rm, d |> f |> Some) |> RmaDeref
                 match (mo, rm) with
                 | (0b00uy, 0b110uy) -> pword16 |>> createRmaDeref W16
                 | (0b00uy, _) -> 
-                    returnM (RmaDeref { DrefType = getModRmType mo rm
-                                        DrefDisp = None })
+                    returnM (RmaDeref (getModRmType mo rm, None))
                 | (0b01uy, _) -> pword8 |>> createRmaDeref W8
                 | (0b10uy, _) -> pword16 |>> createRmaDeref W16
                 | (0b11uy, _) -> returnM (RmaReg(rm))
@@ -118,15 +112,21 @@ module Disassembler =
             let y = ((int) aoc >>> 4) - 1
             aocRegMap.[x, y]
         
+        let getDeref (t, d) = 
+            function
+            | NormalArgCode.B -> ArgDereference8 { DrefType8 = t; DrefDisp8 = d } 
+            | NormalArgCode.W | NormalArgCode.P -> ArgDereference16 { DrefType16 = t; DrefDisp16 = d } 
+            | _ -> Prelude.undefined
+        
         let withMrm a = a, mrm
         let appendArg a = a :: args
         let cpmodRegRm = mrm |> Option.fold (fun _ e -> (returnM e) <@> "cached MRM") (pmodRegRm <@> "raw MRM")
         
-        let parseDrefOrReg oc = 
+        let parseDrefOrReg aoc = 
             cpmodRegRm |>> (fun mrm -> 
             match mrm.ModRM with
-            | RmaReg r -> getRegister oc r |> appendArg, Some mrm
-            | RmaDeref d -> ArgDereference d |> appendArg, Some mrm)
+            | RmaReg r -> getRegister aoc r |> appendArg, Some mrm
+            | RmaDeref d -> getDeref d aoc |> appendArg, Some mrm)
         
         let parseImmediate8 = W8
                               >> ArgImmediate
@@ -134,42 +134,43 @@ module Disassembler =
         let parseImmediate16 = W16
                                >> ArgImmediate
                                <!> pword16
-        
+
         let parseNormalArgs nac = 
-            let getAddrCode nac = nac &&& NormalArgCode.ACMask
-            let getOperandCode nac = nac &&& NormalArgCode.OCMask
             match nac with
-            | nac when NormalArgCode.E = getAddrCode nac -> parseDrefOrReg (getOperandCode nac)
-            | nac when NormalArgCode.G = getAddrCode nac -> 
-                cpmodRegRm |>> (fun mrm -> getRegister (getOperandCode nac) ((uint8) mrm.MRReg) |> appendArg, Some mrm)
-            | nac when nac = (NormalArgCode.J ||| NormalArgCode.B) -> Common.signExtend
-                                                                      >> ArgOffset
-                                                                      <!> pword8
-                                                                      |>> appendArg
-                                                                      |>> withMrm
-            | nac when nac = (NormalArgCode.J ||| NormalArgCode.W) -> ArgOffset <!> pword16 |>> appendArg |>> withMrm
-            | nac when nac = (NormalArgCode.I ||| NormalArgCode.B) -> parseImmediate8 |>> appendArg |>> withMrm
-            | nac when nac = (NormalArgCode.I ||| NormalArgCode.W) -> parseImmediate16 |>> appendArg |>> withMrm
-            | nac when nac = (NormalArgCode.I ||| NormalArgCode.Z) -> parseImmediate8 |>> appendArg |>> withMrm
-            | nac when NormalArgCode.O = getAddrCode nac -> 
-                pword16 |>> (fun w16 -> 
-                ArgDereference { DrefType = MrmTDisp
-                                 DrefDisp = 
-                                     w16
-                                     |> W16
-                                     |> Some }) |>> appendArg |>> withMrm
-            | nac when nac = (NormalArgCode.S ||| NormalArgCode.W) -> 
-                cpmodRegRm |>> (fun mrm -> 
-                modRegMap.[(int)mrm.MRReg]
-                |> ArgRegisterSeg
-                |> appendArg, Some mrm)
-            | nac when nac = (NormalArgCode.A ||| NormalArgCode.P) -> 
+            | (* Ap *) nac when nac = (NormalArgCode.A ||| NormalArgCode.P) -> 
                 pword16 .>>. pword16 |>> (fun (o, s) -> 
                 { Offset = o
                   Segment = s }
                 |> ArgAddress) |>> appendArg |>> withMrm
-            | nac when nac = (NormalArgCode.M ||| NormalArgCode.P) -> parseDrefOrReg NormalArgCode.P
-            | _ -> failwithf "DESC value = %A is unexpected." gra
+            | (* Eb *) nac when nac = (NormalArgCode.E ||| NormalArgCode.B) -> parseDrefOrReg NormalArgCode.B
+            | (* Ew *) nac when nac = (NormalArgCode.E ||| NormalArgCode.W) -> parseDrefOrReg NormalArgCode.W
+            | (* Gb *) nac when nac = (NormalArgCode.G ||| NormalArgCode.B) -> 
+                cpmodRegRm |>> (fun mrm -> getRegister NormalArgCode.B mrm.MRReg |> appendArg, Some mrm)
+            | (* Gw *) nac when nac = (NormalArgCode.G ||| NormalArgCode.W) -> 
+                cpmodRegRm |>> (fun mrm -> getRegister NormalArgCode.W mrm.MRReg |> appendArg, Some mrm)
+            | (* I0 *) nac when nac = (NormalArgCode.I ||| NormalArgCode.Z) -> parseImmediate8 |>> appendArg |>> withMrm
+            | (* Ib *) nac when nac = (NormalArgCode.I ||| NormalArgCode.B) -> parseImmediate8 |>> appendArg |>> withMrm
+            | (* Iw *) nac when nac = (NormalArgCode.I ||| NormalArgCode.W) -> parseImmediate16 |>> appendArg |>> withMrm
+            | (* Jb *) nac when nac = (NormalArgCode.J ||| NormalArgCode.B) -> Common.signExtend
+                                                                                >> ArgOffset
+                                                                                <!> pword8
+                                                                                |>> appendArg
+                                                                                |>> withMrm
+            | (* Jw *) nac when nac = (NormalArgCode.J ||| NormalArgCode.W) -> ArgOffset <!> pword16 |>> appendArg |>> withMrm
+            | (* Mp *) nac when nac = (NormalArgCode.M ||| NormalArgCode.P) -> parseDrefOrReg NormalArgCode.P
+            | (* Ob *) nac when nac = (NormalArgCode.O ||| NormalArgCode.B) -> 
+                pword16 |>> (fun w16 -> 
+                ArgDereference8 { DrefType8 = MrmTDisp; DrefDisp8 = w16 |> W16 |> Some }) |>> appendArg |>> withMrm
+            | (* Ow *) nac when nac = (NormalArgCode.O ||| NormalArgCode.W) -> 
+                pword16 |>> (fun w16 -> 
+                ArgDereference16 { DrefType16 = MrmTDisp; DrefDisp16 = w16 |> W16 |> Some }) |>> appendArg |>> withMrm
+            | (* Sw *) nac when nac = (NormalArgCode.S ||| NormalArgCode.W) -> 
+                cpmodRegRm |>> (fun mrm -> 
+                modRegMap.[(int) mrm.MRReg]
+                |> ArgRegisterSeg
+                |> appendArg, Some mrm)
+            | _ -> failwithf "DESC value = %A is unexpected. NAC = %A." gra nac
+
         
         let parseSpecialArgs = 
             function 
