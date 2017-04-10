@@ -324,10 +324,6 @@
       <Paket>True</Paket>
       <Link>paket-files/YaFunTK.fs</Link>
     </Compile>
-    <None Include="TestData\ADD.tests.asm" />
-    <None Include="TestData\ADD.tests.com">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Common.fs" />
     <Compile Include="Common.Tests.fs" />
@@ -345,6 +341,10 @@
     <Compile Include="CPU\Execution.Control.Tests.fs" />
     <Compile Include="CPU\Execution.Processor.Tests.fs" />
     <None Include="app.config" />
+    <None Include="TestData\ADD.tests.asm" />
+    <None Include="TestData\ADD.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="TestData\CALL-RET.tests.asm" />
     <None Include="TestData\CALL-RET.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -353,6 +353,7 @@
     <None Include="TestData\INC.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="TestData\PUSHX-POPX.tests.asm" />
     <None Include="TestData\PUSHX-POPX.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

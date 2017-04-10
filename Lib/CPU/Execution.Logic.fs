@@ -19,8 +19,8 @@ module Logic =
         | _ -> nyi instr
     
     module SHX =
-        let coreSHX8Params = (0uy, 1uy, 0x80uy, 0xFFuy, 7)
-        let coreSHX16Params = (0us, 1us, 0x8000us, 0xFFFFus, 15)
+        let coreSHX8Params = ((0uy, 1uy, 0x80uy, 0xFFuy), 7)
+        let coreSHX16Params = ((0us, 1us, 0x8000us, 0xFFFFus), 15)
 
         let rec loop f acc (x: Word8) =
             if x > 0uy then
@@ -35,7 +35,7 @@ module Logic =
                              and 'T : (static member ( &&& ) : ^T * ^T ->  ^T)
                              and 'T : (static member op_LeftShift : ^T * int32 -> ^T)
                              and 'T : (static member op_RightShift : ^T * int32 -> ^T)>
-            (setSZPFlags: 'T -> State<unit, _>) (v0: 'T, v1: 'T, vMid: 'T, vMax: 'T, bits) (getVal : State<'T, _>) (setVal: 'T -> State<unit, _>) (cnt : Word8) = 
+            (setSZPFlags: 'T -> State<unit, _>) ((v0: 'T, v1: 'T, vMid: 'T, vMax: 'T), bits) (getVal : State<'T, _>) (setVal: 'T -> State<unit, _>) (cnt : Word8) = 
             let doShl = 
                 let f = (=<<) (fun s -> setFlag Flags.CF (s &&& vMid <> v0) *> setVal ((s <<< 1) &&& vMax) *> getVal)
                 loop f getVal cnt
@@ -48,7 +48,7 @@ module Logic =
                              and 'T : (static member ( &&& ) : ^T * ^T ->  ^T)
                              and 'T : (static member op_LeftShift : ^T * int32 -> ^T)
                              and 'T : (static member op_RightShift : ^T * int32 -> ^T)>
-            (setSZPFlags: 'T -> State<unit, _>) (v0: 'T, v1: 'T, vMid: 'T, _: 'T, _) (getVal : State<'T, _>) (setVal: 'T -> State<unit, _>) (cnt : Word8) = 
+            (setSZPFlags: 'T -> State<unit, _>) ((v0: 'T, v1: 'T, vMid: 'T, _: 'T), _) (getVal : State<'T, _>) (setVal: 'T -> State<unit, _>) (cnt : Word8) = 
             let setOF cnt s = (setFlag Flags.OF ((cnt = Word8(v1)) && (s &&& vMid <> v0)))
             let doShr = 
                 let f = (=<<) (fun s -> setFlag Flags.CF (s &&& v1 <> v0) *> setVal (s >>> 1) *> getVal)

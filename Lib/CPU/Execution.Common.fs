@@ -422,5 +422,6 @@ module Common =
         setSubFlags sub16FunParams flagSZP16 sub16ValParams
     
     (* Miscellenous helpers *)
+    // TODO: How do we get the type system to take care of OpCode signatures so we dont have this catch all for all opcodes?
     let inline nyi instr = failwithf "%O - Not implemented" (instr.ToString())
     let inline ns<'T> : State<'T option, Motherboard> = None |> State.returnM
