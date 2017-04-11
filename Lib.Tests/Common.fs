@@ -43,8 +43,9 @@ module Common =
         |> execAllLogicalInstrs
     
     let verifyAfterTestFromCOMFile mb (tCount: int) (iCount: int) = 
-        let successExitIp = 0x14dus
+        let successExitIp = 0x15Fus
         let counterOff = 0x14aus
+        let testStubICount = 26L
         let count = 
             0x0us @|@ counterOff
             |> readWord16
@@ -52,4 +53,4 @@ module Common =
         count |> should equal (Word16(tCount))
         mb.CPU.IP |> should equal (successExitIp + 1us)
         mb.CPU.CS |> should equal 0x0us
-        mb.CPU.ICount |> should equal (int64(iCount)) // 6 Instructions for a null test file
+        mb.CPU.ICount |> should equal (int64(iCount) + testStubICount)

@@ -1,5 +1,7 @@
 ﻿namespace Lib.CPU.Execution
-
+(* 
+    STC CLC CMC STD CLD STI CLI HLT WAIT ESC LOCK NOP
+*)
 module Processor = 
     open FSharpx
     open FSharpx.State

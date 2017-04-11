@@ -1,5 +1,9 @@
 namespace Lib.CPU.Execution
 
+(* 
+    MOV PUSH POP XCHG XLAT/XLATB IN OUT LEA LDS LE LAHF SAHF PUSHF POPF 
+*)
+
 module Data = 
     open YaFunTK
     open FSharpx

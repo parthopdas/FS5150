@@ -1,5 +1,10 @@
 namespace Lib.CPU.Execution
-
+(* 
+    CALL RET 
+    JMPJA/JNBE JAE/JNB JB/JNAE JBE/JNA JC JE/JZ JG/JNLE JGE/JNL JL/JNGE JLE/JNG JNC JNE/JNZ JNO JNP/JPO JNS JOJP/JPE JS
+    LOOP LOOPE/LOOPZ LOOPNE/LOOPNZ JCXZ 
+    INT INTO IRET
+*)
 module Control = 
     open YaFunTK
     open FSharpx
@@ -163,3 +168,5 @@ module Control =
         // loopz disp8    18 (CX<>0 and ZF=1)/6 (CX=0 or ZF=0)    2    loopz MaxWtLp
         | [ ArgOffset(off) ] -> LOOPX.doLoop instr.Length off id
         | _ -> nyi instr
+
+    let execINT _ = ns

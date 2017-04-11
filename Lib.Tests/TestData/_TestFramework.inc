@@ -4,12 +4,12 @@
 
 %macro PVT_ASSERT_ZERO 0
     jz $+5
-    jmp near _ATestFailed
+    jmp near TF_ATestFailed
 %endmacro
 
 %macro PVT_ASSERT_NOT_ZERO 0
     jnz $+5
-    jmp near _ATestFailed
+    jmp near TF_ATestFailed
 %endmacro
 
 %macro ASSERT_ZERO_TEST 1
@@ -38,13 +38,33 @@ StackStart:
 StackEnd:
 NumberOfTests   dw  0
 
-_ATestFailed:
+TF_ATestFailed:
+mov dx, TF_FailedMsg
+call TF_PrintMessage
+call TF_Quit
 hlt
 
-_AllTestsPassed:
+TF_AllTestsPassed:
+mov dx, TF_PassedMsg
+call TF_PrintMessage
+call TF_Quit
 hlt
 %endmacro
 
 %macro __END_TEST_SUITE__ 0
-jmp near _AllTestsPassed
+jmp near TF_AllTestsPassed
+
+TF_PrintMessage:
+    mov ah, 9
+    int 21h
+    ret
+
+TF_Quit:
+    mov al, 0
+    mov ah, 04ch
+    int 21h
+    ret
+
+TF_PassedMsg    db  'All tests passed!', 0ah, 0dh, '$'
+TF_FailedMsg    db  'Test failed!', 0ah, 0dh, '$'
 %endmacro

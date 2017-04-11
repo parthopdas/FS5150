@@ -80,7 +80,7 @@ module FDE =
           (* "IMUL", 0x1B *) nyi;
           (* "IN", 0x1C *) nyi;
           (* "INC", 0x1D *) execINC;
-          (* "INT", 0x1E *) nyi;
+          (* "INT", 0x1E *) execINT;
           (* "INTO", 0x1F *) nyi;
           (* "IRET", 0x20 *) nyi;
           (* "JA", 0x21 *) nyi;

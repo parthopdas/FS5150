@@ -341,32 +341,32 @@
     <Compile Include="CPU\Execution.Control.Tests.fs" />
     <Compile Include="CPU\Execution.Processor.Tests.fs" />
     <None Include="app.config" />
-    <None Include="TestData\ADD.tests.asm" />
-    <None Include="TestData\ADD.tests.com">
+    <None Include="TestData\AADD.tests.asm" />
+    <None Include="TestData\AADD.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\CALL-RET.tests.asm" />
-    <None Include="TestData\CALL-RET.tests.com">
+    <None Include="TestData\AINC.tests.asm" />
+    <None Include="TestData\AINC.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\INC.tests.asm" />
-    <None Include="TestData\INC.tests.com">
+    <None Include="TestData\CCALL-RET.tests.asm" />
+    <None Include="TestData\CCALL-RET.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\LOOPX.tests.asm" />
-    <None Include="TestData\LOOPX.tests.com">
+    <None Include="TestData\CLOOPX.tests.asm" />
+    <None Include="TestData\CLOOPX.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\PUSHX-POPX.tests.asm" />
-    <None Include="TestData\PUSHX-POPX.tests.com">
+    <None Include="TestData\DPUSHX-POPX.tests.asm" />
+    <None Include="TestData\DPUSHX-POPX.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\SHL.tests.asm" />
-    <None Include="TestData\SHL.tests.com">
+    <None Include="TestData\LSHL.tests.asm" />
+    <None Include="TestData\LSHL.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\SHR.tests.asm" />
-    <None Include="TestData\SHR.tests.com">
+    <None Include="TestData\LSHR.tests.asm" />
+    <None Include="TestData\LSHR.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

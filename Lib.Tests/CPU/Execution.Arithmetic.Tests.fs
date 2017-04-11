@@ -13,8 +13,8 @@ open YaFunTK
 open global.Xunit
 
 [<Theory>]
-[<InlineData("ADD.tests.com", 42, 0x164)>]
-[<InlineData("INC.tests.com", 30, 0x11c)>]
+[<InlineData("AADD.tests.com", 42, 0x154)>]
+[<InlineData("AINC.tests.com", 30, 0x10c)>]
 let ``COM.Tests`` testName tCount iCount = 
     let mb = createMB testName
     

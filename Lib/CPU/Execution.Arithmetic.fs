@@ -1,5 +1,7 @@
 namespace Lib.CPU.Execution
-
+(* 
+    ADD ADC INC AAA DA SUB SBB DEC NEG CMP AAS DA MUL IMUL AA DIV IDIV AAD CBW CWD
+*)
 module Arithmetic = 
     open YaFunTK
     open FSharpx

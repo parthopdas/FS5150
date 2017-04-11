@@ -23,9 +23,7 @@ __BEGIN_TEST_SUITE__
   %else 
     loop%+1 %%SumLoop
   %endif   
-    GetFlags
-    and ax, Mask_AllF
-    ASSERT_ZERO_CMP {ax, %2}
+    GetFlagsAndVerify %2
     ASSERT_ZERO_CMP {cx, 0}
     ASSERT_ZERO_CMP {byte [StartOfVars + 1], 1}
     ASSERT_ZERO_CMP {byte [StartOfVars + 2], 2}

@@ -17,6 +17,13 @@
     pop ax
 %endmacro
 
+%macro GetFlagsAndVerify 1
+    pushf
+    pop ax
+    and ax, Mask_AllF
+    ASSERT_ZERO_CMP {ax, %1}
+%endmacro
+
 %define Mask_NoF  0000000000000000b
 %define Mask_CF   0000000000000001b
 %define Mask_PF   0000000000000100b
