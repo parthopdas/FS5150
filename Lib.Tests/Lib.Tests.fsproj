@@ -353,6 +353,10 @@
     <None Include="TestData\INC.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="TestData\LOOPX.tests.asm" />
+    <None Include="TestData\LOOPX.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="TestData\PUSHX-POPX.tests.asm" />
     <None Include="TestData\PUSHX-POPX.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

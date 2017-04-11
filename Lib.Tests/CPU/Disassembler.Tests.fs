@@ -227,14 +227,14 @@ let ``popCode tests`` (bs, oc, args, hasMrm) : unit =
 
 let ``pinstruction tests data`` : obj array seq = 
     seq {    
-        (* 1 Arg  *)        yield ([| 0x26uy; |], "0000:0000 26           ES:*\t", false) 
-        (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 37           AAA\t", false) 
-        (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 04FF         ADD\tAL, FF", false) 
-        (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 E80DF0       CALL\tF00D", false) 
-        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD     ADC\tword ptr [DDF0], BP", false) 
-        (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 EA0DF0ADBA   JMP\tBAAD:F00D", false) 
-        (* 6 Args + GRP *)  yield ([| 0x81uy; 0b10000110uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 818634013200 ADD\tword ptr [BP+0134], 0032", true) 
-        (* 6 Args *)        yield ([| 0xC7uy; 0x06uy; 0x72uy; 0x00uy; 0x00uy; 0x00uy |], "0000:0000 C70672000000 MOV\tword ptr [0072], 0000", false) 
+        (* 1 Arg  *)        yield ([| 0x26uy; |], "0000:0000 26           ES:* ", false) 
+        (* 1 Arg  *)        yield ([| 0x37uy; |], "0000:0000 37           AAA ", false) 
+        (* 2 Arg  *)        yield ([| 0x04uy; 0xFFuy |], "0000:0000 04FF         ADD AL, FF", false) 
+        (* 3 Arg  *)        yield ([| 0xE8uy; 0x0Duy; 0xF0uy |], "0000:0000 E80DF0       CALL F00D", false) 
+        (* 4 Args *)        yield ([| 0x11uy; 0b00101110uy; 0xF0uy; 0xDDuy |], "0000:0000 112EF0DD     ADC word ptr [DDF0], BP", false) 
+        (* 5 Args *)        yield ([| 0xEAuy; 0x0Duy; 0xF0uy; 0xADuy; 0xBAuy |], "0000:0000 EA0DF0ADBA   JMP BAAD:F00D", false) 
+        (* 6 Args + GRP *)  yield ([| 0x81uy; 0b10000110uy; 0x34uy; 0x01uy; 0x32uy; 0x00uy |], "0000:0000 818634013200 ADD word ptr [BP+0134], 0032", true) 
+        (* 6 Args *)        yield ([| 0xC7uy; 0x06uy; 0x72uy; 0x00uy; 0x00uy; 0x00uy |], "0000:0000 C70672000000 MOV word ptr [0072], 0000", false) 
     }
     |> Seq.map (fun (a, b, c) -> 
            [| box a
@@ -259,6 +259,6 @@ let ``pinstruction parse-compile round trip``() =
     // As soon as we have figured out how to get a generator for multiple args, implement it.
     let law csip = 
         match runOnInput (pinstruction csip grammer) ([| 0x37uy |] |> fromBytes 0) with
-        | Success(i, is) -> i.ToString() = (sprintf "%O 37           AAA\t" csip) && is.Position = 1
+        | Success(i, is) -> i.ToString() = (sprintf "%O 37           AAA " csip) && is.Position = 1
         | Failure _ -> false
     Check.QuickThrowOnFailure law

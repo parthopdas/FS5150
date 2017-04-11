@@ -144,23 +144,47 @@ module Logic =
             *> ns
         | _ -> nyi instr
 
-    let execTEST instr = 
-        let opAnd8 v1v2 = 
+    module AND =
+        let inline opAnd8 v1v2 = 
             let res = v1v2 ||> (&&&)
             flagLog8 res *> (res |> State.returnM)
     
-        let opAnd16 v1v2 = 
+        let inline opAnd16 v1v2 = 
             let res = v1v2 ||> (&&&)
             flagLog16 res *> (res |> State.returnM)
-    
+
+
+    let execAND instr = 
+        match instr.Args with
+        // and reg8,reg8    3   2   and dl,dl
+        // and [mem8],reg8  16EA    2 to 4  and [si1],dl
+        // and reg8,[mem8]  9EA 2 to 4  and ah,[sibx]
+        // and reg16,reg16  3   2   and si,bp
+        // and [mem16],reg16    24EA    2 to 4  and [WordVar],dx
+        // and reg16,[mem16]    13EA    2 to 4  and si,[WordVar2]
+        // and reg8,immed8  4   3   and ah,07fh
+        // and [mem8],immed8    17EA    3 to 5  and byte ptr [di],5
+        // and reg16,sextimmed  4   3   and dx,1
+        // and reg16,immed16    4   4   and cx,0aaaah
+        // and [mem16],sextimmed    25EA    3 to 5  and word ptr [bx],80h
+        // and [mem16],immed16  25EA    4 to 6  and word ptr [di],05555h
+        // and al,immed8    4   2   and al,0f0h
+        // and ax,immed16   4   3   and ax,0ff00h
+        | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
+            (Prelude.tuple2 <!> getReg16 r <*> (c |> State.returnM)
+             >>= AND.opAnd16 >>= setReg16 r)
+            *> ns
+        | _ -> nyi instr
+
+    let execTEST instr = 
         match instr.Args with
         | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> 
             (Prelude.tuple2 <!> getReg8 r <*> (c |> State.returnM)
-             >>= opAnd8)
+             >>= AND.opAnd8)
             *> ns
         | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
             (Prelude.tuple2 <!> getReg16 r <*> (c |> State.returnM)
-             >>= opAnd16)
+             >>= AND.opAnd16)
             *> ns
         | _ -> nyi instr
     

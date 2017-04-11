@@ -16,3 +16,6 @@ module Processor =
 
     let inline execCLI _ = setFlag Flags.IF false *> ns
     let inline execSTI _ = setFlag Flags.IF true *> ns
+
+    let inline execHLT _ =
+        setHalted *> ns

@@ -57,7 +57,7 @@ module FDE =
           (* "AAS", 0x4 *) nyi;
           (* "ADC", 0x5 *) nyi;
           (* "ADD", 0x6 *) execADD;
-          (* "AND", 0x7 *) nyi;
+          (* "AND", 0x7 *) execAND;
           (* "CALL", 0x8 *) execCALL;
           (* "CBW", 0x9 *) nyi;
           (* "CLC", 0xA *) execCLC;
@@ -71,7 +71,7 @@ module FDE =
           (* "CWD", 0x12 *) nyi;
           (* "DAA", 0x13 *) nyi;
           (* "DAS", 0x14 *) nyi;
-          (* "DEC", 0x15 *) nyi;
+          (* "DEC", 0x15 *) execDEC ;
           (* "DIV", 0x16 *) nyi;
           (* "DS:", 0x17 *) execXS DS;
           (* "ES:", 0x18 *) execXS ES;
@@ -108,9 +108,9 @@ module FDE =
           (* "LOCK", 0x37 *) nyi;
           (* "LODSB", 0x38 *) nyi;
           (* "LODSW", 0x39 *) nyi;
-          (* "LOOP", 0x3A *) nyi;
-          (* "LOOPNZ", 0x3B *) nyi;
-          (* "LOOPZ", 0x3C *) nyi;
+          (* "LOOP", 0x3A *) execLOOP;
+          (* "LOOPNZ", 0x3B *) execLOOPNZ;
+          (* "LOOPZ", 0x3C *) execLOOPZ;
           (* "MOV", 0x3D *) execMOV;
           (* "MOVSB", 0x3E *) nyi;
           (* "MOVSW", 0x3F *) nyi;

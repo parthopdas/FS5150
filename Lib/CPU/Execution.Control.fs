@@ -8,8 +8,8 @@ module Control =
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     
-    let getAndIncrIPIf n flg = 
-        if flg then 
+    let getAndIncrIPIf n c = 
+        if c then 
             getCSIP >>= (Prelude.flip (|++) n
                          >> Some
                          >> State.returnM)
@@ -140,5 +140,26 @@ module Control =
             popIPCS <* (decSP c) >>= (Some >> State.returnM)
         | _ -> nyi instr
 
-    let execHLT _ =
-        setHalted *> ns
+    module LOOPX =
+        let doLoop instrLen off ccond =
+            let cond = Prelude.tuple2 <!> getFlag Flags.ZF <*> getReg16 CX >>= (fun (zf, cx) -> (cx <> 0us && ccond zf) |> State.returnM)
+            (getReg16 CX >>= ((+) 0xFFFFus >> setReg16 CX)) 
+            *> (cond >>= getAndIncrIPIf (instrLen + off))
+
+    let execLOOP instr = 
+        match instr.Args with
+        // loop disp8    17 (CX<>0)/5 (CX=0)    2    loop WaitLoop
+        | [ ArgOffset(off) ] -> LOOPX.doLoop instr.Length off (Prelude.ct true)
+        | _ -> nyi instr
+
+    let execLOOPNZ instr = 
+        match instr.Args with
+        // loopnz disp8    19 (CX<>0 and ZF=0)/5 (CX=0 or ZF=1)    2    loopnz PollLp
+        | [ ArgOffset(off) ] -> LOOPX.doLoop instr.Length off not
+        | _ -> nyi instr
+
+    let execLOOPZ instr = 
+        match instr.Args with
+        // loopz disp8    18 (CX<>0 and ZF=1)/6 (CX=0 or ZF=0)    2    loopz MaxWtLp
+        | [ ArgOffset(off) ] -> LOOPX.doLoop instr.Length off id
+        | _ -> nyi instr

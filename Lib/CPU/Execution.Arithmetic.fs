@@ -155,6 +155,13 @@ module Arithmetic =
             |> State.returnM
             <* setSub8Flags a1a2
     
+        let inline private decCore<'T>
+            sub (v1 : 'T) (get : State<'T, _>) (set : 'T -> State<unit, _>) =
+            let sub1 = Prelude.tuple2 <!> get <*> (v1 |> State.returnM) >>= sub >>= set
+            (getFlag Flags.CF <* sub1 >>= setFlag Flags.CF)
+        let dec8 = decCore coreSUB8 1uy
+        let dec16 = decCore coreSUB16 1us
+
     let execSUB instr = 
         match instr.Args with
         | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
@@ -170,12 +177,15 @@ module Arithmetic =
                 >>= setReg8 r)
             *> ns
         | _ -> Prelude.undefined
-    
+
+    // TODO: Add COM tests for this    
     let execCMP instr = 
         match instr.Args with
         // cmp reg8,reg8    3    2    cmp ah,al
         // cmp [mem8],reg8    9EA    2 to 4    cmp [si],cl
         // cmp reg8,[mem8]    9EA    2 to 4    cmp ah,[bx]
+        | [ ArgRegister8 r; ArgDereference8 dref ] -> 
+            (Prelude.tuple2 <!> getReg8 r <*> (readMem8 instr dref) >>= setSub8Flags) *> ns
         // cmp reg16,reg16    3    2    cmp dx,ax
         | [ ArgRegister16 r1; ArgRegister16 r2 ] -> 
             (Prelude.tuple2 <!> getReg16 r1 <*> getReg16 r2 >>= setSub16Flags) *> ns
@@ -203,4 +213,10 @@ module Arithmetic =
             (Prelude.tuple2 <!> (readMem16 instr dref) <*> (c |> State.returnM) >>= setSub16Flags) *> ns
         // cmp al,immed8    4    2    cmp al,22
         // cmp ax,immed16    4    3    cmp ax,722
+        | _ -> nyi instr
+
+    let execDEC instr = 
+        match instr.Args with
+        | [ ArgRegister16 r ] -> 
+            (SUB.dec16 (getReg16 r) (setReg16 r)) *> ns
         | _ -> nyi instr

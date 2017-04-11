@@ -352,14 +352,14 @@ module InstructionSet =
         override x.ToString() = 
             let fmtBytes = 
                 sprintf "%s%s" (String.Join("", x.Bytes |> Array.map (sprintf "%02X"))) 
-                    (new String(' ', 2 * (6 - x.Bytes.Length)))
+                    (String(' ', 2 * (6 - x.Bytes.Length)))
             
             let fmtArgs = 
                 (String.Join(", ", 
                              x.Args
                              |> List.map (fun e -> e.ToString())
                              |> Array.ofList))
-            sprintf "%O %s %s%s\t%O" x.Address fmtBytes ocIndices.[x.OpCode] (if x.IsPrefix then "*"
+            sprintf "%O %s %s%s %O" x.Address fmtBytes ocIndices.[x.OpCode] (if x.IsPrefix then "*"
                                                                               else "") fmtArgs
         
         member x.Length : Word16 = uint16 x.Bytes.Length
