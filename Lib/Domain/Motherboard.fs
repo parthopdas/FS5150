@@ -56,7 +56,7 @@ module PC =
           mutable Flags : BitVector32
           mutable LogicalInstrStart : Address
           mutable SegmentOverride : RegisterSeg option
-          mutable RepetitionType : RepetitionType option
+          mutable RepetitionType : RepetitionType
           mutable Halted : bool 
           mutable ITicks : int64
           mutable ICount : int64 }

@@ -87,11 +87,11 @@ module String =
                     if f zf then goBack
                     else ns
             Prelude.tuple2 <!> getRepetitionType <*> getReg16 CX >>= (function 
-            | Some _, 0us -> ns
-            | None, 0us -> subAccESDI *> updateDI *> ns
-            | None, _ -> subAccESDI *> updateDI *> ns
-            | Some WhileZero, cx -> subAccESDI *> updateDI *> (setReg16 CX (cx - 1us)) *> whileDf id
-            | Some WhileNotZero, cx -> subAccESDI *> updateDI *> (setReg16 CX (cx - 1us)) *> whileDf not)
+            | NoRepetition, 0us -> subAccESDI *> updateDI *> ns
+            | NoRepetition, _ -> subAccESDI *> updateDI *> ns
+            | _, 0us -> ns
+            | WhileZero, cx -> subAccESDI *> updateDI *> (setReg16 CX (cx - 1us)) *> whileDf id
+            | WhileNotZero, cx -> subAccESDI *> updateDI *> (setReg16 CX (cx - 1us)) *> whileDf not)
         
         let coreSCASB = coreSCASX (getReg8 AL) readWord8 setSub8Flags 1us
         let inline execSCASB _ = coreSCASB
@@ -109,10 +109,10 @@ module String =
             
             let goBack = getLogicalInstrStart >>= (Some >> State.returnM)
             Prelude.tuple2 <!> getRepetitionType <*> getReg16 CX >>= (function 
-            | Some _, 0us -> ns
-            | None, 0us -> cpData *> updateXI *> ns
-            | None, _ -> cpData *> updateXI *> ns
-            | Some _, cx -> cpData *> updateXI *> (setReg16 CX (cx - 1us)) *> goBack)
+            | NoRepetition, 0us -> cpData *> updateXI *> ns
+            | NoRepetition, _ -> cpData *> updateXI *> ns
+            | _, 0us -> ns
+            | _, cx -> cpData *> updateXI *> (setReg16 CX (cx - 1us)) *> goBack)
     
     module LODSX = 
         let inline private coreLODSX read setAcc n = 

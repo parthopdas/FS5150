@@ -25,21 +25,21 @@ let csip = 0x10us @|@ 0us
 
 module SCASX = 
     let ``Core SCASX tests data`` : obj array seq = 
-        [| ((Some WhileZero, 0x0us, false, 0xbaadus), (csip, 0x1us @|@ 0us, 0x0us, false))
-           ((Some WhileNotZero, 0x0us, true, 0xdeadus), (csip, 0x1us @|@ 0us, 0x0us, false))
-           ((None, 0x0us, true, 0xdeadus), (csip, 0x1us @|@ 0xfffeus, 0x0us, true))
-           ((None, 0x1us, false, 0xdeadus), (csip, 0x1us @|@ 0x2us, 0x1us, true))
-           ((Some WhileZero, 0x1us, false, 0xdeadus), (0x10us @|@ 0x10us, 0x1us @|@ 0x2us, 0x0us, true))
-           ((Some WhileZero, 0x1us, true, 0xbaadus), (csip, 0x1us @|@ 0xfffeus, 0x0us, false))
-           ((Some WhileNotZero, 0x1us, true, 0xdeadus), (csip, 0x1us @|@ 0xfffeus, 0x0us, true))
-           ((Some WhileNotZero, 0x1us, false, 0xbaadus), (0x10us @|@ 0x10us, 0x1us @|@ 0x2us, 0x0us, false)) |]
+        [| ((WhileZero, 0x0us, false, 0xbaadus), (csip, 0x1us @|@ 0us, 0x0us, false))
+           ((WhileNotZero, 0x0us, true, 0xdeadus), (csip, 0x1us @|@ 0us, 0x0us, false))
+           ((NoRepetition, 0x0us, true, 0xdeadus), (csip, 0x1us @|@ 0xfffeus, 0x0us, true))
+           ((NoRepetition, 0x1us, false, 0xdeadus), (csip, 0x1us @|@ 0x2us, 0x1us, true))
+           ((WhileZero, 0x1us, false, 0xdeadus), (0x10us @|@ 0x10us, 0x1us @|@ 0x2us, 0x0us, true))
+           ((WhileZero, 0x1us, true, 0xbaadus), (csip, 0x1us @|@ 0xfffeus, 0x0us, false))
+           ((WhileNotZero, 0x1us, true, 0xdeadus), (csip, 0x1us @|@ 0xfffeus, 0x0us, true))
+           ((WhileNotZero, 0x1us, false, 0xbaadus), (0x10us @|@ 0x10us, 0x1us @|@ 0x2us, 0x0us, false)) |]
         |> Seq.map (fun (a, b) -> 
                [| box a
                   box b |])
     
     [<Xunit.Theory>]
     [<Xunit.MemberData("Core SCASX tests data")>]
-    let ``Core SCASX tests`` ((reptype : RepetitionType option, cx : Word16, df : bool, v : Word16), 
+    let ``Core SCASX tests`` ((reptype : RepetitionType, cx : Word16, df : bool, v : Word16), 
                               (csip' : Address, esdi' : Address, cx' : Word16, zf : bool)) : unit = 
         mb.CPU.RepetitionType <- reptype
         mb.CPU.CX <- cx

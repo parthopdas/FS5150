@@ -25,7 +25,7 @@ module Common =
           Flags = BitVector32()
           LogicalInstrStart = { Offset = 0us; Segment = 0us }
           SegmentOverride = None
-          RepetitionType = None
+          RepetitionType = NoRepetition
           Halted = false
           ITicks = 0L
           ICount = 0L }
@@ -354,7 +354,7 @@ module Common =
         let innerFn mb = 
             mb.CPU.LogicalInstrStart <- mb.CPU.CS @|@ mb.CPU.IP
             mb.CPU.SegmentOverride <- None
-            mb.CPU.RepetitionType <- None
+            mb.CPU.RepetitionType <- NoRepetition
             (), mb
         innerFn : State<unit, Motherboard>
     
@@ -382,14 +382,14 @@ module Common =
     
     let setRepetitionType rt = 
         let innerFn mb = 
-            mb.CPU.RepetitionType <- Some rt
+            mb.CPU.RepetitionType <- rt
             (), mb
         innerFn : State<unit, Motherboard>
     
     let getRepetitionType = 
         let innerFn mb = 
             mb.CPU.RepetitionType, mb
-        innerFn : State<RepetitionType option, Motherboard>
+        innerFn : State<RepetitionType, Motherboard>
     
     let setHalted = 
         let innerFn mb = 
