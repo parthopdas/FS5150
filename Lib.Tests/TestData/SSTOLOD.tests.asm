@@ -42,8 +42,6 @@ _main:
 _FACT_ ; norep, df=0 => load, no update of CX, update DI, no flags affected
 UnsetFlags
 mov cx, 100h
-mov ax, cs
-mov ds, ax
 mov si, ltest1str
 lodsb
 mov bx, ax
@@ -55,8 +53,6 @@ ASSERT_EQUAL_CMP {si, ltest1str + 1}
 _FACT_ ; norep, df=1 => load, no update of CX, update DI, no flags affected
 SetFlags
 mov cx, 100h
-mov ax, cs
-mov ds, ax
 mov si, ltest1str
 lodsb
 mov bx, ax
@@ -69,8 +65,6 @@ ASSERT_EQUAL_CMP {si, ltest1str - 1}
 _FACT_ ; rep cx=2, df=0 => load, update of CX, update DI, no flags affected
 UnsetFlags
 mov cx, 2
-mov ax, cs
-mov ds, ax
 mov si, ltest2str
 rep lodsb
 mov bx, ax
@@ -82,8 +76,6 @@ ASSERT_EQUAL_CMP {si, ltest2str + 2}
 _FACT_ ; rep cx=2, df=1 => load, update of CX, update DI, no flags affected
 SetFlags
 mov cx, 2
-mov ax, cs
-mov ds, ax
 mov si, ltest2str + 1
 rep lodsb
 mov bx, ax
@@ -95,8 +87,6 @@ ASSERT_EQUAL_CMP {si, ltest2str - 1}
 _FACT_ ; rep cx=0 => no load, no update of CX, no update DI, no flags affected
 SetFlags
 mov cx, 0
-mov ax, cs
-mov ds, ax
 mov al, 0feh
 mov si, ltest2str
 rep lodsb
@@ -110,8 +100,6 @@ ASSERT_EQUAL_CMP {si, ltest2str}
 _FACT_ ; norep, df=0 => load, no update of CX, update DI, no flags affected
 UnsetFlags
 mov cx, 100h
-mov ax, cs
-mov ds, ax
 mov si, ltest1wstr
 lodsw
 mov bx, ax
@@ -124,8 +112,6 @@ ASSERT_EQUAL_CMP {si, ltest1wstr + 2}
 _FACT_ ; rep cx=2, df=1 => load, update of CX, update DI, no flags affected
 SetFlags
 mov cx, 2
-mov ax, cs
-mov ds, ax
 mov si, ltest2wstr + 2
 rep lodsw
 mov bx, ax
@@ -150,8 +136,6 @@ ASSERT_EQUAL_CMP {si, ltest2wstr - 2}
 _FACT_ ; norep, df=0 => load, no update of CX, update DI, no flags affected
 UnsetFlags
 mov cx, 100h
-mov ax, cs
-mov es, ax
 mov di, stest1str
 mov al, 'x'
 stosb
@@ -165,8 +149,6 @@ ASSERT_EQUAL_CMP {byte [stest1str], 'x'}
 _FACT_ ; norep, df=1 => load, no update of CX, update DI, no flags affected
 SetFlags
 mov cx, 100h
-mov ax, cs
-mov es, ax
 mov di, stest1str
 mov al, 'y'
 stosb
@@ -181,8 +163,6 @@ ASSERT_EQUAL_CMP {byte [stest1str], 'y'}
 _FACT_ ; rep cx=2, df=0 => load, update of CX, update DI, no flags affected
 UnsetFlags
 mov cx, 2
-mov ax, cs
-mov es, ax
 mov di, stest2str
 mov al, '5'
 rep stosb
@@ -197,8 +177,6 @@ ASSERT_EQUAL_CMP {byte [stest2str + 1], '5'}
 _FACT_ ; rep cx=2, df=1 => load, update of CX, update DI, no flags affected
 SetFlags
 mov cx, 2
-mov ax, cs
-mov es, ax
 mov di, stest2str + 1
 mov al, '7'
 rep stosb
@@ -213,8 +191,6 @@ ASSERT_EQUAL_CMP {byte [stest2str], '7'}
 _FACT_ ; rep cx=0 => no load, no update of CX, no update DI, no flags affected
 SetFlags
 mov cx, 0
-mov ax, cs
-mov es, ax
 mov al, 0feh
 mov di, ltest1str
 rep stosb
@@ -229,8 +205,6 @@ ASSERT_EQUAL_CMP {byte [ltest1str], 'A'}
 _FACT_ ; norep, df=0 => load, no update of CX, update DI, no flags affected
 UnsetFlags
 mov cx, 100h
-mov ax, cs
-mov es, ax
 mov di, stest1wstr
 mov ax, 'MM'
 stosw
@@ -245,8 +219,6 @@ ASSERT_EQUAL_CMP {word [stest1wstr], 'MM'}
 _FACT_ ; rep cx=2, df=1 => load, update of CX, update DI, no flags affected
 SetFlags
 mov cx, 2
-mov ax, cs
-mov es, ax
 mov di, stest2wstr + 2
 mov ax, 'NN'
 rep stosw

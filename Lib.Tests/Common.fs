@@ -43,9 +43,9 @@ module Common =
         |> execAllLogicalInstrs
     
     let verifyAfterTestFromCOMFile mb (tCount: int) (iCount: int) = 
-        let successExitIp = 0x15Fus
-        let counterOff = 0x14aus
-        let testStubICount = 26L // TODO: This is actually only 16
+        let successExitIp = 0x163us
+        let counterOff = 0x14eus
+        let testStubICount = 18L
         let count = 
             0x0us @|@ counterOff
             |> readWord16

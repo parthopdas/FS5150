@@ -5,7 +5,7 @@ open global.Xunit
 open Lib.Common
 
 [<Theory>]
-[<InlineData("DPUSHX-POPX.tests.com", 4, 0x65)>]
+[<InlineData("DPUSHX-POPX.tests.com", 4, 0x6f)>]
 let ``COM.Tests`` testName tCount iCount = 
     let mb = createMB testName
     

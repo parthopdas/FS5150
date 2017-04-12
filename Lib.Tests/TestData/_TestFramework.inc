@@ -34,6 +34,8 @@
 
 %macro __BEGIN_TEST_SUITE__ 0
 mov ax, cs
+mov ds, ax
+mov es, ax
 mov ss, ax
 mov sp, StackEnd
 jmp near _main
