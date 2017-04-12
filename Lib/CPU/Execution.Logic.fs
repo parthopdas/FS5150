@@ -6,18 +6,25 @@ module Logic =
     open YaFunTK
     open FSharpx
     open FSharpx.State
+    open Lib
     open Lib.CPU.Execution.Common
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     
-    let flagLog8 (w8 : Word8) = flagSZP8 w8 *> (setFlag Flags.CF false) *> (setFlag Flags.OF false)
+    let setLogicFlags8 (w8 : Word8) = flagSZP8 w8 *> (setFlag Flags.CF false) *> (setFlag Flags.OF false)
     
-    let flagLog16 (w16 : Word16) = flagSZP16 w16 *> (setFlag Flags.CF false) *> (setFlag Flags.OF false)
+    let setLogicFlags16 (w16 : Word16) = flagSZP16 w16 *> (setFlag Flags.CF false) *> (setFlag Flags.OF false)
     
     let execNOT instr = 
         match instr.Args with
+        // not reg8 3   2   not al
         | [ ArgRegister8 r ] -> ((~~~) <!> getReg8 r >>= setReg8 r) *> ns
+        // not [mem8]   16EA    2 to 4  not byte ptr [bx]
+        | [ ArgDereference8 dref ] -> ((~~~) <!> readMem8 instr dref >>= writeMem8 instr dref) *> ns
+        // not reg16    3   2   not dx
         | [ ArgRegister16 r ] -> ((~~~) <!> getReg16 r >>= setReg16 r) *> ns
+        // not [mem16]  24EA    2 to 4  not [WordVar]
+        | [ ArgDereference16 dref ] -> ((~~~) <!> readMem16 instr dref >>= writeMem16 instr dref) *> ns
         | _ -> nyi instr
     
     module SHX =
@@ -119,74 +126,152 @@ module Logic =
             (getReg8 CL >>= SHX.coreSHR16 (readMem16 instr dref) (writeMem16 instr dref)) *> ns
         | _ -> nyi instr
     
-    let execXOR instr = 
-        let opXor8 v1v2 = 
-            let res = v1v2 ||> (^^^)
-            flagLog8 res *> (res |> State.returnM)
+    let execTEST instr = 
+        let inline op8 v1v2 = 
+            let res = v1v2 ||> (&&&)
+            setLogicFlags8 res *> (res |> State.returnM)
     
-        let opXor16 v1v2 = 
-            let res = v1v2 ||> (^^^)
-            flagLog16 res *> (res |> State.returnM)
-    
+        let inline op16 v1v2 = 
+            let res = v1v2 ||> (&&&)
+            setLogicFlags16 res *> (res |> State.returnM)
+
         match instr.Args with
-        | [ ArgRegister16 r1; ArgRegister16 r2 ] -> 
-            (Prelude.tuple2 <!> getReg16 r1 <*> getReg16 r2
-             >>= opXor16
-             >>= setReg16 r1)
-            *> ns
+        // test reg8,reg8  3   2   or al,dl
         | [ ArgRegister8 r1; ArgRegister8 r2 ] -> 
             (Prelude.tuple2 <!> getReg8 r1 <*> getReg8 r2
-             >>= opXor8
-             >>= setReg8 r1)
+             >>= op8)
             *> ns
-        | [ ArgRegister16 r1; ArgImmediate(W16 w16) ] -> 
-            (Prelude.tuple2 <!> getReg16 r1 <*> (w16 |> State.returnM)
-             >>= opXor16
-             >>= setReg16 r1)
+        // test [mem8],reg8    16EA    2 to 4  or [ByteVar],ch
+        | [ ArgDereference8 dref; ArgRegister8 r ] -> 
+            (Prelude.tuple2 <!> readMem8 instr dref <*> getReg8 r
+             >>= op8)
             *> ns
-        | _ -> nyi instr
-
-    module AND =
-        let inline opAnd8 v1v2 = 
-            let res = v1v2 ||> (&&&)
-            flagLog8 res *> (res |> State.returnM)
-    
-        let inline opAnd16 v1v2 = 
-            let res = v1v2 ||> (&&&)
-            flagLog16 res *> (res |> State.returnM)
-
-
-    let execAND instr = 
-        match instr.Args with
-        // and reg8,reg8    3   2   and dl,dl
-        // and [mem8],reg8  16EA    2 to 4  and [si1],dl
-        // and reg8,[mem8]  9EA 2 to 4  and ah,[sibx]
-        // and reg16,reg16  3   2   and si,bp
-        // and [mem16],reg16    24EA    2 to 4  and [WordVar],dx
-        // and reg16,[mem16]    13EA    2 to 4  and si,[WordVar2]
-        // and reg8,immed8  4   3   and ah,07fh
-        // and [mem8],immed8    17EA    3 to 5  and byte ptr [di],5
-        // and reg16,sextimmed  4   3   and dx,1
-        // and reg16,immed16    4   4   and cx,0aaaah
-        // and [mem16],sextimmed    25EA    3 to 5  and word ptr [bx],80h
-        // and [mem16],immed16  25EA    4 to 6  and word ptr [di],05555h
-        // and al,immed8    4   2   and al,0f0h
-        // and ax,immed16   4   3   and ax,0ff00h
-        | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
-            (Prelude.tuple2 <!> getReg16 r <*> (c |> State.returnM)
-             >>= AND.opAnd16 >>= setReg16 r)
+        // test reg8,[mem8]    9EA 2 to 4  or bh,[si]
+        | [ ArgRegister8 r; ArgDereference8 dref ] -> 
+            (Prelude.tuple2 <!> getReg8 r <*> readMem8 instr dref
+             >>= op8)
             *> ns
-        | _ -> nyi instr
-
-    let execTEST instr = 
-        match instr.Args with
+        // test reg16,reg16    3   2   or bp,ax
+        | [ ArgRegister16 r1; ArgRegister16 r2 ] -> 
+            (Prelude.tuple2 <!> getReg16 r1 <*> getReg16 r2
+             >>= op16)
+            *> ns
+        // test [mem16],reg16  24EA    2 to 4  or [bpsi],cx
+        | [ ArgDereference16 dref; ArgRegister16 r ] -> 
+            (Prelude.tuple2 <!> readMem16 instr dref <*> getReg16 r
+             >>= op16)
+            *> ns
+        // test reg16,[mem16]  13EA    2 to 4  or ax,[bx]
+        | [ ArgRegister16 r; ArgDereference16 dref ] -> 
+            (Prelude.tuple2 <!> getReg16 r <*> readMem16 instr dref
+             >>= op16)
+            *> ns
+        // test reg8,immed8    4   3   or cl,03h
         | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> 
             (Prelude.tuple2 <!> getReg8 r <*> (c |> State.returnM)
-             >>= AND.opAnd8)
+             >>= op8)
             *> ns
+        // test [mem8],immed8  17EA    3 to 5  or [ByteVar1],29h
+        | [ ArgDereference8 dref; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> readMem8 instr dref <*> (c |> State.returnM)
+             >>= op8)
+            *> ns
+        // test reg16,immed16  4   4   or ax,01fffh
         | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
             (Prelude.tuple2 <!> getReg16 r <*> (c |> State.returnM)
-             >>= AND.opAnd16)
+             >>= op16)
             *> ns
+        // test [mem16],immed16    25EA    4 to 6  or [WordVar],7fffh
+        | [ ArgDereference16 dref; ArgImmediate(W16 c) ] -> 
+            (Prelude.tuple2 <!> readMem16 instr dref <*> (c |> State.returnM)
+             >>= op16)
+            *> ns
+        // test al,immed8  4   2   or al,0c0h
+        // test ax,immed16 4   3   or ax,01ffh
         | _ -> nyi instr
+
+    let execLogicOp op8 op16 instr = 
+        let inline op8 v1v2 = 
+            let res = v1v2 ||> op8
+            setLogicFlags8 res *> (res |> State.returnM)
     
+        let inline op16 v1v2 = 
+            let res = v1v2 ||> op16
+            setLogicFlags16 res *> (res |> State.returnM)
+
+        match instr.Args with
+        // or/and/xor reg8,reg8  3   2   or al,dl
+        | [ ArgRegister8 r1; ArgRegister8 r2 ] -> 
+            (Prelude.tuple2 <!> getReg8 r1 <*> getReg8 r2
+             >>= op8 
+             >>= setReg8 r1)
+            *> ns
+        // or/and/xor [mem8],reg8    16EA    2 to 4  or [ByteVar],ch
+        | [ ArgDereference8 dref; ArgRegister8 r ] -> 
+            (Prelude.tuple2 <!> readMem8 instr dref <*> getReg8 r
+             >>= op8
+             >>= writeMem8 instr dref)
+            *> ns
+        // or/and/xor reg8,[mem8]    9EA 2 to 4  or bh,[si]
+        | [ ArgRegister8 r; ArgDereference8 dref ] -> 
+            (Prelude.tuple2 <!> getReg8 r <*> readMem8 instr dref
+             >>= op8
+             >>= setReg8 r)
+            *> ns
+        // or/and/xor reg16,reg16    3   2   or bp,ax
+        | [ ArgRegister16 r1; ArgRegister16 r2 ] -> 
+            (Prelude.tuple2 <!> getReg16 r1 <*> getReg16 r2
+             >>= op16
+             >>= setReg16 r1)
+            *> ns
+        // or/and/xor [mem16],reg16  24EA    2 to 4  or [bpsi],cx
+        | [ ArgDereference16 dref; ArgRegister16 r ] -> 
+            (Prelude.tuple2 <!> readMem16 instr dref <*> getReg16 r
+             >>= op16
+             >>= writeMem16 instr dref)
+            *> ns
+        // or/and/xor reg16,[mem16]  13EA    2 to 4  or ax,[bx]
+        | [ ArgRegister16 r; ArgDereference16 dref ] -> 
+            (Prelude.tuple2 <!> getReg16 r <*> readMem16 instr dref
+             >>= op16
+             >>= setReg16 r)
+            *> ns
+        // or/and/xor reg8,immed8    4   3   or cl,03h
+        | [ ArgRegister8 r; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> getReg8 r <*> (c |> State.returnM)
+             >>= op8 
+             >>= setReg8 r)
+            *> ns
+        // or/and/xor [mem8],immed8  17EA    3 to 5  or [ByteVar1],29h
+        | [ ArgDereference8 dref; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> readMem8 instr dref <*> (c |> State.returnM)
+             >>= op8
+             >>= writeMem8 instr dref)
+            *> ns
+        // or/and/xor reg16,sextimmed    4   3   or ax,01fh
+        | [ ArgRegister16 r; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> getReg16 r <*> (c |> Common.signExtend |> State.returnM)
+             >>= op16
+             >>= setReg16 r)
+            *> ns
+        // or/and/xor reg16,immed16  4   4   or ax,01fffh
+        | [ ArgRegister16 r; ArgImmediate(W16 c) ] -> 
+            (Prelude.tuple2 <!> getReg16 r <*> (c |> State.returnM)
+             >>= op16 
+             >>= setReg16 r)
+            *> ns
+        // or/and/xor [mem16],sextimmed  25EA    3 to 5  or [WordVar],7fh
+        | [ ArgDereference16 dref; ArgImmediate(W8 c) ] -> 
+            (Prelude.tuple2 <!> readMem16 instr dref <*> (c |> Common.signExtend |> State.returnM)
+             >>= op16
+             >>= writeMem16 instr dref)
+            *> ns
+        // or/and/xor [mem16],immed16    25EA    4 to 6  or [WordVar],7fffh
+        | [ ArgDereference16 dref; ArgImmediate(W16 c) ] -> 
+            (Prelude.tuple2 <!> readMem16 instr dref <*> (c |> State.returnM)
+             >>= op16
+             >>= writeMem16 instr dref)
+            *> ns
+        // or/and/xor al,immed8  4   2   or al,0c0h
+        // or/and/xor ax,immed16 4   3   or ax,01ffh
+        | _ -> nyi instr

@@ -57,7 +57,7 @@ module FDE =
           (* "AAS", 0x4 *) nyi;
           (* "ADC", 0x5 *) nyi;
           (* "ADD", 0x6 *) execADD;
-          (* "AND", 0x7 *) execAND;
+          (* "AND", 0x7 *) execLogicOp (&&&) (&&&);
           (* "CALL", 0x8 *) execCALL;
           (* "CBW", 0x9 *) nyi;
           (* "CLC", 0xA *) execCLC;
@@ -118,7 +118,7 @@ module FDE =
           (* "NEG", 0x41 *) nyi;
           (* "NOP", 0x42 *) nyi;
           (* "NOT", 0x43 *) execNOT;
-          (* "OR", 0x44 *) nyi;
+          (* "OR", 0x44 *) execLogicOp (|||) (|||);
           (* "OUT", 0x45 *) execOUT;
           (* "POP", 0x46 *) execPOP;
           (* "POPF", 0x47 *) execPOPF;
@@ -150,7 +150,7 @@ module FDE =
           (* "WAIT", 0x61 *) nyi;
           (* "XCHG", 0x62 *) nyi;
           (* "XLAT", 0x63 *) nyi;
-          (* "XOR", 0x64 *) execXOR; |]
+          (* "XOR", 0x64 *) execLogicOp (^^^) (^^^); |]
 
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr i = 

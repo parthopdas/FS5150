@@ -45,7 +45,7 @@ module Common =
     let verifyAfterTestFromCOMFile mb (tCount: int) (iCount: int) = 
         let successExitIp = 0x15Fus
         let counterOff = 0x14aus
-        let testStubICount = 26L
+        let testStubICount = 26L // TODO: This is actually only 16
         let count = 
             0x0us @|@ counterOff
             |> readWord16

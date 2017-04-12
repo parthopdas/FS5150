@@ -12,7 +12,7 @@ module Arithmetic =
     open Lib
     
     module ADD =
-        let inline private setAddlags<'T, 'TUp
+        let inline private setAddFlags<'T, 'TUp
                             when 'TUp : equality
                              and 'TUp : (static member ( ^^^ ) :  ^TUp *  ^TUp ->  ^TUp)
                              and 'TUp : (static member ( &&& ) :  ^TUp *  ^TUp ->  ^TUp)>
@@ -28,9 +28,9 @@ module Arithmetic =
         let private add16ValParams = (0xFFFF0000ul, 0ul, 0x8000ul, 0x10ul)
         let private add16FunParams = ((+), uint16, uint32)
     
-        let setAdd8Flags = setAddlags add8FunParams flagSZP8 add8ValParams
+        let setAdd8Flags = setAddFlags add8FunParams flagSZP8 add8ValParams
 
-        let setAdd16Flags = setAddlags add16FunParams flagSZP16 add16ValParams
+        let setAdd16Flags = setAddFlags add16FunParams flagSZP16 add16ValParams
 
         let inline opAdd16 v1v2 = 
             let res = v1v2 ||> (+)

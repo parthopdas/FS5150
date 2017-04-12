@@ -361,6 +361,14 @@
     <None Include="TestData\DPUSHX-POPX.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="TestData\LNOT.tests.asm" />
+    <None Include="TestData\LNOT.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="TestData\LOR.tests.asm" />
+    <None Include="TestData\LOR.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="TestData\LSHL.tests.asm" />
     <None Include="TestData\LSHL.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
