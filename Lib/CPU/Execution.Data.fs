@@ -5,12 +5,10 @@ namespace Lib.CPU.Execution
 *)
 
 module Data = 
-    open YaFunTK
     open FSharpx
     open FSharpx.State
     open Lib.CPU.Execution.Common
     open Lib.Domain.InstructionSet
-    open Lib.Domain.PC
     
     let execMOV instr = 
         match instr.Args with
@@ -83,54 +81,3 @@ module Data =
     let execPUSHF _ = (getRegFlags >>= push) *> ns
     
     let execPOPF _ = (pop >>= setRegFlags) *> ns
-    
-    let coreSTOSX getAcc write n = 
-        let writeToESDI v = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= write v
-        
-        let updateDI = 
-            getFlag Flags.DF >>= (fun df -> 
-            let update = 
-                if df then (-)
-                else (+)
-            getReg16 DI >>= (Prelude.flip update n >> setReg16 DI))
-        
-        let goBack = getLogicalInstrStart >>= (Some >> State.returnM)
-        Prelude.tuple2 <!> getRepetitionType <*> getReg16 CX >>= (function 
-        | Some _, 0us -> ns
-        | None, 0us -> (getAcc >>= writeToESDI) *> updateDI *> ns
-        | None, _ -> (getAcc >>= writeToESDI) *> updateDI *> ns
-        | Some _, cx -> (getAcc >>= writeToESDI) *> updateDI *> (setReg16 CX (cx - 1us)) *> goBack)
-    
-    let coreSTOSB = coreSTOSX (getReg8 AL) writeWord8 1us
-    let inline execSTOSB _ = coreSTOSB
-    let coreSTOSW = coreSTOSX (getReg16 AX) writeWord16 2us
-    let inline execSTOSW _ = coreSTOSW
-    
-    let coreSCASX getAcc read sub n = 
-        let readFromESDI = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= read
-        let subAccESDI = Prelude.tuple2 <!> getAcc <*> readFromESDI >>= sub
-        
-        let updateDI = 
-            getFlag Flags.DF >>= (fun df -> 
-            let update = 
-                if df then (-)
-                else (+)
-            getReg16 DI >>= (Prelude.flip update n >> setReg16 DI))
-        
-        let goBack = getLogicalInstrStart >>= (Some >> State.returnM)
-        
-        let whileDf f = 
-            getFlag Flags.ZF >>= fun zf -> 
-                if f zf then goBack
-                else ns
-        Prelude.tuple2 <!> getRepetitionType <*> getReg16 CX >>= (function 
-        | Some _, 0us -> ns
-        | None, 0us -> subAccESDI *> updateDI *> ns
-        | None, _ -> subAccESDI *> updateDI *> ns
-        | Some WhileZero, cx -> subAccESDI *> updateDI *> (setReg16 CX (cx - 1us)) *> whileDf id
-        | Some WhileNotZero, cx -> subAccESDI *> updateDI *> (setReg16 CX (cx - 1us)) *> whileDf not)
-    
-    let coreSCASB = coreSCASX (getReg8 AL) readWord8 setSub8Flags 1us
-    let inline execSCASB _ = coreSCASB
-    let coreSCASW = coreSCASX (getReg16 AX) readWord16 setSub16Flags 2us
-    let inline execSCASW _ = coreSCASW

@@ -22,6 +22,11 @@
     PVT_ASSERT_ZERO
 %endmacro
 
+%macro ASSERT_EQUAL_CMP 1
+    cmp %1
+    PVT_ASSERT_ZERO
+%endmacro
+
 %macro ASSERT_NOT_ZERO_TEST 1
     test %1
     PVT_ASSERT_NOT_ZERO

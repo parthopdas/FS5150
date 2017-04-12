@@ -125,6 +125,8 @@ module Logic =
         | [ ArgDereference16 dref; ArgRegister8 CL ] -> 
             (getReg8 CL >>= SHX.coreSHR16 (readMem16 instr dref) (writeMem16 instr dref)) *> ns
         | _ -> nyi instr
+
+    // TODO: Merge TEST with AND with an if condition
     
     let execTEST instr = 
         let inline op8 v1v2 = 

@@ -18,8 +18,7 @@
 %endmacro
 
 %macro GetFlagsAndVerify 1
-    pushf
-    pop ax
+    GetFlags
     and ax, Mask_AllF
     ASSERT_ZERO_CMP {ax, %1}
 %endmacro

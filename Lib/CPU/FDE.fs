@@ -12,6 +12,7 @@ module FDE =
     open Lib.CPU.Execution.Data
     open Lib.CPU.Execution.Logic
     open Lib.CPU.Execution.Processor
+    open Lib.CPU.Execution.String
     open Lib.Domain.InstructionSet
     open Lib.Domain.PC
     open Lib.Parser.Core
@@ -65,8 +66,8 @@ module FDE =
           (* "CLI", 0xC *) execCLI;
           (* "CMC", 0xD *) nyi;
           (* "CMP", 0xE *) execCMP;
-          (* "CMPSB", 0xF *) nyi;
-          (* "CMPSW", 0x10 *) nyi;
+          (* "CMPSB", 0xF *) CMPSX.execCMPSB;
+          (* "CMPSW", 0x10 *) CMPSX.execCMPSW;
           (* "CS:", 0x11 *) execXS CS;
           (* "CWD", 0x12 *) nyi;
           (* "DAA", 0x13 *) nyi;
@@ -106,14 +107,14 @@ module FDE =
           (* "LEA", 0x35 *) nyi;
           (* "LES", 0x36 *) nyi;
           (* "LOCK", 0x37 *) nyi;
-          (* "LODSB", 0x38 *) nyi;
-          (* "LODSW", 0x39 *) nyi;
+          (* "LODSB", 0x38 *) LODSX.execLODSB;
+          (* "LODSW", 0x39 *) LODSX.execLODSW;
           (* "LOOP", 0x3A *) execLOOP;
           (* "LOOPNZ", 0x3B *) execLOOPNZ;
           (* "LOOPZ", 0x3C *) execLOOPZ;
           (* "MOV", 0x3D *) execMOV;
-          (* "MOVSB", 0x3E *) nyi;
-          (* "MOVSW", 0x3F *) nyi;
+          (* "MOVSB", 0x3E *) MOVSX.execMOVSB;
+          (* "MOVSW", 0x3F *) MOVSX.execMOVSW;
           (* "MUL", 0x40 *) nyi;
           (* "NEG", 0x41 *) nyi;
           (* "NOP", 0x42 *) nyi;
@@ -126,7 +127,7 @@ module FDE =
           (* "PUSHF", 0x49 *) execPUSHF;
           (* "RCL", 0x4A *) nyi;
           (* "RCR", 0x4B *) nyi;
-          (* "REPNZ", 0x4C *) nyi;
+          (* "REPNZ", 0x4C *) execREPX WhileNotZero;
           (* "REPZ", 0x4D *) execREPX WhileZero;
           (* "RET", 0x4E *) execRET;
           (* "RETF", 0x4F *) execRETF;
@@ -135,16 +136,16 @@ module FDE =
           (* "SAHF", 0x52 *) nyi;
           (* "SAR", 0x53 *) nyi;
           (* "SBB", 0x54 *) nyi;
-          (* "SCASB", 0x55 *) execSCASB;
-          (* "SCASW", 0x56 *) execSCASW;
+          (* "SCASB", 0x55 *) SCASX.execSCASB;
+          (* "SCASW", 0x56 *) SCASX.execSCASW;
           (* "SHL", 0x57 *) execSHL;
           (* "SHR", 0x58 *) execSHR;
           (* "SS:", 0x59 *) execXS SS;
           (* "STC", 0x5A *) execSTC;
           (* "STD", 0x5B *) execSTD;
           (* "STI", 0x5C *) execSTI;
-          (* "STOSB", 0x5D *) execSTOSB;
-          (* "STOSW", 0x5E *) execSTOSW;
+          (* "STOSB", 0x5D *) STOSX.execSTOSB;
+          (* "STOSW", 0x5E *) STOSX.execSTOSW;
           (* "SUB", 0x5F *) execSUB;
           (* "TEST", 0x60 *) execTEST;
           (* "WAIT", 0x61 *) nyi;
