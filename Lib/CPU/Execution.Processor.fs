@@ -21,3 +21,5 @@ module Processor =
 
     let inline execHLT _ =
         setHalted *> ns
+
+    let inline execNOP _ = ns

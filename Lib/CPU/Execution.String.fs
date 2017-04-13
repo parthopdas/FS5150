@@ -61,8 +61,29 @@ module String =
     open YaFunTK
     
     module MOVSX = 
-        let execMOVSB _ = nyi
-        let execMOVSW _ = nyi
+        let private coreMOVSX read write n =
+            let getSrcSeg = getSegOverride DS >>= getRegSeg 
+            let readFromXSSI = (@|@) <!> getSrcSeg <*> getReg16 SI >>= read
+            let writeToESSI v = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= write v
+            let cpData = readFromXSSI >>= writeToESSI
+
+            let updateXI = 
+                getFlag Flags.DF >>= (fun df -> 
+                let update = 
+                    if df then (-)
+                    else (+)
+                (getReg16 SI >>= (Prelude.flip update n >> setReg16 SI))
+                *> (getReg16 DI >>= (Prelude.flip update n >> setReg16 DI)))
+            
+            let goBack = getLogicalInstrStart >>= (Some >> State.returnM)
+            Prelude.tuple2 <!> getRepetitionType <*> getReg16 CX >>= (function 
+            | NoRepetition, 0us -> cpData *> updateXI *> ns
+            | NoRepetition, _ -> cpData *> updateXI *> ns
+            | _, 0us -> ns
+            | _, cx -> cpData *> updateXI *> (setReg16 CX (cx - 1us)) *> goBack)
+
+        let execMOVSB _ = coreMOVSX readWord8 writeWord8 1us
+        let execMOVSW _ = coreMOVSX readWord16 writeWord16 2us
     
     module CMPSX = 
         let execCMPSB _ = nyi

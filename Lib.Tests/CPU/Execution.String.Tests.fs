@@ -12,6 +12,7 @@ open Lib.Common
 
 [<Theory>]
 [<InlineData("SSTOLOD.tests.com", 14, 0x146)>]
+[<InlineData("SMOVX.tests.com", 8, 0xc9)>]
 let ``COM.Tests`` testName tCount iCount = 
     let mb = createMB testName
     

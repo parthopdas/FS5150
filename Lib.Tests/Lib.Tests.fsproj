@@ -377,6 +377,10 @@
     <None Include="TestData\LSHR.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="TestData\SMOVX.tests.asm" />
+    <None Include="TestData\SMOVX.tests.com">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="TestData\SSTOLOD.tests.asm" />
     <None Include="TestData\SSTOLOD.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

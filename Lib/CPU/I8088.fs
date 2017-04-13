@@ -114,6 +114,7 @@ module I8088 =
         let str = 
             bps 
             |> Seq.map Prelude.toStr
+            |> Seq.sort
             |> String.concat Environment.NewLine
         ((ls, bps), str) |> Result.returnM
 

@@ -333,6 +333,14 @@ module Common =
     let addressFromDref instr t d = 
         (@|@) <!> (getSegOverrideForEA instr.UseSS >>= getRegSeg) <*> getEA t d
     
+    let getSegOverride def = 
+        let innerFn mb = 
+            let seg = 
+                mb.CPU.SegmentOverride
+                |> Option.getOrElse def
+            seg, mb
+        innerFn : State<RegisterSeg, Motherboard>
+    
     let setSegOverride sr = 
         let innerFn mb = 
             mb.CPU.SegmentOverride <- Some sr

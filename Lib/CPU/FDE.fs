@@ -117,7 +117,7 @@ module FDE =
           (* "MOVSW", 0x3F *) MOVSX.execMOVSW;
           (* "MUL", 0x40 *) nyi;
           (* "NEG", 0x41 *) nyi;
-          (* "NOP", 0x42 *) nyi;
+          (* "NOP", 0x42 *) execNOP;
           (* "NOT", 0x43 *) execNOT;
           (* "OR", 0x44 *) execLogicOp (|||) (|||);
           (* "OUT", 0x45 *) execOUT;

@@ -24,7 +24,7 @@ let main _ =
     printf "IBM 5150 Emulator. (c) 2016, Partho P. Das"
     let dbg = I8088Agent()
     
-    let rec loop() = 
+    let rec loop prevCmdStr = 
         printf "\n-"
         let execCmd = 
             function 
@@ -38,10 +38,10 @@ let main _ =
             | UnassembleCmdFormat _ -> dbg.Unassemble()
             | _ -> "" |> Result.returnM
         Console.ReadLine()
-        |> execCmd
-        |> printf "%O"
-        loop()
-    loop()
+        |> fun cmdStr -> if cmdStr.Trim() = "" then prevCmdStr else cmdStr
+        |> Prelude.tee (execCmd >> printf "%O")
+        |> loop 
+    loop ""
     0
 
-// F000:FA16
+// F000:E18D
