@@ -15,6 +15,7 @@ open global.Xunit
 [<Theory>]
 [<InlineData("AADD.tests.com", 42, 0x15e)>]
 [<InlineData("AINC.tests.com", 30, 0x116)>]
+[<InlineData("ASUB.tests.com", 40, 0x153)>]
 let ``COM.Tests`` testName tCount iCount = 
     let mb = createMB testName
     

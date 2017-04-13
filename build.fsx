@@ -37,6 +37,9 @@ Target "Lint" (fun _ ->
     !! "**/*.fsproj"
         |> Seq.iter (FSharpLint (fun p -> { p with FailBuildIfAnyWarnings = true })))
 
+Target "Assemble" (fun _ ->
+    Shell.Exec("powershell.exe", "-NoLogo -NoProfile -ExecutionPolicy Bypass -File " + __SOURCE_DIRECTORY__ @@ @"bin\buildAllAsms.ps1") |> ignore)
+
 Target "Build" (fun _ ->
     !! solutionFile
     |> MSBuild buildDir "Build" msbuildProps
@@ -54,6 +57,7 @@ let runTest pattern =
 Target "Test" DoNothing
 Target "UnitTests" (runTest "*.Tests*.dll")
 
+"Assemble" ==> "Build"
 "Lint" ==> "Build"
 "Clean" ?=> "Lint"
 "Clean" ?=> "Build"

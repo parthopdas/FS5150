@@ -9,13 +9,13 @@ __BEGIN_TEST_SUITE__
 ;;
 ;; Variables use in the tests
 ;;
-bx1         db      1h
-bx2         db      2h
-bp5         dw      1h
-Basedi      dw      2h
-si6         db      1h
-WordVar     dw      1h
-WordVar1    dw      1h
+ByteVar     db  2
+si1         db  1
+WordVar     dw  4
+dibp        dw  3
+ByteVar2    db  5
+WordVar2    dw  9
+WordVar3    dw  10
 
 ;;
 ;; Start of Tests
@@ -29,86 +29,86 @@ _main:
 _FACT_
 UnsetFlags
 mov ah, 1
-add ah, 0ffh
+sub ah, 2
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_CF}
 
 _FACT_
 SetFlags
 mov bl, 1
-add bl, 1
+sub bl, 1
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_CF}
 
 _FACT_
 UnsetFlags
-mov bx, 5
-add bx, 0ffffh
+mov bx, 1
+sub bx, 2
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_CF}
 
 _FACT_
 SetFlags
 mov cx, 1
-add cx, 1
+sub cx, 1
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_CF}
 
 ; PF
 _FACT_
 UnsetFlags
-mov al, 82h
-add al, 84h
+mov al, 00000000b
+sub al, 00000000b
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_PF}
 
 _FACT_
 SetFlags
-mov dl, 83h
-add dl, 84h
+mov dl, 10000001b
+sub dl, 00000001b
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_PF}
 
 _FACT_
 UnsetFlags
-mov cx, 1
-add cx, 0ffffh
+mov cx, 0
+sub cx, 1
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_PF}
 
 _FACT_
 SetFlags
-mov bx, 1083h
-add bx, 1084h
+mov bx, 8003h
+sub bx, 1
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_PF}
 
 ; AF
 _FACT_
 UnsetFlags
-mov al, 0fh
-add al, 1
+mov al, 00000111b
+sub al, -1
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_AF}
 
 _FACT_
 SetFlags
-mov dh, 0eh
-add dh, 1
+mov dh, 00000111b
+sub dh, 1
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_AF}
 
 _FACT_
 UnsetFlags
-mov cx, 0eh
-add cx, 2
+mov cx, 086h
+sub cx, -1
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_AF}
 
 _FACT_
 SetFlags
-mov bx, 1
-add bx, 1
+mov bx, 0ffffh
+sub bx, 0fh
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_AF}
 
@@ -116,57 +116,57 @@ ASSERT_ZERO_TEST {ax, Mask_AF}
 _FACT_
 UnsetFlags
 mov dl, 1
-add dl, 0ffh
+sub dl, 1
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_ZF}
 
 _FACT_
 SetFlags
 mov ch, 1
-add ch, 1
+sub ch, 2
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_ZF}
 
 _FACT_
 UnsetFlags
-mov si, 1
-add si, 0ffffh
+mov si, -1
+sub si, strict word 0ffffh
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_ZF}
 
 _FACT_
 SetFlags
-mov di, 1
-add di, 1
+mov di, -1
+sub di, -2
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_ZF}
 
 ; SF
 _FACT_
 UnsetFlags
-mov dl, 1
-add dl, 0feh
+mov dl, 0
+sub dl, 1
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_SF}
 
 _FACT_
 SetFlags
 mov ch, 1
-add ch, 1
+sub ch, 1
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_SF}
 
 _FACT_
 UnsetFlags
-mov si, 1
-add si, 0fffeh
+mov si, 08001h
+sub si, 1
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_SF}
 
 _FACT_
 SetFlags
-mov di, 1
-add di, 1
+mov di, 08002h
+sub di, 3
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_SF}
 
@@ -174,144 +174,134 @@ ASSERT_ZERO_TEST {ax, Mask_SF}
 _FACT_
 UnsetFlags
 mov bl, 10010110b
-add bl, 10100011b 
+sub bl, 01011101b 
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 UnsetFlags
 mov bh, 00110110b
-add bh, 01100011b 
+sub bh, 10011101b 
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 SetFlags
 mov dl, 10010110b 
-add dl, 01100011b 
+sub dl, 10011100b 
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 SetFlags
 mov ah, 10010110b 
-add ah, 11110011b 
+sub ah, 00001100b 
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 UnsetFlags
 mov bx, 1001011000000000b
-add bx, 1010001100000000b 
+sub bx, 0101110011111111b 
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 UnsetFlags
 mov bx, 0011011000000000b
-add bx, 0110001100000000b 
+sub bx, 1001110011111111b 
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 SetFlags
 mov cx, 1001011000000000b 
-add cx, 0110001100000000b 
+sub cx, 1001110011111111b 
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 SetFlags
 mov cx, 1001011000000000b 
-add cx, 1111001100000000b 
+sub cx, 1111001100000000b 
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_OF}
 
 ;;
 ;; Instruction Forms
 ;; 
-; add reg8,reg8	3	2	add ah,al
+; sub reg8,reg8 3   2   sub al,dl
 _FACT_
-mov ah, 1h
-mov al, 2h
-add ah, al
-ASSERT_ZERO_CMP {ah, 3h}
+mov ah, 1
+mov al, 1
+sub ah, al
+ASSERT_ZERO_CMP {ah, 0}
 
-; add [mem8],reg8	16EA	2 to 4	add [bx1],dh
+; sub [mem8],reg8   16EA    2 to 4  sub [ByteVar],ah
 _FACT_
-mov dh, 2h
-add [bx1], dh
-ASSERT_ZERO_CMP {byte [bx1], 3h}
+mov ah, 1
+sub byte [ByteVar], ah
+ASSERT_ZERO_CMP {byte [ByteVar], 1}
 
-; add reg8,[mem8]	9EA	2 to 4	add ch,[bx]
+; sub reg8,[mem8]   9EA 2 to 4  sub dl,[si1]
 _FACT_
-mov ch, 1h
-mov bx, bx2
-add ch, [bx]
-ASSERT_ZERO_CMP {ch, 3h}
+mov dl, 0
+sub dl, byte [si1]
+ASSERT_ZERO_CMP {dl, 0ffh}
 
-; add reg16,reg16	3	2	add dx,ax
+; sub reg16,reg16   3   2   sub ax,dx
 _FACT_
-mov dx, 1h
-mov ax, 2h
-add dx, ax
-ASSERT_ZERO_CMP {dx, 3h}
+mov ax, 1
+mov dx, 1
+sub ax, dx
+ASSERT_ZERO_CMP {ax, 0}
 
-; add [mem16],reg16	24EA	2 to 4	add [bp5],ax
+; sub [mem16],reg16 24EA    2 to 4  sub [WordVar],ax
 _FACT_
-mov ax, 2h
-add [bp5], ax
-ASSERT_ZERO_CMP {word [bp5], 3h}
+mov ax, 1
+sub word [WordVar], ax
+ASSERT_ZERO_CMP {word [WordVar], 3}
 
-; add reg16,[mem16]	13EA	2 to 4	add ax,[Basedi]
+; sub reg16,[mem16] 13EA    2 to 4  sub cx,[dibp]
 _FACT_
-mov ax, 1h
-add ax, [Basedi]
-ASSERT_ZERO_CMP {ax, 3h}
+mov cx, 0
+sub cx, word [dibp]
+ASSERT_ZERO_CMP {cx, 0fffdh}
 
-; add reg8,immed8	4	3	add dl,16
+; sub reg8,immed8   4   3   sub dl,10h
 _FACT_
-mov dl, 1h
-add dl, 16
-ASSERT_ZERO_CMP {dl, 17}
+mov dl, 2
+sub dl, 1
+ASSERT_ZERO_CMP {dl, 1}
 
-; add [mem8],immed8	17EA	3 to 5	add byte ptr [si6],0c3h
+; sub [mem8],immed8 17EA    3 to 5  sub [ByteVar],01h
 _FACT_
-add byte [si6], 0c3h
-ASSERT_ZERO_CMP {byte [si6], 0c4h}
+sub byte [ByteVar2], 1
+ASSERT_ZERO_CMP {byte [ByteVar2], 4}
 
-; add reg16,sextimmed	4	3	add si,0ff80h
+; sub reg16,sextimmed   4   3   sub dx,1
 _FACT_
-mov si, 1h
-add si, 0ff80h
-ASSERT_ZERO_CMP {si, 0ff81h}
+mov dx, 2
+sub dx, -1
+ASSERT_ZERO_CMP {dx, 3}
 
-; add reg16,immed16	4	4	add si,8000h
+; sub reg16,immed16 4   4   sub dx,80h
 _FACT_
-mov si, 1h
-add si, strict word 8000h
-ASSERT_ZERO_CMP {si, strict word 8001h}
+mov dx, 0
+sub dx, strict word -1
+ASSERT_ZERO_CMP {dx, strict word 1}
 
-; add [mem16],sextimmed	25EA	3 to 5	add [WordVar],3
+; sub [mem16],sextimmed 25EA    3 to 5  sub word ptr [bp],10h
 _FACT_
-add word [WordVar], -1
-ASSERT_ZERO_CMP {word [WordVar], 0}
+sub word [WordVar2], -1
+ASSERT_ZERO_CMP {word [WordVar2], 10}
 
-; add [mem16],immed16	25EA	4 to 6	add [WordVar],300h
+; sub [mem16],immed16   25EA    4 to 6  sub word ptr [bp],100h
 _FACT_
-add word [WordVar1], strict word 8000h
-ASSERT_ZERO_CMP {word [WordVar1], strict word 8001h}
+sub word [WordVar3], strict word -2
+ASSERT_ZERO_CMP {word [WordVar3], strict word 12}
 
-; add al,immed8	4	2	add al,1
-_FACT_
-mov al, 1h
-add al, 1h
-ASSERT_ZERO_CMP {al, 2h}
-
-; add ax,immed16	4	3	add ax,2
-_FACT_
-mov ax, 1h
-add ax, strict word 2h
-ASSERT_ZERO_CMP {ax, strict word 3h}
+; sub al,immed8 4   2   sub al,20h
+; sub ax,immed16    4   3   sub ax,100h
 
 __END_TEST_SUITE__

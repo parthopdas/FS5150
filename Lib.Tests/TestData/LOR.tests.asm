@@ -210,11 +210,11 @@ ASSERT_ZERO_CMP {cx, 0ffffh}
 _FACT_
 SetFlags
 mov cx, 0fffh
-or cx, 0e000h
+or cx, strict word 0e000h
 GetFlags
 and ax, (Mask_CF | Mask_OF)
 ASSERT_ZERO_CMP {ax, 0}
-ASSERT_ZERO_CMP {cx, 0efffh}
+ASSERT_ZERO_CMP {cx, strict word 0efffh}
 
 ; or [mem16],sextimmed 25EA    3 to 5  or [WordVar],7fh
 _FACT_
@@ -230,11 +230,11 @@ ASSERT_ZERO_CMP {word [WordVar], 0ffffh}
 _FACT_
 SetFlags
 mov word [WordVar], 0fffh
-or word [WordVar], 0e000h
+or word [WordVar], strict word 0e000h
 GetFlags
 and ax, (Mask_CF | Mask_OF)
 ASSERT_ZERO_CMP {ax, 0}
-ASSERT_ZERO_CMP {word [WordVar], 0efffh}
+ASSERT_ZERO_CMP {word [WordVar], strict word 0efffh}
 
 ; or al,immed8 4   2   or al,0c0h
 ; - Covered above

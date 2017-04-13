@@ -1,10 +1,6 @@
 %include "_TestFramework.inc"
 %include "_Flags.inc"
 
-; TODO
-; - Rename COM tests file according to instruction classes
-; - Print tests succeeded or failed
-
 BITS 16
 ORG 100h
 
