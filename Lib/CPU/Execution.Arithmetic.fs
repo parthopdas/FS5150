@@ -40,6 +40,13 @@ module Arithmetic =
             let res = v1v2 ||> (+)
             setAdd8Flags v1v2 *> (res |> State.returnM)
     
+        let inline private incCore<'T>
+            add (v1 : 'T) (get : State<'T, _>) (set : 'T -> State<unit, _>) =
+            let add1 = Prelude.tuple2 <!> get <*> (v1 |> State.returnM) >>= add >>= set
+            (getFlag Flags.CF <* add1 >>= setFlag Flags.CF)
+        let inc8 = incCore opAdd8 1uy
+        let inc16 = incCore opAdd16 1us
+
     // TODO: PERF: Prelude.Tuple is unnecessary
 
     let execADD instr = 
@@ -120,28 +127,20 @@ module Arithmetic =
         // add ax,immed16    4    3    add ax,2
         | _ -> nyi instr
 
-    module INC =    
-        let inline private incCore<'T>
-            add (v1 : 'T) (get : State<'T, _>) (set : 'T -> State<unit, _>) =
-            let add1 = Prelude.tuple2 <!> get <*> (v1 |> State.returnM) >>= add >>= set
-            (getFlag Flags.CF <* add1 >>= setFlag Flags.CF)
-        let inc8 = incCore ADD.opAdd8 1uy
-        let inc16 = incCore ADD.opAdd16 1us
-
     let execINC instr = 
         match instr.Args with
         // inc reg8 3   2   inc ah
         | [ ArgRegister8 r ] -> 
-            (INC.inc8 (getReg8 r) (setReg8 r))*> ns
+            (ADD.inc8 (getReg8 r) (setReg8 r))*> ns
         // inc [mem8]   15EA    2 to 4  inc byte ptr [bx]
         | [ ArgDereference8 dref ] -> 
-            (INC.inc8 (readMem8 instr dref) (writeMem8 instr dref))*> ns
+            (ADD.inc8 (readMem8 instr dref) (writeMem8 instr dref))*> ns
         // inc reg16    2   1   inc si
         | [ ArgRegister16 r ] -> 
-            (INC.inc16 (getReg16 r) (setReg16 r))*> ns
+            (ADD.inc16 (getReg16 r) (setReg16 r))*> ns
         // inc [mem16]  23EA    2 to 4  inc [WordVar]
         | [ ArgDereference16 dref ] -> 
-            (INC.inc16 (readMem16 instr dref) (writeMem16 instr dref))*> ns
+            (ADD.inc16 (readMem16 instr dref) (writeMem16 instr dref))*> ns
         | _ -> nyi instr
     
     module SUB =
@@ -245,6 +244,16 @@ module Arithmetic =
 
     let execDEC instr = 
         match instr.Args with
+        // dec reg8 3   2   dec ah
+        | [ ArgRegister8 r ] -> 
+            (SUB.dec8 (getReg8 r) (setReg8 r)) *> ns
+        // dec [mem8]   15EA    2 to 4  dec byte ptr [bx]
+        | [ ArgDereference8 dref ] -> 
+            (SUB.dec8 (readMem8 instr dref) (writeMem8 instr dref))*> ns
+        // dec reg16    2   1   dec si
         | [ ArgRegister16 r ] -> 
-            (SUB.dec16 (getReg16 r) (setReg16 r)) *> ns
+            (SUB.dec16 (getReg16 r) (setReg16 r))*> ns
+        // dec [mem16]  23EA    2 to 4  dec [WordVar]
+        | [ ArgDereference16 dref ] -> 
+            (SUB.dec16 (readMem16 instr dref) (writeMem16 instr dref))*> ns
         | _ -> nyi instr
