@@ -19,7 +19,146 @@ module Control =
                          >> Some
                          >> State.returnM)
         else None |> State.returnM
+
+    let execJXXX cond instr = 
+        match instr.Args with
+        | [ ArgOffset(w16) ] -> cond >>= getAndIncrIPIf (instr.Length + w16)
+        | _ -> nyi instr
+
+    // ja disp8     Jump above                  CF=0 and ZF=0   ja OutOfRange
+    // jnbe disp8   Jump not below or equal     CF=0 and ZF=0   jnbe TooHigh
+    let execJA = 
+        state {
+            let! cf = getFlag Flags.CF
+            let! zf = getFlag Flags.ZF
+            return (not cf && not zf) 
+        } |> execJXXX
+
+    // jb disp8     Jump below                  CF=1    jb TooLow
+    // jc disp8     Jump Carry flag set         CF=1    jc NextTest
+    // jnae disp8   Jump not above or equal     CF=1    jnae Skip1
+    let execJB = 
+        state {
+            return! getFlag Flags.CF
+        } |> execJXXX
     
+    // jbe disp8    Jump below or equal         CF=1 or ZF=1    jbe Exit
+    // jna disp8    Jump not above              CF=1 or ZF=1    jna NotAbove
+    let execJBE =
+        state {
+            let! cf = getFlag Flags.CF
+            let! zf = getFlag Flags.ZF
+            return (cf || zf) 
+        } |> execJXXX
+
+
+    // jnle disp8   Jump not less than or equal     ZF=0 and SF=OF  jnle ShortLab
+    // jg disp8     Jump greater                    ZF=0 and SF=OF  jg Greater
+    let execJG =
+        state {
+            let! zf = getFlag Flags.ZF
+            let! sf = getFlag Flags.SF
+            return (not zf && not sf) 
+        } |> execJXXX
+
+    // jge disp8    Jump greater than or equal      SF=OF   jge GtThanEq
+    // jnl disp8    Jump not less than              SF=OF   jnl NotLess
+    let execJGE = 
+        state {
+            let! sf = getFlag Flags.SF
+            let! ofl = getFlag Flags.OF
+            return (sf = ofl) 
+        } |> execJXXX
+
+    // jl disp8     Jump less than                  SF<>OF  jl IsLessThan
+    // jnge disp8   Jump not greater than or equal  SF<>OF  jnge Point2
+    let execJL =
+        state {
+            let! sf = getFlag Flags.SF
+            let! ofl = getFlag Flags.OF
+            return (sf <> ofl) 
+        } |> execJXXX
+
+    // jle disp8    Jump less than or equal         ZF=1 or SF<>OF  jle LessThanEq
+    // jng disp8    Jump not greater                ZF=1 or SF<>OF  jng LoopBottom
+    let execJLE =
+        state {
+            let! zf = getFlag Flags.ZF
+            let! sf = getFlag Flags.SF
+            let! ofl = getFlag Flags.OF
+            return (zf && (sf <> ofl)) 
+        } |> execJXXX
+
+    // jae disp8    Jump above or equal             CF=0    jae XLabel
+    // jnb disp8    Jump not below                  CF=0    jnb OffTop
+    // jnc disp8    Jump Carry flag not set         CF=0    jnc TryAgain
+    let execJNB = 
+        state {
+            let! cf = getFlag Flags.CF
+            return not cf 
+        } |> execJXXX
+    
+
+    // jno disp8    Jump Overflow flag not set      OF=0    jno NoOverflow
+    let execJNO = 
+        state {
+            let! ofl = getFlag Flags.OF
+            return not ofl 
+        } |> execJXXX
+    
+    // jns disp8    Jump Sign flag not set          SF=0    jns NoSign
+    let execJNS = 
+        state {
+            let! sf = getFlag Flags.SF
+            return not sf 
+        } |> execJXXX
+
+    // jne disp8    Jump not equal                  ZF=0    jne Mismatch
+    // jnz disp8    Jump not zero                   ZF=0    jnz Different
+    let execJNZ = 
+        state {
+            let! zf = getFlag Flags.ZF
+            return not zf 
+        } |> execJXXX
+    
+    // jo disp8     Jump Overflow flag set          OF=1    jo Overflow
+    let execJO = 
+        state {
+            let! ofl = getFlag Flags.OF
+            return ofl 
+        } |> execJXXX
+    
+    // jp disp8     Jump Parity flag set            PF=1    jp ParCheck1
+    // jpe disp8    Jump Parity Even                PF=1    jpe ParityEven
+    let execJPE = 
+        state {
+            let! pf = getFlag Flags.PF
+            return pf 
+        } |> execJXXX
+    
+    // jnp disp8    Jump Parity flag not set        PF=0    jnp EndText
+    // jpo disp8    Jump Parity Odd                 PF=0    jpo OddParity
+    let execJPO = 
+        state {
+            let! pf = getFlag Flags.PF
+            return not pf 
+        } |> execJXXX
+    
+    // js disp8     Jump Sign flag set              SF=1    js Negative
+    let execJS = 
+        state {
+            let! sf = getFlag Flags.SF
+            return sf 
+        } |> execJXXX
+    
+    // jz disp8 Jump zero                           ZF=1    jz Match
+    // je disp8 Jump equal                          ZF=1    je Same
+    let execJZ = 
+        state {
+            let! zf = getFlag Flags.ZF
+            return zf 
+        } |> execJXXX
+        
     let execJMP instr = 
         match instr.Args with
         | [ ArgAddress a ] -> 
@@ -30,51 +169,6 @@ module Control =
             getCSIP >>= (Prelude.flip (|++) (instr.Length + w16)
                          >> Some
                          >> State.returnM)
-        | _ -> nyi instr
-    
-    let execJB instr = 
-        match instr.Args with
-        | [ ArgOffset(w16) ] -> getFlag Flags.CF >>= getAndIncrIPIf (instr.Length + w16)
-        | _ -> nyi instr
-    
-    let execJNB instr = 
-        match instr.Args with
-        | [ ArgOffset(w16) ] -> getFlag Flags.CF >>= (not >> getAndIncrIPIf (instr.Length + w16))
-        | _ -> nyi instr
-    
-    let execJO instr = 
-        match instr.Args with
-        | [ ArgOffset(w16) ] -> getFlag Flags.OF >>= getAndIncrIPIf (instr.Length + w16)
-        | _ -> nyi instr
-    
-    let execJNO instr = 
-        match instr.Args with
-        | [ ArgOffset(w16) ] -> getFlag Flags.OF >>= (not >> getAndIncrIPIf (instr.Length + w16))
-        | _ -> nyi instr
-    
-    let execJS instr = 
-        match instr.Args with
-        | [ ArgOffset(w16) ] -> getFlag Flags.SF >>= getAndIncrIPIf (instr.Length + w16)
-        | _ -> nyi instr
-    
-    let execJZ instr = 
-        match instr.Args with
-        | [ ArgOffset(w16) ] -> getFlag Flags.ZF >>= getAndIncrIPIf (instr.Length + w16)
-        | _ -> nyi instr
-    
-    let execJNZ instr = 
-        match instr.Args with
-        | [ ArgOffset(w16) ] -> getFlag Flags.ZF >>= (not >> getAndIncrIPIf (instr.Length + w16))
-        | _ -> nyi instr
-    
-    let execJPE instr = 
-        match instr.Args with
-        | [ ArgOffset(w16) ] -> getFlag Flags.PF >>= getAndIncrIPIf (instr.Length + w16)
-        | _ -> nyi instr
-    
-    let execJPO instr = 
-        match instr.Args with
-        | [ ArgOffset(w16) ] -> getFlag Flags.PF >>= (not >> getAndIncrIPIf (instr.Length + w16))
         | _ -> nyi instr
     
     let execJCXZ instr = 
@@ -147,7 +241,9 @@ module Control =
 
     module LOOPX =
         let doLoop instrLen off ccond =
-            let cond = Prelude.tuple2 <!> getFlag Flags.ZF <*> getReg16 CX >>= (fun (zf, cx) -> (cx <> 0us && ccond zf) |> State.returnM)
+            let cond = 
+                Prelude.tuple2 <!> getFlag Flags.ZF <*> getReg16 CX 
+                >>= (fun (zf, cx) -> (cx <> 0us && ccond zf) |> State.returnM)
             (getReg16 CX >>= ((+) 0xFFFFus >> setReg16 CX)) 
             *> (cond >>= getAndIncrIPIf (instrLen + off))
 

@@ -188,42 +188,42 @@ ASSERT_NOT_ZERO_TEST {ax, Mask_OF}
 _FACT_
 SetFlags
 mov dl, 10010110b 
-sub dl, 10011100b 
+sub dl, 10011101b 
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 SetFlags
 mov ah, 10010110b 
-sub ah, 00001100b 
+sub ah, 00001101b 
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 UnsetFlags
 mov bx, 1001011000000000b
-sub bx, 0101110011111111b 
+sub bx, 0101110100000000b 
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 UnsetFlags
 mov bx, 0011011000000000b
-sub bx, 1001110011111111b 
+sub bx, 1001110100000000b 
 GetFlags
 ASSERT_NOT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 SetFlags
 mov cx, 1001011000000000b 
-sub cx, 1001110011111111b 
+sub cx, 1001110100000000b 
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_OF}
 
 _FACT_
 SetFlags
 mov cx, 1001011000000000b 
-sub cx, 1111001100000000b 
+sub cx, 0000110100000000b 
 GetFlags
 ASSERT_ZERO_TEST {ax, Mask_OF}
 
