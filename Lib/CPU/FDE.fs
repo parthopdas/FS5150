@@ -38,17 +38,8 @@ module FDE =
     
     /// decodeInstr :: Address -> InputState<_> -> Result<Instruction * InputState<_>>
     let decodeInstr csip instrBytes = 
-#if PERF
-        ({ Address = { Segment = 0us; Offset = 0us }
-           Mneumonic = "CLD"
-           IsPrefix = false
-           UseSS = false
-           Args = []
-           Bytes = [| 0x26uy |] }, fromBytes [|0us; 0us; 0us; 0us; 0us; 0us|]) |> Result.returnM
-#else
         // TODO: P2D: We are shortcircuting the monad here. How to build a stack of monads like State<Parser<_>>
         runOnInput (pinstruction csip grammer) instrBytes
-#endif
 
     let executors =
        [| (* "--", 0x0 *) nyi;
@@ -58,7 +49,7 @@ module FDE =
           (* "AAS", 0x4 *) nyi;
           (* "ADC", 0x5 *) nyi;
           (* "ADD", 0x6 *) execADD;
-          (* "AND", 0x7 *) execLogicOp (&&&) (&&&);
+          (* "AND", 0x7 *) execAND;
           (* "CALL", 0x8 *) execCALL;
           (* "CBW", 0x9 *) nyi;
           (* "CLC", 0xA *) execCLC;
@@ -68,14 +59,14 @@ module FDE =
           (* "CMP", 0xE *) execCMP;
           (* "CMPSB", 0xF *) CMPSX.execCMPSB;
           (* "CMPSW", 0x10 *) CMPSX.execCMPSW;
-          (* "CS:", 0x11 *) execXS CS;
+          (* "CS:", 0x11 *) execCS;
           (* "CWD", 0x12 *) nyi;
           (* "DAA", 0x13 *) nyi;
           (* "DAS", 0x14 *) nyi;
-          (* "DEC", 0x15 *) execDEC ;
+          (* "DEC", 0x15 *) execDEC;
           (* "DIV", 0x16 *) nyi;
-          (* "DS:", 0x17 *) execXS DS;
-          (* "ES:", 0x18 *) execXS ES;
+          (* "DS:", 0x17 *) execDS;
+          (* "ES:", 0x18 *) execES;
           (* "HLT", 0x19 *) execHLT;
           (* "IDIV", 0x1A *) nyi;
           (* "IMUL", 0x1B *) nyi;
@@ -119,7 +110,7 @@ module FDE =
           (* "NEG", 0x41 *) nyi;
           (* "NOP", 0x42 *) execNOP;
           (* "NOT", 0x43 *) execNOT;
-          (* "OR", 0x44 *) execLogicOp (|||) (|||);
+          (* "OR", 0x44 *) execOR;
           (* "OUT", 0x45 *) execOUT;
           (* "POP", 0x46 *) execPOP;
           (* "POPF", 0x47 *) execPOPF;
@@ -127,8 +118,8 @@ module FDE =
           (* "PUSHF", 0x49 *) execPUSHF;
           (* "RCL", 0x4A *) nyi;
           (* "RCR", 0x4B *) nyi;
-          (* "REPNZ", 0x4C *) execREPX WhileNotZero;
-          (* "REPZ", 0x4D *) execREPX WhileZero;
+          (* "REPNZ", 0x4C *) execREPNZ;
+          (* "REPZ", 0x4D *) execREPZ;
           (* "RET", 0x4E *) execRET;
           (* "RETF", 0x4F *) execRETF;
           (* "ROL", 0x50 *) nyi;
@@ -140,7 +131,7 @@ module FDE =
           (* "SCASW", 0x56 *) SCASX.execSCASW;
           (* "SHL", 0x57 *) execSHL;
           (* "SHR", 0x58 *) execSHR;
-          (* "SS:", 0x59 *) execXS SS;
+          (* "SS:", 0x59 *) execSS;
           (* "STC", 0x5A *) execSTC;
           (* "STD", 0x5B *) execSTD;
           (* "STI", 0x5C *) execSTI;
@@ -151,14 +142,10 @@ module FDE =
           (* "WAIT", 0x61 *) nyi;
           (* "XCHG", 0x62 *) nyi;
           (* "XLAT", 0x63 *) nyi;
-          (* "XOR", 0x64 *) execLogicOp (^^^) (^^^); |]
+          (* "XOR", 0x64 *) execXOR; |]
 
     /// executeInstr :: Instruction -> State<unit,Motherboard>
     let executeInstr i = 
-#if PERF
-        execCLD i
-#else
         executors.[i.OpCode] i
         >>= Option.fold (fun _ e -> e |> State.returnM) (Prelude.flip (|++) i.Length <!> getCSIP)
         >>= setCSIP
-#endif

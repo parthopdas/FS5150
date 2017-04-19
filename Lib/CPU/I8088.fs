@@ -42,10 +42,8 @@ module I8088 =
           PortRAM = Array.zeroCreate init.PortRamSize }
     
     let loadBinary fname addr ro mb = 
-        (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
-        |> Path.GetFullPath
-        |> Path.GetDirectoryName
-        |> fun p -> Path.Combine(p, fname)
+        (Path.getLocalPath(), fname)
+        ||> Path.combine
         |> File.ReadAllBytes
         |> (fun bs -> Array.blit bs 0 mb.RAM addr bs.Length; bs.Length)
         |> (fun len -> Array.fill mb.ReadOnly addr len ro)

@@ -277,3 +277,9 @@ module Logic =
         // or/and/xor al,immed8  4   2   or al,0c0h
         // or/and/xor ax,immed16 4   3   or ax,01ffh
         | _ -> nyi instr
+
+    let execAND instr = execLogicOp (&&&) (&&&) instr
+
+    let execOR instr = execLogicOp (|||) (|||) instr
+
+    let execXOR instr = execLogicOp (^^^) (^^^) instr

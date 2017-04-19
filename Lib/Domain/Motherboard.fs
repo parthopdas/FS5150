@@ -2,29 +2,20 @@
 
 module PC = 
     open InstructionSet
-    open System.Diagnostics
     open System
     open System.Collections.Specialized
+    open System.Diagnostics
     
     [<Flags>]
     type Flags = 
-        /// Overflow - Signed number exceeds capacity of result
         | OF = 0b0000100000000000
-        /// Direction - Set by user to indication direction of string instructions
         | DF = 0b0000010000000000
-        /// Interrupt - Enable or disable hardware interrupts
         | IF = 0b0000001000000000
-        /// Trap - Single step
         | TF = 0b0000000100000000
-        /// Sign - Results sign bit from compare/substract ops
         | SF = 0b0000000010000000
-        /// Zero - Result is zero from compare/substract ops
         | ZF = 0b0000000001000000
-        /// Adjust - ?
         | AF = 0b0000000000010000
-        /// Parity - ?
         | PF = 0b0000000000000100
-        /// Carry - Unsigned number exceeds capacity of result
         | CF = 0b0000000000000001
     
     let flagNames = 

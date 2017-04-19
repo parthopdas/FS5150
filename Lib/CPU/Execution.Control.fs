@@ -178,10 +178,22 @@ module Control =
     
     let execXS sreg _ = 
         setSegOverride sreg *> ns
+
+    let execCS instr = execXS CS instr 
+
+    let execDS instr = execXS DS instr 
+    
+    let execES instr = execXS ES instr 
+    
+    let execSS instr = execXS SS instr  
     
     let execREPX rt _ = 
         setRepetitionType rt *> ns
         
+    let execREPNZ instr = execREPX WhileNotZero instr
+        
+    let execREPZ instr = execREPX WhileZero instr
+
     let inline private coreCALLRelative ilen w16 =
         getCSIP >>= (fun csip -> 
                      let retAddr = csip |++ ilen
