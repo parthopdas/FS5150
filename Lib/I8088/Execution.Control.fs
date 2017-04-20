@@ -1,4 +1,4 @@
-namespace Lib.CPU.Execution
+namespace Lib.Chips.I8088.Execution
 (* 
     CALL RET 
     JMPJA/JNBE JAE/JNB JB/JNAE JBE/JNA JC JE/JZ JG/JNLE JGE/JNL JL/JNGE JLE/JNG JNC JNE/JNZ JNO JNP/JPO JNS JOJP/JPE JS
@@ -9,9 +9,9 @@ module Control =
     open YaFunTK
     open FSharpx
     open FSharpx.State
-    open Lib.CPU.Execution.Common
-    open Lib.Domain.InstructionSet
-    open Lib.Domain.PC
+    open Lib.Chips.I8088.Execution.Common
+    open Lib.Chips.I8088.InstructionSet
+    open Lib.Chips.I8088
     
     let getAndIncrIPIf n c = 
         if c then 

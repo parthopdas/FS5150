@@ -1,19 +1,18 @@
-﻿namespace Lib.CPU
+﻿namespace Lib.Chips.I8088
 
-module I8088 = 
+module I8088Agent = 
     open YaFunTK
     open FSharpx
     open FSharpx.Text
-    open Lib.CPU.Execution.Common
-    open Lib.CPU.Execution.FDE
-    open Lib.Domain.InstructionSet
-    open Lib.Domain.PC
+    open Lib.Chips.I8088.Execution.Common
+    open Lib.Chips.I8088.Execution.FDE
+    open Lib.Chips.I8088.InstructionSet
+    open Lib.Chips.I8088
     open Lib.Parser.Core
     open System
     open System.Diagnostics
     open System.Globalization
     open System.IO
-    open System.Reflection
     open System.Collections.Generic
     open System.Collections
     
@@ -35,9 +34,9 @@ module I8088 =
         | Paused
         | Halted
 
-    let initMotherBoard init : Motherboard = 
+    let initMotherBoard init : I8088 = 
         { SW = Stopwatch()
-          CPU = { initialCPU() with CS = init.CS; IP = init.IP } 
+          Registers = { initialCPU() with CS = init.CS; IP = init.IP } 
           RAM = Array.create init.RamSize 0xfeuy
           ReadOnly = BitArray(init.RamSize)
           PortRAM = Array.zeroCreate init.PortRamSize }
@@ -59,9 +58,9 @@ module I8088 =
         sprintf 
             "[Timer: %s] Count = %d, Ticks = %d, Average = %.6fmips" 
             (if Stopwatch.IsHighResolution && not mb.SW.IsRunning then "OK" else "NOT OK") 
-            mb.CPU.ICount 
-            mb.CPU.ITicks
-            (((float)Stopwatch.Frequency) / ((float)mb.CPU.ITicks / (float)mb.CPU.ICount) / 1000000.0)
+            mb.Registers.ICount 
+            mb.Registers.ITicks
+            (((float)Stopwatch.Frequency) / ((float)mb.Registers.ITicks / (float)mb.Registers.ICount) / 1000000.0)
         |> Result.returnM
     
     let resetCPUState = State.exec resetCPU >> Result.returnM
@@ -69,7 +68,7 @@ module I8088 =
     let execOneLogicalInstr (mb, (ls, bps : HashSet<_>)) = 
         let execPhysicalInstr mb = 
             mb
-            |> State.eval (State.( *> ) beforePhysicalInstr createInputAtCSIP)
+            |> State.eval (State.( *> ) beforePhysicalInstr fetchInstr)
             |> Prelude.uncurry decodeInstr
             |> Result.bind (fun is -> 
                             let i = is |> fst
@@ -83,16 +82,16 @@ module I8088 =
                             if isPrefix then 
                                 loopExecPrefixInstrs (mb', (ls, bps)) 
                             else (Result.returnM (mb', (ls, bps))))
-        if mb.CPU.Halted then
+        if mb.Registers.Halted then
             (mb, (Halted, bps)) |> Result.returnM
-        else if ls = Running && mb.CPU.CS @|@ mb.CPU.IP |> bps.Contains then
+        else if ls = Running && mb.Registers.CS @|@ mb.Registers.IP |> bps.Contains then
             (mb, (Paused, bps)) |> Result.returnM
         else
             (mb |> State.exec beforeLogicalInstr, (ls, bps))
             |> loopExecPrefixInstrs 
 
     let rec private execNextLogicalInstr (mb, state) = 
-        if not mb.CPU.Halted then
+        if not mb.Registers.Halted then
             (mb, state)
             |> execOneLogicalInstr
             |> execAllLogicalInstrs
@@ -101,7 +100,7 @@ module I8088 =
     let dumpRegisters (mb, _) = 
         let rinstr = 
             mb
-            |> State.eval createInputAtCSIP
+            |> State.eval fetchInstr
             ||> decodeInstr
             |> Result.map fst
             |> Result.map Prelude.toStr

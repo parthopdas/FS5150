@@ -1,4 +1,4 @@
-﻿namespace Lib.Domain
+﻿namespace Lib.Chips.I8088
 
 module InstructionSet = 
     open System

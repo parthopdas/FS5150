@@ -1,9 +1,9 @@
-﻿module Lib.InstructionSetLoader.Tests
+﻿module Lib.Chips.I8088.InstructionSetLoader.Tests
 
 open FsUnit.Xunit
-open Lib.CPU.InstructionSetLoader
+open Lib.Chips.I8088.InstructionSetLoader
 open Lib.Common
-open Lib.Domain.InstructionSet
+open Lib.Chips.I8088.InstructionSet
 open Xunit
 
 [<Fact>]

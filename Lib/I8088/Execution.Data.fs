@@ -1,4 +1,4 @@
-namespace Lib.CPU.Execution
+namespace Lib.Chips.I8088.Execution
 
 (* 
     MOV PUSH POP XCHG XLAT/XLATB IN OUT LEA LDS LE LAHF SAHF PUSHF POPF 
@@ -7,8 +7,8 @@ namespace Lib.CPU.Execution
 module Data = 
     open FSharpx
     open FSharpx.State
-    open Lib.CPU.Execution.Common
-    open Lib.Domain.InstructionSet
+    open Lib.Chips.I8088.Execution.Common
+    open Lib.Chips.I8088.InstructionSet
     
     let execMOV i = 
         match i.Args with

@@ -1,11 +1,11 @@
-namespace Lib.CPU.Execution
+namespace Lib.Chips.I8088.Execution
 
 module Common = 
     open YaFunTK
     open FSharpx
     open FSharpx.State
-    open Lib.Domain.InstructionSet
-    open Lib.Domain.PC
+    open Lib.Chips.I8088.InstructionSet
+    open Lib.Chips.I8088
     open System.Collections.Specialized
     
     let initialCPU() = 
@@ -53,131 +53,131 @@ module Common =
     
     (* Register IO *)
     let getFlag (flag : Flags) = 
-        let innerFn mb = mb.CPU.Flags.[int(flag)], mb
-        innerFn : State<bool, Motherboard>
+        let innerFn mb = mb.Registers.Flags.[int(flag)], mb
+        innerFn : State<bool, I8088>
     
     let setFlag (flag : Flags) value = 
         let innerFn mb = 
-            mb.CPU.Flags.[int(flag)] <- value
+            mb.Registers.Flags.[int(flag)] <- value
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let setCSIP addr = 
         let innerFn mb = 
-            mb.CPU.CS <- addr.Segment
-            mb.CPU.IP <- addr.Offset
+            mb.Registers.CS <- addr.Segment
+            mb.Registers.IP <- addr.Offset
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     // TODO: Perf: Split this out into getcs and getip, same for set
     let getCSIP = 
         let innerFn mb = 
-            mb.CPU.CS @|@ mb.CPU.IP, mb
-        innerFn : State<Address, Motherboard>
+            mb.Registers.CS @|@ mb.Registers.IP, mb
+        innerFn : State<Address, I8088>
     
     let setSSSP addr = 
         let innerFn mb = 
-            mb.CPU.SS <- addr.Segment
-            mb.CPU.SP <- addr.Offset
+            mb.Registers.SS <- addr.Segment
+            mb.Registers.SP <- addr.Offset
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let getSSSP = 
         let innerFn mb = 
-            mb.CPU.SS @|@ mb.CPU.SP, mb
-        innerFn : State<Address, Motherboard>
+            mb.Registers.SS @|@ mb.Registers.SP, mb
+        innerFn : State<Address, I8088>
     
     let getRegSeg segReg = 
         let innerFn mb = 
             let data = 
                 match segReg with
-                | CS -> mb.CPU.CS
-                | DS -> mb.CPU.DS
-                | ES -> mb.CPU.ES
-                | SS -> mb.CPU.SS
+                | CS -> mb.Registers.CS
+                | DS -> mb.Registers.DS
+                | ES -> mb.Registers.ES
+                | SS -> mb.Registers.SS
             data, mb
-        innerFn : State<Word16, Motherboard>
+        innerFn : State<Word16, I8088>
     
     let setRegSeg segReg value = 
         let innerFn mb = 
             match segReg with
-            | CS -> mb.CPU.CS <- value
-            | DS -> mb.CPU.DS <- value
-            | ES -> mb.CPU.ES <- value
-            | SS -> mb.CPU.SS <- value
+            | CS -> mb.Registers.CS <- value
+            | DS -> mb.Registers.DS <- value
+            | ES -> mb.Registers.ES <- value
+            | SS -> mb.Registers.SS <- value
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let getRegFlags = 
         let innerFn mb =
-            let data = uint16 mb.CPU.Flags.Data 
+            let data = uint16 mb.Registers.Flags.Data 
             data, mb
-        innerFn : State<Word16, Motherboard>
+        innerFn : State<Word16, I8088>
     
     let setRegFlags (value : Word16) = 
         let innerFn mb = 
-            mb.CPU.Flags <- value |> int |> BitVector32
+            mb.Registers.Flags <- value |> int |> BitVector32
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let getReg8 reg = 
         let innerFn mb = 
             let data = 
                 match reg with
-                | AL -> getLoByte mb.CPU.AX
-                | AH -> getHiByte mb.CPU.AX
-                | BL -> getLoByte mb.CPU.BX
-                | BH -> getHiByte mb.CPU.BX
-                | CL -> getLoByte mb.CPU.CX
-                | CH -> getHiByte mb.CPU.CX
-                | DL -> getLoByte mb.CPU.DX
-                | DH -> getHiByte mb.CPU.DX
+                | AL -> getLoByte mb.Registers.AX
+                | AH -> getHiByte mb.Registers.AX
+                | BL -> getLoByte mb.Registers.BX
+                | BH -> getHiByte mb.Registers.BX
+                | CL -> getLoByte mb.Registers.CX
+                | CH -> getHiByte mb.Registers.CX
+                | DL -> getLoByte mb.Registers.DX
+                | DH -> getHiByte mb.Registers.DX
             data, mb
-        innerFn : State<Word8, Motherboard>
+        innerFn : State<Word8, I8088>
     
     let setReg8 reg value = 
         let innerFn mb = 
             match reg with
-            | AL -> mb.CPU.AX <- setLoByte mb.CPU.AX value
-            | AH -> mb.CPU.AX <- setHiByte mb.CPU.AX value
-            | BL -> mb.CPU.BX <- setLoByte mb.CPU.BX value
-            | BH -> mb.CPU.BX <- setHiByte mb.CPU.BX value
-            | CL -> mb.CPU.CX <- setLoByte mb.CPU.CX value
-            | CH -> mb.CPU.CX <- setHiByte mb.CPU.CX value
-            | DL -> mb.CPU.DX <- setLoByte mb.CPU.DX value
-            | DH -> mb.CPU.DX <- setHiByte mb.CPU.DX value
+            | AL -> mb.Registers.AX <- setLoByte mb.Registers.AX value
+            | AH -> mb.Registers.AX <- setHiByte mb.Registers.AX value
+            | BL -> mb.Registers.BX <- setLoByte mb.Registers.BX value
+            | BH -> mb.Registers.BX <- setHiByte mb.Registers.BX value
+            | CL -> mb.Registers.CX <- setLoByte mb.Registers.CX value
+            | CH -> mb.Registers.CX <- setHiByte mb.Registers.CX value
+            | DL -> mb.Registers.DX <- setLoByte mb.Registers.DX value
+            | DH -> mb.Registers.DX <- setHiByte mb.Registers.DX value
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     // TODO: PERF: Change to array indexed by AX, BX, etc.
     let getReg16 reg = 
         let innerFn mb = 
             let data = 
                 match reg with
-                | AX -> mb.CPU.AX
-                | BX -> mb.CPU.BX
-                | CX -> mb.CPU.CX
-                | DX -> mb.CPU.DX
-                | SP -> mb.CPU.SP
-                | BP -> mb.CPU.BP
-                | SI -> mb.CPU.SI
-                | DI -> mb.CPU.DI
+                | AX -> mb.Registers.AX
+                | BX -> mb.Registers.BX
+                | CX -> mb.Registers.CX
+                | DX -> mb.Registers.DX
+                | SP -> mb.Registers.SP
+                | BP -> mb.Registers.BP
+                | SI -> mb.Registers.SI
+                | DI -> mb.Registers.DI
             data, mb
-        innerFn : State<Word16, Motherboard>
+        innerFn : State<Word16, I8088>
     
     let setReg16 reg value = 
         let innerFn mb = 
             match reg with
-            | AX -> mb.CPU.AX <- value
-            | BX -> mb.CPU.BX <- value
-            | CX -> mb.CPU.CX <- value
-            | DX -> mb.CPU.DX <- value
-            | SP -> mb.CPU.SP <- value
-            | BP -> mb.CPU.BP <- value
-            | SI -> mb.CPU.SI <- value
-            | DI -> mb.CPU.DI <- value
+            | AX -> mb.Registers.AX <- value
+            | BX -> mb.Registers.BX <- value
+            | CX -> mb.Registers.CX <- value
+            | DX -> mb.Registers.DX <- value
+            | SP -> mb.Registers.SP <- value
+            | BP -> mb.Registers.BP <- value
+            | SI -> mb.Registers.SI <- value
+            | DI -> mb.Registers.DI <- value
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let parity = 
         [| true; false; false; true; false; true; true; false; false; true; true; false; true; false; false; true; false; 
@@ -216,7 +216,7 @@ module Common =
         let innerFn mb = 
             let addr = int32 (flatten addr)
             mb.RAM.[addr], mb
-        innerFn : State<Word8, Motherboard>
+        innerFn : State<Word8, I8088>
     
     let read6Bytes addr = 
         let innerFn mb = 
@@ -224,7 +224,7 @@ module Common =
             let bs : Word8[] = Array.zeroCreate 6 
             Array.blit mb.RAM ((int)a0) bs 0 6
             bs, mb
-        innerFn : State<Word8[], Motherboard>
+        innerFn : State<Word8[], I8088>
         
     let readWord16 addr = 
         (+|+) <!> readWord8 (addr |++ 1us) <*> readWord8 addr
@@ -234,7 +234,7 @@ module Common =
             let addr = int32 (flatten addr)
             if not mb.ReadOnly.[addr] then mb.RAM.[addr] <- value
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let writeWord16 (value : Word16) addr = 
         (writeWord8 (getLoByte value) addr) >>. (writeWord8 (getHiByte value) (addr |++ 1us))
@@ -263,7 +263,7 @@ module Common =
                     |> Map.tryFind pno
                     |> Option.fold (fun _ e -> e pno) 0xFFuy
             pval, mb
-        innerFn : State<Word8, Motherboard>
+        innerFn : State<Word8, I8088>
     
     let portRead16Callbacks : Map<Word16, Word16 -> Word16> = Map.empty
     
@@ -271,7 +271,7 @@ module Common =
         let ifNoCallback = (+|+) <!> portRead8 (pno + 1us) <*> portRead8 pno
         portRead16Callbacks
         |> Map.tryFind pno
-        |> Option.fold (fun _ e -> e pno |> State.returnM) ifNoCallback : State<Word16, Motherboard>
+        |> Option.fold (fun _ e -> e pno |> State.returnM) ifNoCallback : State<Word16, I8088>
     
     let portWriteCallbacks : Map<Word16, Word16 -> Word8 -> unit> = Map.empty
     
@@ -285,7 +285,7 @@ module Common =
             |> Map.tryFind pno
             |> Option.fold (fun _ e -> e pno value) ()
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let portWrite16Callbacks : Map<Word16, Word16 -> Word16 -> unit> = Map.empty
     
@@ -293,7 +293,7 @@ module Common =
         let ifNoCallback = portWrite8 pno !><value *> portWrite8 pno !><(value >>> 8)
         portWrite16Callbacks
         |> Map.tryFind pno
-        |> Option.fold (fun _ e -> e pno value |> State.returnM) ifNoCallback : State<unit, Motherboard>
+        |> Option.fold (fun _ e -> e pno value |> State.returnM) ifNoCallback : State<unit, I8088>
     
     (* Segmented Address calculations *)
     let private getEA t d = 
@@ -313,21 +313,21 @@ module Common =
             d
             |> Option.fold (fun acc e -> 
                    acc + match e with
-                         | W8 w8 -> Lib.Common.signExtend w8
+                         | W8 w8 -> Common.signExtend w8
                          | W16 w16 -> w16) 0us
             |> State.returnM
         
         (+) <!> reg <*> disp
     
-    let private getSegOverrideForEA (usess : bool) : State<RegisterSeg, Motherboard> = 
+    let private getSegOverrideForEA (usess : bool) : State<RegisterSeg, I8088> = 
         let innerFn mb = 
             let sr = 
-                mb.CPU.SegmentOverride
+                mb.Registers.SegmentOverride
                 |> Option.orElse (if usess then Some SS
                                   else None)
                 |> Option.getOrElse DS
             sr, mb
-        innerFn : State<RegisterSeg, Motherboard>
+        innerFn : State<RegisterSeg, I8088>
     
     // TODO: Unit tests for AddressFromDref - http://www.jagregory.com/abrash-zen-of-asm/#mod-reg-rm-addressing
     let addressFromDref instr t d = 
@@ -336,16 +336,16 @@ module Common =
     let getSegOverride def = 
         let innerFn mb = 
             let seg = 
-                mb.CPU.SegmentOverride
+                mb.Registers.SegmentOverride
                 |> Option.getOrElse def
             seg, mb
-        innerFn : State<RegisterSeg, Motherboard>
+        innerFn : State<RegisterSeg, I8088>
     
     let setSegOverride sr = 
         let innerFn mb = 
-            mb.CPU.SegmentOverride <- Some sr
+            mb.Registers.SegmentOverride <- Some sr
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
 
     let inline readMem8 instr dref = addressFromDref instr dref.DrefType8 dref.DrefDisp8 >>= readWord8
     let inline readMem16 instr dref = addressFromDref instr dref.DrefType16 dref.DrefDisp16 >>= readWord16
@@ -355,55 +355,55 @@ module Common =
     (*  CPU State management *)
     let getLogicalInstrStart =
         let innerFn mb = 
-            mb.CPU.LogicalInstrStart, mb
-        innerFn : State<Address, Motherboard>
+            mb.Registers.LogicalInstrStart, mb
+        innerFn : State<Address, I8088>
      
     let beforeLogicalInstr = 
         let innerFn mb = 
-            mb.CPU.LogicalInstrStart <- mb.CPU.CS @|@ mb.CPU.IP
-            mb.CPU.SegmentOverride <- None
-            mb.CPU.RepetitionType <- NoRepetition
+            mb.Registers.LogicalInstrStart <- mb.Registers.CS @|@ mb.Registers.IP
+            mb.Registers.SegmentOverride <- None
+            mb.Registers.RepetitionType <- NoRepetition
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let beforePhysicalInstr = 
         let innerFn mb = 
             mb.SW.Restart()
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let afterPhysicalInstr = 
         let innerFn mb = 
-            mb.CPU.ICount <- mb.CPU.ICount + 1L
+            mb.Registers.ICount <- mb.Registers.ICount + 1L
             mb.SW.Stop()
-            mb.CPU.ITicks <- mb.CPU.ITicks + mb.SW.ElapsedTicks
+            mb.Registers.ITicks <- mb.Registers.ITicks + mb.SW.ElapsedTicks
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let resetCPU = 
         let innerFn mb = 
             let cpu = initialCPU()
-            cpu.ICount <- mb.CPU.ICount
-            cpu.ITicks <- mb.CPU.ITicks
-            (), { mb with CPU = cpu }
-        innerFn : State<unit, Motherboard>
+            cpu.ICount <- mb.Registers.ICount
+            cpu.ITicks <- mb.Registers.ITicks
+            (), { mb with Registers = cpu }
+        innerFn : State<unit, I8088>
     
     let setRepetitionType rt = 
         let innerFn mb = 
-            mb.CPU.RepetitionType <- rt
+            mb.Registers.RepetitionType <- rt
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     let getRepetitionType = 
         let innerFn mb = 
-            mb.CPU.RepetitionType, mb
-        innerFn : State<RepetitionType, Motherboard>
+            mb.Registers.RepetitionType, mb
+        innerFn : State<RepetitionType, I8088>
     
     let setHalted = 
         let innerFn mb = 
-            mb.CPU.Halted <- true
+            mb.Registers.Halted <- true
             (), mb
-        innerFn : State<unit, Motherboard>
+        innerFn : State<unit, I8088>
     
     (* Common arithmetic *)
     let private sub8ValParams = (0xFF00us, 0us, 0x80us, 0x10us)
@@ -431,4 +431,4 @@ module Common =
     (* Miscellenous helpers *)
     // TODO: How do we get the type system to take care of OpCode signatures so we dont have this catch all for all opcodes?
     let inline nyi instr = failwithf "%O - Not implemented" (instr.ToString())
-    let inline ns<'T> : State<'T option, Motherboard> = None |> State.returnM
+    let inline ns<'T> : State<'T option, I8088> = None |> State.returnM

@@ -1,4 +1,4 @@
-namespace Lib.CPU.Execution
+namespace Lib.Chips.I8088.Execution
 (* 
     ADD ADC INC AAA DA SUB SBB DEC NEG CMP AAS DA MUL IMUL AA DIV IDIV AAD CBW CWD
 *)
@@ -6,9 +6,9 @@ module Arithmetic =
     open YaFunTK
     open FSharpx
     open FSharpx.State
-    open Lib.CPU.Execution.Common
-    open Lib.Domain.InstructionSet
-    open Lib.Domain.PC
+    open Lib.Chips.I8088.Execution.Common
+    open Lib.Chips.I8088.InstructionSet
+    open Lib.Chips.I8088
     open Lib
     
     module ADD =

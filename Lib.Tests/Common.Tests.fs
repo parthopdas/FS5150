@@ -3,7 +3,7 @@
 module CommonTests =
     open FsUnit.Xunit
     open Xunit
-    open Lib
+    open Lib.Chips.I8088
 
     [<Theory>]
     [<InlineData(12uy, 12)>]

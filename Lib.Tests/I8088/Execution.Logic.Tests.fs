@@ -1,4 +1,4 @@
-﻿module Lib.Excution.Logic.Tests
+﻿module Lib.Chips.I8088.Excution.Logic.Tests
 
 open Lib.Common
 open global.Xunit

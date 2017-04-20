@@ -3,10 +3,10 @@
 module Common = 
     open FSharpx
     open FsUnit.Xunit
-    open Lib.CPU.Execution.Common
-    open Lib.CPU.I8088
-    open Lib.Domain.InstructionSet
-    open Lib.Domain.PC
+    open Lib.Chips.I8088.Execution.Common
+    open Lib.Chips.I8088.I8088Agent
+    open Lib.Chips.I8088.InstructionSet
+    open Lib.Chips.I8088
     open Lib.Parser.Core
     open System
     open System.Collections.Generic
@@ -17,11 +17,11 @@ module Common =
         (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath
         |> Path.GetFullPath
         |> Path.GetDirectoryName
-        |> fun p -> Path.Combine(p, "8086_table.txt")
+        |> fun p -> Path.Combine(p, @"I8088\8086_table.txt")
         |> File.ReadAllText
-        |> Lib.CPU.InstructionSetLoader.loadInstructionSet
+        |> InstructionSetLoader.loadInstructionSet
     
-    let grammer = is |> Lib.CPU.InstructionSetLoader.loadGrammer
+    let grammer = is |> InstructionSetLoader.loadGrammer
     let mb = InitParams.Default |> initMotherBoard
     
     let onBits (v : Word8) = 
@@ -35,7 +35,7 @@ module Common =
           CS = 0us
           IP = 0x100us }
         |> initMotherBoard
-        |> loadBinary (Path.combine "TestData" tn) 0x100 false
+        |> loadBinary (Path.combine @"I8088\TestData" tn) 0x100 false
     
     let runTestFromCOMFile mb = 
         (mb, (Running, HashSet<_>()))
@@ -51,6 +51,6 @@ module Common =
             |> readWord16
             |> Prelude.flip State.eval mb
         count |> should equal (Word16(tCount))
-        mb.CPU.IP |> should equal (successExitIp + 1us)
-        mb.CPU.CS |> should equal 0x0us
-        mb.CPU.ICount |> should equal (int64(iCount) + testStubICount)
+        mb.Registers.IP |> should equal (successExitIp + 1us)
+        mb.Registers.CS |> should equal 0x0us
+        mb.Registers.ICount |> should equal (int64(iCount) + testStubICount)

@@ -54,26 +54,25 @@
       <Link>paket-files/YaFunTK.fs</Link>
     </Compile>
     <None Include="app.config" />
-    <Compile Include="Common.fs" />
     <Compile Include="Parser\Input.fs" />
     <Compile Include="Parser\Core.fs" />
     <Compile Include="Parser\Combinators.fs" />
     <Compile Include="Parser\Tokens.fs" />
-    <Compile Include="Domain\InstructionSet.fs" />
-    <Compile Include="Domain\Motherboard.fs" />
-    <Compile Include="CPU\InstructionSetLoader.fs" />
-    <Compile Include="CPU\Disassembler.fs" />
-    <Compile Include="CPU\Execution.Common.fs" />
-    <Compile Include="CPU\Execution.Data.fs" />
-    <Compile Include="CPU\Execution.Arithmetic.fs" />
-    <Compile Include="CPU\Execution.Logic.fs" />
-    <Compile Include="CPU\Execution.String.fs" />
-    <Compile Include="CPU\Execution.Control.fs" />
-    <Compile Include="CPU\Execution.Processor.fs" />
-    <Compile Include="CPU\FDE.fs" />
-    <Compile Include="CPU\I8088.fs" />
-    <None Include="app.config" />
-    <None Include="8086_table.txt">
+    <Compile Include="I8088\Common.fs" />
+    <Compile Include="I8088\InstructionSet.fs" />
+    <Compile Include="I8088\I8088.fs" />
+    <Compile Include="I8088\InstructionSetLoader.fs" />
+    <Compile Include="I8088\Disassembler.fs" />
+    <Compile Include="I8088\Execution.Common.fs" />
+    <Compile Include="I8088\Execution.Data.fs" />
+    <Compile Include="I8088\Execution.Arithmetic.fs" />
+    <Compile Include="I8088\Execution.Logic.fs" />
+    <Compile Include="I8088\Execution.String.fs" />
+    <Compile Include="I8088\Execution.Control.fs" />
+    <Compile Include="I8088\Execution.Processor.fs" />
+    <Compile Include="I8088\FDE.fs" />
+    <Compile Include="I8088\I8088Agent.fs" />
+    <None Include="I8088\8086_table.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="PCXTBIOS.BIN">

@@ -324,69 +324,69 @@
       <Paket>True</Paket>
       <Link>paket-files/YaFunTK.fs</Link>
     </Compile>
+    <None Include="app.config" />
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Common.fs" />
     <Compile Include="Common.Tests.fs" />
     <Compile Include="Parser\Input.Tests.fs" />
     <Compile Include="Parser\Core.Tests.fs" />
     <Compile Include="Parser\Combinators.Tests.fs" />
     <Compile Include="Parser\Tokens.Tests.fs" />
-    <Compile Include="CPU\InstructionSetLoader.Tests.fs" />
-    <Compile Include="CPU\Disassembler.Tests.fs" />
-    <Compile Include="CPU\Execution.Common.Tests.fs" />
-    <Compile Include="CPU\Execution.Data.Tests.fs" />
-    <Compile Include="CPU\Execution.Arithmetic.Tests.fs" />
-    <Compile Include="CPU\Execution.Logic.Tests.fs" />
-    <Compile Include="CPU\Execution.String.Tests.fs" />
-    <Compile Include="CPU\Execution.Control.Tests.fs" />
-    <Compile Include="CPU\Execution.Processor.Tests.fs" />
-    <None Include="app.config" />
-    <None Include="TestData\AADD.tests.asm" />
-    <None Include="TestData\AADD.tests.com">
+    <Compile Include="I8088\Common.fs" />
+    <Compile Include="I8088\InstructionSetLoader.Tests.fs" />
+    <Compile Include="I8088\Disassembler.Tests.fs" />
+    <Compile Include="I8088\Execution.Common.Tests.fs" />
+    <Compile Include="I8088\Execution.Data.Tests.fs" />
+    <Compile Include="I8088\Execution.Arithmetic.Tests.fs" />
+    <Compile Include="I8088\Execution.Logic.Tests.fs" />
+    <Compile Include="I8088\Execution.String.Tests.fs" />
+    <Compile Include="I8088\Execution.Control.Tests.fs" />
+    <Compile Include="I8088\Execution.Processor.Tests.fs" />
+    <None Include="I8088\TestData\AADD.tests.asm" />
+    <None Include="I8088\TestData\AADD.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\AINC.tests.asm" />
-    <None Include="TestData\AINC.tests.com">
+    <None Include="I8088\TestData\AINC.tests.asm" />
+    <None Include="I8088\TestData\AINC.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\ASUB.tests.asm" />
-    <None Include="TestData\ASUB.tests.com">
+    <None Include="I8088\TestData\ASUB.tests.asm" />
+    <None Include="I8088\TestData\ASUB.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\CCALL-RET.tests.asm" />
-    <None Include="TestData\CCALL-RET.tests.com">
+    <None Include="I8088\TestData\CCALL-RET.tests.asm" />
+    <None Include="I8088\TestData\CCALL-RET.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\CLOOPX.tests.asm" />
-    <None Include="TestData\CLOOPX.tests.com">
+    <None Include="I8088\TestData\CLOOPX.tests.asm" />
+    <None Include="I8088\TestData\CLOOPX.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\DPUSHX-POPX.tests.asm" />
-    <None Include="TestData\DPUSHX-POPX.tests.com">
+    <None Include="I8088\TestData\DPUSHX-POPX.tests.asm" />
+    <None Include="I8088\TestData\DPUSHX-POPX.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\LNOT.tests.asm" />
-    <None Include="TestData\LNOT.tests.com">
+    <None Include="I8088\TestData\LNOT.tests.asm" />
+    <None Include="I8088\TestData\LNOT.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\LOR.tests.asm" />
-    <None Include="TestData\LOR.tests.com">
+    <None Include="I8088\TestData\LOR.tests.asm" />
+    <None Include="I8088\TestData\LOR.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\LSHL.tests.asm" />
-    <None Include="TestData\LSHL.tests.com">
+    <None Include="I8088\TestData\LSHL.tests.asm" />
+    <None Include="I8088\TestData\LSHL.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\LSHR.tests.asm" />
-    <None Include="TestData\LSHR.tests.com">
+    <None Include="I8088\TestData\LSHR.tests.asm" />
+    <None Include="I8088\TestData\LSHR.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\SMOVX.tests.asm" />
-    <None Include="TestData\SMOVX.tests.com">
+    <None Include="I8088\TestData\SMOVX.tests.asm" />
+    <None Include="I8088\TestData\SMOVX.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="TestData\SSTOLOD.tests.asm" />
-    <None Include="TestData\SSTOLOD.tests.com">
+    <None Include="I8088\TestData\SSTOLOD.tests.asm" />
+    <None Include="I8088\TestData\SSTOLOD.tests.com">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

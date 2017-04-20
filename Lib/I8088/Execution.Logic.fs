@@ -1,4 +1,4 @@
-namespace Lib.CPU.Execution
+namespace Lib.Chips.I8088.Execution
 (* 
     NOT AND OR XOR TEST SHL/SAL SHR SAR ROL ROR RCL RCR
 *)
@@ -6,9 +6,9 @@ module Logic =
     open FSharpx
     open FSharpx.State
     open Lib
-    open Lib.CPU.Execution.Common
-    open Lib.Domain.InstructionSet
-    open Lib.Domain.PC
+    open Lib.Chips.I8088.Execution.Common
+    open Lib.Chips.I8088.InstructionSet
+    open Lib.Chips.I8088
     
     let setLogicFlags8 (w8 : Word8) = flagSZP8 w8 *> (setFlag Flags.CF false) *> (setFlag Flags.OF false)
     

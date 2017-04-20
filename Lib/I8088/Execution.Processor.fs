@@ -1,12 +1,12 @@
-﻿namespace Lib.CPU.Execution
+﻿namespace Lib.Chips.I8088.Execution
 (* 
     STC CLC CMC STD CLD STI CLI HLT WAIT ESC LOCK NOP
 *)
 module Processor = 
     open FSharpx
     open FSharpx.State
-    open Lib.CPU.Execution.Common
-    open Lib.Domain.PC
+    open Lib.Chips.I8088.Execution.Common
+    open Lib.Chips.I8088
     
     let inline execCMC _ = ((getFlag Flags.CF) >>= (not >> setFlag Flags.CF)) *> ns
 

@@ -1,15 +1,15 @@
-﻿module Lib.Disassembler.Tests
+﻿module Lib.Chips.I8088.Disassembler.Tests
 
 open Xunit
 open FsCheck
 open FsUnit.Xunit
-open Lib.Domain.InstructionSet
+open Lib.Chips.I8088.InstructionSet
 open Lib.Parser.Core
 open Lib.Parser.TextInput
 open System
-open Lib.CPU.Disassembler
+open Lib.Chips.I8088.Disassembler
 open Lib.Common
-open Lib.CPU.InstructionSetLoader
+open Lib.Chips.I8088.InstructionSetLoader
 
 [<Fact>]
 let ``pword8 can parse word8``() = 

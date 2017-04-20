@@ -1,9 +1,8 @@
-namespace Lib.CPU
+namespace Lib.Chips.I8088
 
 module Disassembler = 
     open YaFunTK
-    open Lib
-    open Lib.Domain.InstructionSet
+    open Lib.Chips.I8088.InstructionSet
     open Lib.Parser.Combinators
     open Lib.Parser.Core
         

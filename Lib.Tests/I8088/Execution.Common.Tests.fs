@@ -1,8 +1,8 @@
-﻿module Lib.Excution.Common.Tests
+﻿module Lib.Chips.I8088.Excution.Common.Tests
 
 open YaFunTK
 open FsUnit.Xunit
-open Lib.CPU.Execution.Common
+open Lib.Chips.I8088.Execution.Common
 open FSharpx.State
 
 let mb = Lib.Common.mb
@@ -61,12 +61,12 @@ let ``|-- tests`` (s1, o1, n, s2, o2) =
 let ``set CSIP tests`` () =
     let tos = 0x10us @|@ 0x02us
     eval (setCSIP tos) mb
-    mb.CPU.CS @|@ mb.CPU.IP |> should equal tos
+    mb.Registers.CS @|@ mb.Registers.IP |> should equal tos
 
 [<Xunit.Fact>]
 let ``get CSIP tests`` () =
-    mb.CPU.CS <- 0xBAADus
-    mb.CPU.IP <- 0xF00Dus
+    mb.Registers.CS <- 0xBAADus
+    mb.Registers.IP <- 0xF00Dus
 
     let a = eval getCSIP mb
     a |> should equal (0xBAADus @|@ 0xF00Dus)
@@ -75,12 +75,12 @@ let ``get CSIP tests`` () =
 let ``set SSSP tests`` () =
     let tos = 0x10us @|@ 0x02us
     eval (setSSSP tos) mb
-    mb.CPU.SS @|@ mb.CPU.SP |> should equal tos
+    mb.Registers.SS @|@ mb.Registers.SP |> should equal tos
 
 [<Xunit.Fact>]
 let ``get SSSP tests`` () =
-    mb.CPU.SS <- 0xBAADus
-    mb.CPU.SP <- 0xF00Dus
+    mb.Registers.SS <- 0xBAADus
+    mb.Registers.SP <- 0xF00Dus
 
     let a = eval getSSSP mb
     a |> should equal (0xBAADus @|@ 0xF00Dus)

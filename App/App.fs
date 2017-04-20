@@ -2,7 +2,7 @@
 module Program
 
 open System
-open Lib.CPU.I8088
+open Lib.Chips.I8088.I8088Agent
 open Lib.Parser.Core
 
 (*

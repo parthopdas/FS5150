@@ -1,4 +1,4 @@
-﻿namespace Lib.CPU.Execution
+﻿namespace Lib.Chips.I8088.Execution
 
 (* 
     REP REPE/REPZ REPNE/REPNZ MOVS/MOVSB/MOVSW COMPS/COMPSB/COMPSW SCAS/SCASB/SCASW LODS/LODSB/LODSW STOS/STOSB/STOSW
@@ -55,9 +55,9 @@
 module String = 
     open FSharpx
     open FSharpx.State
-    open Lib.CPU.Execution.Common
-    open Lib.Domain.InstructionSet
-    open Lib.Domain.PC
+    open Lib.Chips.I8088.Execution.Common
+    open Lib.Chips.I8088.InstructionSet
+    open Lib.Chips.I8088
     open YaFunTK
     
     module MOVSX = 

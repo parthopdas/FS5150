@@ -1,26 +1,25 @@
-﻿namespace Lib.CPU.Execution
+﻿namespace Lib.Chips.I8088.Execution
 
 module FDE =
     open YaFunTK 
     open FSharpx
     open FSharpx.State
-    open Lib.CPU
-    open Lib.CPU.Disassembler
-    open Lib.CPU.Execution.Arithmetic
-    open Lib.CPU.Execution.Common
-    open Lib.CPU.Execution.Control
-    open Lib.CPU.Execution.Data
-    open Lib.CPU.Execution.Logic
-    open Lib.CPU.Execution.Processor
-    open Lib.CPU.Execution.String
-    open Lib.Domain.InstructionSet
-    open Lib.Domain.PC
+    open Lib.Chips.I8088.Disassembler
+    open Lib.Chips.I8088.Execution.Arithmetic
+    open Lib.Chips.I8088.Execution.Common
+    open Lib.Chips.I8088.Execution.Control
+    open Lib.Chips.I8088.Execution.Data
+    open Lib.Chips.I8088.Execution.Logic
+    open Lib.Chips.I8088.Execution.Processor
+    open Lib.Chips.I8088.Execution.String
+    open Lib.Chips.I8088.InstructionSet
+    open Lib.Chips.I8088
     open Lib.Parser.Core
     open Lib.Parser.TextInput
     open System.IO
     
     let grammer = 
-        (Path.getLocalPath(), "8086_table.txt")
+        (Path.getLocalPath(), @"I8088\8086_table.txt")
         ||> Path.combine
         |> File.ReadAllText
         |> InstructionSetLoader.loadInstructionSet
@@ -30,11 +29,11 @@ module FDE =
         a0
         |> read6Bytes
         |> State.bind (fun bs -> (a0, (fromBytes 0 bs)) |> State.returnM)
-        : State<(Address * InputState<_>),Motherboard> 
+        : State<(Address * InputState<_>), I8088> 
 
     /// fetchInstr : State<(Address * InputState<_>),Motherboard> 
-    let createInputAtCSIP = 
-        getCSIP >>= createInputAt : State<Address * InputState<_>, Motherboard>
+    let fetchInstr = 
+        getCSIP >>= createInputAt : State<Address * InputState<_>, I8088>
     
     /// decodeInstr :: Address -> InputState<_> -> Result<Instruction * InputState<_>>
     let decodeInstr csip instrBytes = 

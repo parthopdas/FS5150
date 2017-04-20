@@ -1,12 +1,12 @@
-﻿module Lib.Excution.String.Tests
+﻿module Lib.Chips.I8088.Excution.String.Tests
 
 open FSharpx.State
 open FsUnit.Xunit
 open Lib
-open Lib.CPU.Execution.Common
-open Lib.CPU.Execution.String
-open Lib.Domain.InstructionSet
-open Lib.Domain.PC
+open Lib.Chips.I8088.Execution.Common
+open Lib.Chips.I8088.Execution.String
+open Lib.Chips.I8088.InstructionSet
+open Lib.Chips.I8088
 open global.Xunit
 open Lib.Common
 
@@ -42,19 +42,19 @@ module SCASX =
     [<Xunit.MemberData("Core SCASX tests data")>]
     let ``Core SCASX tests`` ((reptype : RepetitionType, cx : Word16, df : bool, v : Word16), 
                               (csip' : Address, esdi' : Address, cx' : Word16, zf : bool)) : unit = 
-        mb.CPU.RepetitionType <- reptype
-        mb.CPU.CX <- cx
-        mb.CPU.Flags.[int(Flags.ZF)] <- false
-        mb.CPU.Flags.[int(Flags.DF)] <- df
-        mb.CPU.ES <- esdi.Segment
-        mb.CPU.DI <- esdi.Offset
-        mb.CPU.AX <- 0xdeadus
-        mb.CPU.LogicalInstrStart <- csip.Segment @|@ 0x10us
+        mb.Registers.RepetitionType <- reptype
+        mb.Registers.CX <- cx
+        mb.Registers.Flags.[int(Flags.ZF)] <- false
+        mb.Registers.Flags.[int(Flags.DF)] <- df
+        mb.Registers.ES <- esdi.Segment
+        mb.Registers.DI <- esdi.Offset
+        mb.Registers.AX <- 0xdeadus
+        mb.Registers.LogicalInstrStart <- csip.Segment @|@ 0x10us
         let init = (setCSIP csip) *> (writeWord16 v esdi)
         let wf = init *> SCASX.coreSCASW
         eval wf mb
         |> Option.fold (fun _ -> id) csip
         |> should equal csip'
-        mb.CPU.ES @|@ mb.CPU.DI |> should equal esdi'
-        mb.CPU.Flags.[int(Flags.ZF)] |> should equal zf
-        mb.CPU.CX |> should equal cx'
+        mb.Registers.ES @|@ mb.Registers.DI |> should equal esdi'
+        mb.Registers.Flags.[int(Flags.ZF)] |> should equal zf
+        mb.Registers.CX |> should equal cx'

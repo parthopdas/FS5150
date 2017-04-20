@@ -1,4 +1,4 @@
-﻿namespace Lib
+﻿namespace Lib.Chips.I8088
 
 module Common =
     

@@ -1,10 +1,9 @@
-﻿namespace Lib.CPU
+﻿namespace Lib.Chips.I8088
 
 module InstructionSetLoader = 
     open YaFunTK
     open FSharpx.Text
-    open Lib.Common
-    open Lib.Domain.InstructionSet
+    open Lib.Chips.I8088.InstructionSet
     open System
     open System.Globalization
     
