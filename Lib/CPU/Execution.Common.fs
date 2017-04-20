@@ -252,7 +252,7 @@ module Common =
     (* Device IO *)
     let portReadCallbacks : Map<Word16, Word16 -> Word8> = Map.empty
     
-    let portRead (pno : Word16) = 
+    let portRead8 (pno : Word16) = 
         let innerFn mb = 
             let pval = 
                 match pno with
@@ -268,14 +268,14 @@ module Common =
     let portRead16Callbacks : Map<Word16, Word16 -> Word16> = Map.empty
     
     let portRead16 (pno : Word16) = 
-        let ifNoCallback = (+|+) <!> portRead (pno + 1us) <*> portRead pno
+        let ifNoCallback = (+|+) <!> portRead8 (pno + 1us) <*> portRead8 pno
         portRead16Callbacks
         |> Map.tryFind pno
         |> Option.fold (fun _ e -> e pno |> State.returnM) ifNoCallback : State<Word16, Motherboard>
     
     let portWriteCallbacks : Map<Word16, Word16 -> Word8 -> unit> = Map.empty
     
-    let portWrite (pno : Word16) (value : Word8) = 
+    let portWrite8 (pno : Word16) (value : Word8) = 
         let innerFn mb = 
             mb.PortRAM.[(int) pno] <- value
             match pno with
@@ -290,7 +290,7 @@ module Common =
     let portWrite16Callbacks : Map<Word16, Word16 -> Word16 -> unit> = Map.empty
     
     let portWrite16 (pno : Word16) (value : Word16) = 
-        let ifNoCallback = portWrite pno !><value *> portWrite pno !><(value >>> 8)
+        let ifNoCallback = portWrite8 pno !><value *> portWrite8 pno !><(value >>> 8)
         portWrite16Callbacks
         |> Map.tryFind pno
         |> Option.fold (fun _ e -> e pno value |> State.returnM) ifNoCallback : State<unit, Motherboard>
@@ -415,7 +415,7 @@ module Common =
                         when 'TUp : equality
                          and 'TUp : (static member ( ^^^ ) :  ^TUp *  ^TUp ->  ^TUp)
                          and 'TUp : (static member ( &&& ) :  ^TUp *  ^TUp ->  ^TUp)>
-            (op : 'TUp -> 'TUp -> 'TUp, fdn : 'TUp -> 'T, fup : 'T -> 'TUp) setSZPFlags (vff00, v0, vMid, v10) (v1 : 'T, v2 : 'T) = 
+            (op : 'TUp -> 'TUp -> 'TUp, fdn : 'TUp -> 'T, fup : 'T -> 'TUp) setSZPFlags (vff00, v0, vMid, v10) (v1 : 'T) (v2 : 'T) = 
         let dst = op (fup(v1)) (fup(v2))
         (setSZPFlags (fdn(dst))) 
         *> (setFlag Flags.CF (dst &&& vff00 <> v0)) 

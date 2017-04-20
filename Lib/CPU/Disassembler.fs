@@ -96,14 +96,14 @@ module Disassembler =
             | _ -> false
             |> returnM
         
-        let createpModRegRm (reg, rm, usess) = 
+        let createpModRegRm reg rm usess = 
             returnM { ModRM = rm
                       MRReg = reg
                       MRUseSS = usess }
         
         pword8
-        >>= (fun w8 -> Prelude.tuple3 <!> parseReg w8 <*> parseRmArgs w8 <*> parseUseSS w8)
-        >>= createpModRegRm
+        >>= (fun w8 -> createpModRegRm <!> parseReg w8 <*> parseRmArgs w8 <*> parseUseSS w8)
+        >>= id
         <@> "ModRegRM"
     
     let pargument gra (args, mrm) = 
@@ -225,6 +225,8 @@ module Disassembler =
         parseOc
         >>= parseOcg
         <@> "OpCode"
+
+    // TODO: PERF: Get away from Prelude.Tuple
     
     let pinstruction csip g = 
         let parseAddress = returnM csip

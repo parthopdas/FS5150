@@ -92,7 +92,7 @@ module String =
     module SCASX = 
         let coreSCASX getAcc read sub n = 
             let readFromESDI = (@|@) <!> getRegSeg ES <*> getReg16 DI >>= read
-            let subAccESDI = Prelude.tuple2 <!> getAcc <*> readFromESDI >>= sub
+            let subAccESDI = sub <!> getAcc <*> readFromESDI >>= id
             
             let updateDI = 
                 getFlag Flags.DF >>= (fun df -> 

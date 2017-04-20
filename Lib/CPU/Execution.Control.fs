@@ -254,10 +254,9 @@ module Control =
     module LOOPX =
         let doLoop instrLen off ccond =
             let cond = 
-                Prelude.tuple2 <!> getFlag Flags.ZF <*> getReg16 CX 
-                >>= (fun (zf, cx) -> (cx <> 0us && ccond zf) |> State.returnM)
-            (getReg16 CX >>= ((+) 0xFFFFus >> setReg16 CX)) 
-            *> (cond >>= getAndIncrIPIf (instrLen + off))
+                (fun zf cx -> (cx <> 0us && ccond zf)) <!> getFlag Flags.ZF <*> getReg16 CX 
+            getReg16 CX >>= ((+) 0xFFFFus >> setReg16 CX)
+            >>. cond >>= getAndIncrIPIf (instrLen + off)
 
     let execLOOP instr = 
         match instr.Args with
@@ -277,4 +276,8 @@ module Control =
         | [ ArgOffset(off) ] -> LOOPX.doLoop instr.Length off id
         | _ -> nyi instr
 
-    let execINT _ = ns
+    let inline execINT _ = ns
+
+    let inline execIRET _ = nyi
+    
+    let inline execINTO _ = nyi

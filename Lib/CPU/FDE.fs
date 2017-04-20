@@ -70,11 +70,11 @@ module FDE =
           (* "HLT", 0x19 *) execHLT;
           (* "IDIV", 0x1A *) nyi;
           (* "IMUL", 0x1B *) nyi;
-          (* "IN", 0x1C *) nyi;
+          (* "IN", 0x1C *) execIN;
           (* "INC", 0x1D *) execINC;
           (* "INT", 0x1E *) execINT;
-          (* "INTO", 0x1F *) nyi;
-          (* "IRET", 0x20 *) nyi;
+          (* "INTO", 0x1F *) execINTO;
+          (* "IRET", 0x20 *) execIRET;
           (* "JA", 0x21 *) execJA;
           (* "JB", 0x22 *) execJB;
           (* "JBE", 0x23 *) execJBE;

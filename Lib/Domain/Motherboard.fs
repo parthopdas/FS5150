@@ -3,6 +3,7 @@
 module PC = 
     open InstructionSet
     open System
+    open System.Collections
     open System.Collections.Specialized
     open System.Diagnostics
     
@@ -58,7 +59,7 @@ module PC =
         { SW : Stopwatch
           CPU : CPU
           RAM : MemoryBlock<Word8>
-          ReadOnly : MemoryBlock<bool>
+          ReadOnly : BitArray
           PortRAM : MemoryBlock<Word8> }
         override x.ToString() = 
             let l1 = 

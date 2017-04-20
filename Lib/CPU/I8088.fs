@@ -15,6 +15,7 @@ module I8088 =
     open System.IO
     open System.Reflection
     open System.Collections.Generic
+    open System.Collections
     
     // TODO: PERF: State monad might be causing some bottlenecks. Consider a home grown implementation.
 
@@ -38,15 +39,20 @@ module I8088 =
         { SW = Stopwatch()
           CPU = { initialCPU() with CS = init.CS; IP = init.IP } 
           RAM = Array.create init.RamSize 0xfeuy
-          ReadOnly = Array.zeroCreate init.RamSize
+          ReadOnly = BitArray(init.RamSize)
           PortRAM = Array.zeroCreate init.PortRamSize }
     
     let loadBinary fname addr ro mb = 
         (Path.getLocalPath(), fname)
         ||> Path.combine
         |> File.ReadAllBytes
-        |> (fun bs -> Array.blit bs 0 mb.RAM addr bs.Length; bs.Length)
-        |> (fun len -> Array.fill mb.ReadOnly addr len ro)
+        |> (fun bs -> 
+            Array.blit bs 0 mb.RAM addr bs.Length
+            bs.Length)
+        |> (fun len -> 
+            let a = Array.zeroCreate<bool> mb.RAM.Length
+            Array.fill a addr len ro
+            mb.ReadOnly.Or(BitArray(a)) |> ignore)
         mb
     
     let getStats (mb, _) = 

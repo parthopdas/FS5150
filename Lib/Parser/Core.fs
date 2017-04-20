@@ -133,8 +133,6 @@ module Core =
 
         let ( *>* ) r1 r2 = Prelude.tuple2 <!> r1 <*> r2
 
-        let ( *> ) r1 r2 = Prelude.tuple2 <!> r1 <*> r2 >>= (snd >> returnM)
+        let ( *> ) r1 r2 = snd <!> r1 <*> r2
 
-        let ( <* ) r1 r2 = Prelude.tuple2 <!> r1 <*> r2 >>= (fst >> returnM)
-
-            
+        let ( <* ) r1 r2 = fst <!> r1 <*> r2
