@@ -39,7 +39,7 @@ module Common =
     
     let runTestFromCOMFile mb = 
         (mb, (Running, HashSet<_>()))
-        |> Result.returnM
+        |> ParserResult.returnM
         |> execAllLogicalInstrs
     
     let verifyAfterTestFromCOMFile mb (tCount: int) (iCount: int) = 

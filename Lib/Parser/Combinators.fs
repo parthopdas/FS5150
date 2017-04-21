@@ -1,6 +1,7 @@
 ﻿namespace Lib.Parser
 
 module Combinators = 
+    open YaFunTK.Result
     open Lib.Parser.Core
     
     /// bindP :: ('a -> Parser<'b>) -> Parser<'a> -> Parser<'b>

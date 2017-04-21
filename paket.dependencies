@@ -13,5 +13,8 @@ nuget FsUnit.Xunit
 nuget xunit
 nuget xunit.runner.console
 nuget xunit.runner.visualstudio
+nuget Akkling
+nuget Akkling.TestKit
+nuget NewtonSoft.Json redirects: force
 
 gist parthopdas/ccd06b223c0ae88ed9164f34cc1f5f06 YaFunTK.fs

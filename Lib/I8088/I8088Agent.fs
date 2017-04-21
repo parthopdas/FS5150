@@ -61,31 +61,29 @@ module I8088Agent =
             mb.Registers.ICount 
             mb.Registers.ITicks
             (((float)Stopwatch.Frequency) / ((float)mb.Registers.ITicks / (float)mb.Registers.ICount) / 1000000.0)
-        |> Result.returnM
+        |> ParserResult.returnM
     
-    let resetCPUState = State.exec resetCPU >> Result.returnM
-
     let execOneLogicalInstr (mb, (ls, bps : HashSet<_>)) = 
         let execPhysicalInstr mb = 
             mb
             |> State.eval (State.( *> ) beforePhysicalInstr fetchInstr)
             |> Prelude.uncurry decodeInstr
-            |> Result.bind (fun is -> 
+            |> ParserResult.bind (fun is -> 
                             let i = is |> fst
                             let s = State.( <* ) (i |> executeInstr) afterPhysicalInstr
-                            (State.exec s mb, i.IsPrefix) |> Result.returnM)
+                            (State.exec s mb, i.IsPrefix) |> ParserResult.returnM)
     
         let rec loopExecPrefixInstrs (mb, (ls, bps)) =
             mb
             |> execPhysicalInstr
-            |> Result.bind (fun (mb',isPrefix) -> 
+            |> ParserResult.bind (fun (mb',isPrefix) -> 
                             if isPrefix then 
                                 loopExecPrefixInstrs (mb', (ls, bps)) 
-                            else (Result.returnM (mb', (ls, bps))))
+                            else (ParserResult.returnM (mb', (ls, bps))))
         if mb.Registers.Halted then
-            (mb, (Halted, bps)) |> Result.returnM
+            (mb, (Halted, bps)) |> ParserResult.returnM
         else if ls = Running && mb.Registers.CS @|@ mb.Registers.IP |> bps.Contains then
-            (mb, (Paused, bps)) |> Result.returnM
+            (mb, (Paused, bps)) |> ParserResult.returnM
         else
             (mb |> State.exec beforeLogicalInstr, (ls, bps))
             |> loopExecPrefixInstrs 
@@ -102,15 +100,15 @@ module I8088Agent =
             mb
             |> State.eval fetchInstr
             ||> decodeInstr
-            |> Result.map fst
-            |> Result.map Prelude.toStr
+            |> ParserResult.map fst
+            |> ParserResult.map Prelude.toStr
         
         let rmbstr = 
             mb
             |> Prelude.toStr
-            |> Result.returnM
+            |> ParserResult.returnM
         
-        Result.lift2 (sprintf "%s\n%s") rmbstr rinstr
+        ParserResult.lift2 (sprintf "%s\n%s") rmbstr rinstr
     
     let setBreakPoint addr (_, (ls, bps : HashSet<_>)) =
         bps.Add(addr) |> ignore
@@ -119,7 +117,7 @@ module I8088Agent =
             |> Seq.map Prelude.toStr
             |> Seq.sort
             |> String.concat Environment.NewLine
-        ((ls, bps), str) |> Result.returnM
+        ((ls, bps), str) |> ParserResult.returnM
 
     let dumpMemory addr (mb, _) = 
         let bytesToPrint = 128us
@@ -165,7 +163,7 @@ module I8088Agent =
         
         lines
         |> Strings.joinLines
-        |> Result.returnM
+        |> ParserResult.returnM
     
     let unassemble (mb, _) = 
         let rec getInstrAt ith is n = 
@@ -173,24 +171,24 @@ module I8088Agent =
             |> State.bind (Prelude.flip (|++) n >> createInputAt)
             |> State.bind (Prelude.uncurry decodeInstr >> State.returnM)
             |> Prelude.flip State.eval mb
-            |> Result.map fst
-            |> Result.bind (fun i -> 
-                   if ith = 0 then i :: is |> Result.returnM
+            |> ParserResult.map fst
+            |> ParserResult.bind (fun i -> 
+                   if ith = 0 then i :: is |> ParserResult.returnM
                    else getInstrAt (ith - 1) (i :: is) (n + i.Length))
-        getInstrAt 9 [] 0us |> Result.bind (List.rev
+        getInstrAt 9 [] 0us |> ParserResult.bind (List.rev
                                             >> List.map Prelude.toStr
                                             >> Strings.joinLines
-                                            >> Result.returnM)
+                                            >> ParserResult.returnM)
     
     type I8088Command = 
-        | Break of AsyncReplyChannel<Result<string>>
-        | Resume of AsyncReplyChannel<Result<string>>
-        | SetBreakPoint of Address * AsyncReplyChannel<Result<string>>
-        | Dump of Address * AsyncReplyChannel<Result<string>>
-        | Register of AsyncReplyChannel<Result<string>>
-        | Stats of AsyncReplyChannel<Result<string>>
-        | Trace of AsyncReplyChannel<Result<string>>
-        | Unassemble of AsyncReplyChannel<Result<string>>
+        | Break of AsyncReplyChannel<ParserResult<string>>
+        | Resume of AsyncReplyChannel<ParserResult<string>>
+        | SetBreakPoint of Address * AsyncReplyChannel<ParserResult<string>>
+        | Dump of Address * AsyncReplyChannel<ParserResult<string>>
+        | Register of AsyncReplyChannel<ParserResult<string>>
+        | Stats of AsyncReplyChannel<ParserResult<string>>
+        | Trace of AsyncReplyChannel<ParserResult<string>>
+        | Unassemble of AsyncReplyChannel<ParserResult<string>>
     
     let (|BreakCmdFormat|_|) = Regex.tryMatch "^b$"
     let (|ResumeCmdFormat|_|) = Regex.tryMatch "^g$"
@@ -220,31 +218,31 @@ module I8088Agent =
                     let f = 
                         match command with
                         | Some(Break(rc)) ->
-                            rc.Reply("" |> Result.returnM) 
-                            fun (mb, (_, bps)) -> (mb, (Paused, bps)) |> Result.returnM
+                            rc.Reply("" |> ParserResult.returnM) 
+                            fun (mb, (_, bps)) -> (mb, (Paused, bps)) |> ParserResult.returnM
                         | Some(Resume(rc)) ->
-                            rc.Reply("" |> Result.returnM) 
-                            fun (mb, (_, bps)) -> (mb, (Running, bps)) |> Result.returnM
+                            rc.Reply("" |> ParserResult.returnM) 
+                            fun (mb, (_, bps)) -> (mb, (Running, bps)) |> ParserResult.returnM
                         | Some(SetBreakPoint(a, rc)) -> 
                                 setBreakPoint a 
-                                >> Result.bind (
-                                    Prelude.tee (snd >> Result.returnM >> rc.Reply) 
-                                    >> (fst >> Prelude.tuple2 mb >> Result.returnM))
+                                >> ParserResult.bind (
+                                    Prelude.tee (snd >> ParserResult.returnM >> rc.Reply) 
+                                    >> (fst >> Prelude.tuple2 mb >> ParserResult.returnM))
                         | Some(Stats(rc)) ->
                             Prelude.tee (getStats >> rc.Reply)
-                            >> Result.returnM 
+                            >> ParserResult.returnM 
                         | Some(Trace(rc)) -> 
                             execOneLogicalInstr
-                            >> Prelude.tee (Result.bind dumpRegisters >> rc.Reply)
+                            >> Prelude.tee (ParserResult.bind dumpRegisters >> rc.Reply)
                         | Some(Register(rc)) -> 
                             Prelude.tee (dumpRegisters >> rc.Reply)
-                            >> Result.returnM
+                            >> ParserResult.returnM
                         | Some(Dump(a, rc)) -> 
                             Prelude.tee (dumpMemory a >> rc.Reply)
-                            >> Result.returnM
+                            >> ParserResult.returnM
                         | Some(Unassemble(rc)) -> 
                             Prelude.tee (unassemble >> rc.Reply)
-                            >> Result.returnM
+                            >> ParserResult.returnM
                         | None -> 
                             execOneLogicalInstr
                     return! (mb, (br, bps))
@@ -261,7 +259,7 @@ module I8088Agent =
             |> loadBinary "ROMBASIC.BIN" 0xF6000 false
             |> Prelude.tuple2 (Paused, HashSet<_>())
             |> Prelude.swap
-            |> Result.returnM
+            |> ParserResult.returnM
             |> loop
         
         let mailboxProc = MailboxProcessor.Start processor

@@ -3,3 +3,5 @@ FSharp.Core
 FsUnit.xUnit
 FsCheck.Xunit
 xunit.runner.console
+Akkling
+Akkling.TestKit

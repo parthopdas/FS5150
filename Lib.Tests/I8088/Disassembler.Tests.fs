@@ -10,12 +10,13 @@ open System
 open Lib.Chips.I8088.Disassembler
 open Lib.Common
 open Lib.Chips.I8088.InstructionSetLoader
+open YaFunTK.Result
 
 [<Fact>]
 let ``pword8 can parse word8``() = 
     let law b = 
         let x = runOnInput pword8 (fromBytes () [| b |])
-        x = Success(b, 
+        x = ParserResult.Success(b, 
                     { Bytes = [| b |]
                       Position = 1
                       UserState = () })
@@ -27,7 +28,7 @@ let ``pword16 can parse word16``() =
         let num = (n + 1) * 9876 |> uint16
         let bytes = num |> BitConverter.GetBytes
         let res = runOnInput pword16 (bytes |> fromBytes ())
-        res = Success(num, 
+        res = ParserResult.Success(num, 
                       { Bytes = bytes
                         Position = 2
                         UserState = () })
@@ -39,7 +40,7 @@ let ``pword32 can parse word32``() =
         let num = (n + 1) * 987654 |> uint32
         let bytes = num |> BitConverter.GetBytes
         let res = runOnInput pword32 (bytes |> fromBytes ())
-        res = Success(num, 
+        res = ParserResult.Success(num, 
                       { Bytes = bytes
                         Position = 4
                         UserState = () })
@@ -78,7 +79,7 @@ let ``pmodRegRm tests data`` : obj array seq =
 [<MemberData("pmodRegRm tests data")>]
 let ``pmodRegRm tests`` (bs, reg, rm, usess) : unit = 
     match runOnInput pmodRegRm (bs |> fromBytes ()) with
-    | Success(mrm, is) -> 
+    | ParserResult.Success(mrm, is) -> 
         mrm |> should equal { ModRM = rm
                               MRReg = reg
                               MRUseSS = usess }
@@ -168,7 +169,7 @@ let ``pargument tests data`` : obj array seq =
 [<MemberData("pargument tests data")>]
 let ``pargument tests`` (desc, bs, res, hasMrm) : unit = 
     match runOnInput (pargument (toOcArg desc) ([], None)) (bs |> fromBytes ()) with
-    | Success((arg, mrm), is) -> 
+    | ParserResult.Success((arg, mrm), is) -> 
         arg = [ res ] |> should equal true
         is.Position |> should equal bs.Length
         if hasMrm then mrm |> should not' (equal None)
@@ -218,12 +219,12 @@ let ``popCode tests data`` : obj array seq =
 [<MemberData("popCode tests data")>]
 let ``popCode tests`` (bs, oc, args, hasMrm) : unit = 
     match runOnInput (popCode grammer) (bs |> fromBytes ()) with
-    | Success((ocd, m), is) -> 
+    | ParserResult.Success((ocd, m), is) -> 
         (ocIndices.[ocd.OcId], ocd.OcArgs) |> should equal (oc, args)
         if hasMrm then m |> should not' (equal None)
         else m |> should equal None
         is.Position |> should equal bs.Length
-    | Failure(pl, pe, pp) -> failwithf "Test failed: %A %A %A %A: %A %A %A" bs oc args hasMrm pl pe pp
+    | ParserResult.Failure(pl, pe, pp) -> failwithf "Test failed: %A %A %A %A: %A %A %A" bs oc args hasMrm pl pe pp
 
 let ``pinstruction tests data`` : obj array seq = 
     seq {    
@@ -246,11 +247,11 @@ let ``pinstruction tests data`` : obj array seq =
 let ``pinstruction tests`` (bs, instr, usess) : unit = 
     let csip = { Segment = 0us; Offset = 0us }
     match runOnInput (pinstruction csip grammer) (bs |> fromBytes 0) with
-    | Success(i, is) -> 
+    | ParserResult.Success(i, is) -> 
         i.ToString() |> should equal instr
         i.UseSS |> should equal usess
         is.Position |> should equal bs.Length
-    | Failure(pl, pe, pp) -> failwithf "Test failed: %A %A: %A %A %A" bs instr pl pe pp
+    | ParserResult.Failure(pl, pe, pp) -> failwithf "Test failed: %A %A: %A %A %A" bs instr pl pe pp
 
 [<Fact>]
 let ``pinstruction parse-compile round trip``() = 
@@ -259,6 +260,6 @@ let ``pinstruction parse-compile round trip``() =
     // As soon as we have figured out how to get a generator for multiple args, implement it.
     let law csip = 
         match runOnInput (pinstruction csip grammer) ([| 0x37uy |] |> fromBytes 0) with
-        | Success(i, is) -> i.ToString() = (sprintf "%O 37           AAA " csip) && is.Position = 1
-        | Failure _ -> false
+        | ParserResult.Success(i, is) -> i.ToString() = (sprintf "%O 37           AAA " csip) && is.Position = 1
+        | ParserResult.Failure _ -> false
     Check.QuickThrowOnFailure law

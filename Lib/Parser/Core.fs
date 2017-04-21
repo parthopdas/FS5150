@@ -3,6 +3,7 @@
 module Core = 
     open TextInput
     open YaFunTK
+    open YaFunTK.Result
     
     type ParserLabel = string
     
@@ -14,15 +15,9 @@ module Core =
             | MoreInputNeeded -> "Need more input"
             | ParserError msg -> msg
     
-    type Result<'a> = 
-        | Success of 'a
-        | Failure of ParserLabel * ParserError * ParserPosition
-        override x.ToString() = 
-            match x with
-            | Success a -> sprintf "%O" a
-            | Failure(l, e, p) -> sprintf "... Error: %O %O %A" l e p.CurrentOffset
+    type ParserResult<'a> = Result<'a, ParserLabel * ParserError * ParserPosition>
     
-    type Parser<'T, 'U> = InputState<'U> -> Result<'T * InputState<'U>>
+    type Parser<'T, 'U> = InputState<'U> -> ParserResult<'T * InputState<'U>>
     
     /// satisfy :: (byte -> bool) -> ParserLabel -> Parser<byte>
     let satisfy predicate label = 
@@ -98,41 +93,20 @@ module Core =
         | Success(a, is) -> sprintf "%A [State: %O]" a is
         | Failure(l, m, p) -> sprintf "%s: Error parsing %s. %O" (p.ToString()) l m
 
-    module Result = 
-        /// unit :: 'a -> Result<'a>
-        let returnM x = 
-            Success x
+    module ParserResult = 
+        let inline returnM x = ParserResult<_>.DoReturn(x)
 
-        /// bind :: ('a -> Result<'b>) -> Result<'a> -> Result<'b>
-        let bind f xResult = 
-            match xResult with
-            | Success x ->
-                f x
-            | Failure(l, e, p) -> Failure(l, e, p)
+        let inline bind f xResult = ParserResult<_>.DoBind(f, xResult) 
 
-        let (>>=) x f = bind f x
+        let inline private (>>=) x f = bind f x
 
-        /// map :: ('a -> 'b) -> Result<'a> -> Result<'b>
-        let map f xResult = 
-            xResult >>= (f >> returnM) 
+        let inline map f xResult = ParserResult<_>.DoMap(f, xResult)
 
-        let (<!>) = map
-        let (|>>) x f = map f x
+        let inline (<!>) f v = map f v
+        let inline (|>>) x f = map f x
 
-        /// apply :: Result<('a -> 'b)> -> Result<'a> -> Result<'b>
-        let apply fResult xResult = 
-            fResult >>= (fun f -> xResult >>= (f >> returnM)) 
+        let inline apply fResult xResult = ParserResult<_>.DoApply(fResult, xResult)
 
-        let (<*>) = apply
+        let inline private (<*>) f v = apply f v
 
-        let lift2 f x1 x2 = returnM f <*> x1 <*> x2
-
-        let fold fS fF = function
-            | Success a -> fS a
-            | Failure (l, e, p) -> fF (l, e, p)
-
-        let ( *>* ) r1 r2 = Prelude.tuple2 <!> r1 <*> r2
-
-        let ( *> ) r1 r2 = snd <!> r1 <*> r2
-
-        let ( <* ) r1 r2 = fst <!> r1 <*> r2
+        let inline lift2 f x1 x2 = returnM f <*> x1 <*> x2

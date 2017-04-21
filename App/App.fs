@@ -6,17 +6,17 @@ open Lib.Chips.I8088.I8088Agent
 open Lib.Parser.Core
 
 (*
- Incomplete implementations:
- - Implement signed offset in dereference
- - NOT writes back only if (reg > 1) && (reg < 4)
- - With CPU-Test BIOS Video mode doesnt work
- - Interrupts cannot arrive between pairs of instruction like pop CS, etc.
+TODO: Incomplete implementations:
+- Implement signed offset in dereference
+- NOT writes back only if (reg > 1) && (reg < 4)
+- With CPU-Test BIOS Video mode doesnt work
  *)
 
 (*
- - Move away from strings in op code parsing
- - Move away from maps in op code parsing
- - Unnecessary data is conditional inpinstruction
+TODO:
+- Move away from strings in op code parsing
+- Move away from maps in op code parsing
+- Unnecessary data is conditional inpinstruction
  *)
 
 [<EntryPoint>]
@@ -36,7 +36,7 @@ let main _ =
             | StatsCmdFormat _ -> dbg.Stats()
             | TraceCmdFormat _ -> dbg.Trace()
             | UnassembleCmdFormat _ -> dbg.Unassemble()
-            | _ -> "" |> Result.returnM
+            | _ -> "" |> ParserResult.returnM
         Console.ReadLine()
         |> fun cmdStr -> if cmdStr.Trim() = "" then prevCmdStr else cmdStr
         |> Prelude.tee (execCmd >> printf "%O")

@@ -22,6 +22,7 @@
 
 #### Low level Documentation
 - [Assembler/DOS/BIOS/Chip documentation](http://stanislavs.org/helppc/)
+- [Bare metal S/W](http://www.brokenthorn.com/Resources/OSDevIndex.html)
 
 #### References emulators
 - [IBM PC Emulator in Java](https://github.com/NeatMonster/Intel8086/tree/master/src/fr/neatmonster/ibmpc)
