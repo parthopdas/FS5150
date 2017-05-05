@@ -75,6 +75,7 @@
     <None Include="I8088\8086_table.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Compile Include="I8259\I8259.fs" />
     <None Include="PCXTBIOS.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

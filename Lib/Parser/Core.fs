@@ -94,18 +94,18 @@ module Core =
         | Failure(l, m, p) -> sprintf "%s: Error parsing %s. %O" (p.ToString()) l m
 
     module ParserResult = 
-        let inline returnM x = ParserResult<_>.DoReturn(x)
+        let returnM = Result.returnM
 
-        let inline bind f xResult = ParserResult<_>.DoBind(f, xResult) 
+        let bind = Result.bind 
 
         let inline private (>>=) x f = bind f x
 
-        let inline map f xResult = ParserResult<_>.DoMap(f, xResult)
+        let map = Result.map
 
         let inline (<!>) f v = map f v
         let inline (|>>) x f = map f x
 
-        let inline apply fResult xResult = ParserResult<_>.DoApply(fResult, xResult)
+        let apply = Result.apply
 
         let inline private (<*>) f v = apply f v
 
